@@ -86,7 +86,7 @@ def test_homepage_renders_bookshelf_with_mock_books(page, base_url):
 
     # TestBook2 空态 chip
     card2_text = cards.nth(1).inner_text()
-    assert "立项完成,未开写" in card2_text
+    assert "立项完成，未开写" in card2_text
 
 
 def test_homepage_renders_empty_shelf_when_no_books(page, base_url):

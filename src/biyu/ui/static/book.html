@@ -47,8 +47,10 @@
       margin-top: 8px;
     }
     .entry-grid-main {
-      grid-template-columns: 2fr 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
+    .entry-grid-main .entry-card:not(:first-child) .entry-label { font-size: 17px; }
+    .entry-card-primary { display:inline-flex; align-items:center; justify-content:center; min-height:34px; margin-top:auto; padding:7px 12px; border:1px solid var(--ink); border-radius:4px; background:var(--ink); color:var(--paper); font-size:13px; text-decoration:none; }
     .entry-grid-sub {
       grid-template-columns: repeat(4, 1fr);
     }
@@ -169,7 +171,7 @@
       var marginMeta = document.getElementById("book-margin-meta");
       if (marginMeta) {
         var metaLines = [];
-        if (genre) metaLines.push(genre);
+        if (genre) metaLines.push(window.genreLabel ? window.genreLabel(genre) : genre);
         if (book.word_count) metaLines.push(book.word_count);
         marginMeta.innerHTML = metaLines.join("<br>");
       }
@@ -190,7 +192,7 @@
       if (book.last_chapter == null) {
         var empty = document.createElement("span");
         empty.className = "meta-chip meta-chip-empty";
-        empty.textContent = "立项完成,未开写";
+        empty.textContent = "立项完成，未开写";
         metaDiv.appendChild(empty);
       }
 
@@ -209,6 +211,9 @@
       var iconHtml = window.BiyuIcons ? window.BiyuIcons.iconHtml : function (n) { return ""; };
       var lastChapter = book.last_chapter;
       var backSuffix = lastChapter ? "&chapter=" + encodeURIComponent(lastChapter) : "";
+      var settingsFilled = Number(book.settings_filled_count || 0);
+      var primaryLabel = lastChapter ? "回到第 " + lastChapter + " 章" : (settingsFilled < 9 ? "去填设定" : "开始第 1 章");
+      var primaryHref = lastChapter ? "/workbench.html?book=" + encodeURIComponent(bookIdOrName) + backSuffix : (settingsFilled < 9 ? "/settings.html?book=" + encodeURIComponent(bookIdOrName) : "/workbench.html?book=" + encodeURIComponent(bookIdOrName) + "&chapter=1");
       entriesDiv.innerHTML =
         '<h2 style="font-size:18px;margin:28px 0 12px;">入口</h2>' +
         '<div class="entry-grid entry-grid-main">' +
@@ -216,9 +221,7 @@
         '    <div class="entry-icon">✍</div>' +
         '    <div class="entry-label">章节工作台</div>' +
         '    <div class="entry-desc">细纲、方案、生成、读稿、采用 —— 一条路走完一章</div>' +
-        (lastChapter
-          ? '<span class="entry-back-btn b2 bs" style="align-self:flex-start">回到第 ' + lastChapter + ' 章</span>'
-          : '') +
+        '    <span class="entry-card-primary" onclick="event.preventDefault();window.location.href=\'' + primaryHref + '\'">' + primaryLabel + '</span>' +
         '  </a>' +
         '  <a id="settings-entry" href="/settings.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card" hidden>' +
         '    <div class="entry-icon">📖</div>' +
@@ -226,6 +229,11 @@
         '    <div class="entry-desc">北极星、大纲、世界观七格、人物卡 —— 写手和导演每章都读这里</div>' +
         '    <span id="settings-entry-state" class="entry-state">9 格 · 一格没填</span>' +
         '  </a>' +
+        '  <button class="entry-card" id="zebian-entry" style="cursor:pointer;text-align:left;font-family:inherit;font-size:inherit;">' +
+        '    <div class="entry-icon">编</div><div class="entry-label">责编</div>' +
+        '    <div class="entry-desc">在 Claude Code 里跟责编聊。每次都是新对话，它会读你已存进设定集的内容。</div>' +
+        '    <span id="zebian-entry-status" class="entry-state"></span><span id="zebian-copy" class="entry-back-btn b2 bs" hidden>一键复制开场白</span>' +
+        '  </button>' +
         '</div>' +
         '<div class="entry-grid entry-grid-sub">' +
         '  <a href="/overview.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
@@ -247,15 +255,8 @@
         '  <a href="/summaries.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
         '    <div class="entry-icon">' + iconHtml("summary") + '</div>' +
         '    <div class="entry-label">纪要</div>' +
-        '    <div class="entry-desc">导演会诊生成的结构化纪要</div>' +
+        '    <div class="entry-desc">跟责编聊出来的结论：否掉的方向、还没定的分歧、你的口味</div>' +
         '  </a>' +
-        '  <button class="entry-card" id="zebian-entry" style="cursor:pointer;text-align:left;font-family:inherit;font-size:inherit;">' +
-        '    <div class="entry-icon">编</div>' +
-        '    <div class="entry-label">打开 Claude Code</div>' +
-        '    <div class="entry-desc">每次都是新对话；责编会读你已存进设定集的内容。</div>' +
-        '    <span id="zebian-entry-status" class="entry-state"></span>' +
-        '    <span id="zebian-copy" class="entry-back-btn b2 bs" hidden>一键复制开场白</span>' +
-        '  </button>' +
         '</div>';
 
       // 组装

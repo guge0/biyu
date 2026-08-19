@@ -139,7 +139,9 @@ def test_q2_book_navigation_and_q1_copy_export_ui_contracts() -> None:
     ):
         assert f'<div class="entry-label">{label}</div>' in book
     assert book.count('class="entry-card"') == 7
-    assert '<div class="entry-label">打开 Claude Code</div>' in book
+    assert '<div class="entry-label">责编</div>' in book
+    assert 'entry-card-primary' in book
+    assert '跟责编聊出来的结论：否掉的方向、还没定的分歧、你的口味' in book
     assert 'id="overview-link"' not in workbench
     assert 'id="voiceprint-link"' in workbench
     assert 'id="copy-chapter"' in workbench

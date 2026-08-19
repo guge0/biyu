@@ -216,8 +216,9 @@
     meta.className = "book-meta";
     const progress = book.last_chapter != null
       ? `已写到第 ${book.last_chapter} 章 · 其中 ${book.finalized_count || 0} 章已定稿`
-      : "立项完成,未开写";
-    meta.textContent = book.genre ? `${progress} · ${book.genre}` : progress;
+      : "立项完成，未开写";
+    const genreLabel = window.genreLabel ? window.genreLabel(book.genre) : book.genre;
+    meta.textContent = genreLabel ? `${progress} · ${genreLabel}` : progress;
     link.appendChild(meta);
 
     const more = document.createElement("div");

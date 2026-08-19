@@ -125,10 +125,13 @@ def test_zebian_entry_contract_is_present_on_settings_and_book_pages() -> None:
     settings_js = (static / "settings.js").read_text(encoding="utf-8")
     book_html = (static / "book.html").read_text(encoding="utf-8")
 
+    assert "打开 Claude Code" in settings_html
+    assert '<div class="entry-label">责编</div>' in book_html
+    assert "在 Claude Code 里跟责编聊" in book_html
+    assert "责编会读你已存进设定集的内容" in settings_html
+    assert "它会读你已存进设定集的内容" in book_html
     for text in (settings_html, book_html):
-        assert "打开 Claude Code" in text
         assert "每次都是新对话" in text
-        assert "责编会读你已存进设定集的内容" in text
         assert "一键复制开场白" in text
     assert "/api/workbench/books/${encoded}/zebian" in settings_js
     assert 'fetch("/api/workbench/books/"' in book_html
