@@ -1,0 +1,373 @@
+/* ==========================================================================
+   笔驭 · 手稿页 视觉底座  biyu-paper.css
+   2026-08-05 · 由中枢从视觉规范稿直接抽出，**这是唯一事实源**
+
+   用法：直接 <link> 引入，不要照着它另写一套。
+   本文件里的数值就是最终数值。要改先报中枢，不要就地调。
+
+   与两份规范的关系：
+     《视觉规范_手稿页_2026-08-04》   页面长什么样（本文件是它的实现）
+     《视觉规范_补篇_通用件与动效_2026-08-05》  通用件与动效清单（本文件覆盖）
+   ========================================================================== */
+
+/* ---------- 字体：随包分发，不走 CDN ---------- */
+@font-face{font-family:'Noto Serif SC';src:url('./fonts/NotoSerifSC-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Noto Sans SC';src:url('./fonts/NotoSansSC-Regular.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Noto Sans SC';src:url('./fonts/NotoSansSC-Medium.woff2') format('woff2');font-weight:500;font-display:swap}
+
+/* ---------- 令牌 ---------- */
+:root{
+  --paper:#F8F5EE;
+  --surface:#FDFBF6;
+  --ink:#262119;
+  --ink-solid:#2A251C;
+  --ink-soft:#5C5443;
+  --ink-mute:#8C8471;
+  --ink-faint:#B0A897;
+  --rule:#E0DACC;
+  --rule-soft:#EDE8DC;
+  --numeral:#C3BCA9;
+  --mark:#A65340;
+  --mark-bg:#E8CFC6;
+  --btn-border:#CFC7B4;
+  --serif:'Noto Serif SC','Source Han Serif SC','Songti SC','STSong','SimSun',serif;
+  --sans:'Noto Sans SC','Source Han Sans SC','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --ease:cubic-bezier(.32,.72,0,1);
+}
+
+/* ---------- 基座 ---------- */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:14px;
+  font-weight:400;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* 字重只有两档。任何 600/700 都是错的 */
+h1,h2,h3,h4,h5,h6,strong,b{font-weight:400}
+h1,h2,h3{font-family:var(--serif);margin:0}
+h1{font-size:27px}
+h2{font-size:18px;font-weight:500;font-family:var(--sans)}
+h3{font-size:16px;font-weight:500;font-family:var(--sans)}
+
+/* ---------- 顶部导航 ---------- */
+.top-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 26px;border-bottom:1px solid var(--rule);
+}
+.top-nav .brand{display:flex;align-items:baseline;gap:24px}
+.top-nav .wordmark{font-family:var(--serif);font-size:17px;letter-spacing:.04em;color:var(--ink);text-decoration:none;border:none}
+.top-nav a{font-size:14px;color:var(--ink-mute);text-decoration:none;border:none;padding:0}
+.top-nav a:hover{color:var(--ink-soft);border:none}
+.top-nav a.current,.top-nav a[aria-current]{color:var(--ink);font-weight:500}
+/* 顶栏右侧只留版本，其余开发用标记不出现在作者面 */
+.top-nav .version{font-size:12px;color:var(--ink-faint)}
+
+/* ---------- 页面容器 ---------- */
+.page{max-width:1000px;margin:0 auto;padding:34px 40px 40px}
+
+/* ---------- 留白栏：这套设计的签名 ---------- */
+/* 数字一律用阿拉伯数字。中文数字在 1–3 时只是几根横线，读不出是数字 */
+.spread{display:flex;gap:32px;align-items:flex-start}
+.margin-col{
+  width:66px;flex:0 0 66px;
+  border-right:1px solid var(--rule);
+  padding-right:18px;text-align:right;
+}
+.margin-col .num{font-family:var(--serif);font-size:34px;line-height:1.02;color:var(--numeral);font-weight:400}
+.margin-col .unit{font-size:11px;color:var(--ink-faint);letter-spacing:.22em;margin-top:6px}
+.margin-col .meta{font-size:11px;color:var(--ink-faint);line-height:1.75;margin-top:22px;word-break:keep-all}
+.main-col{flex:1;min-width:0}
+
+/* ---------- 标题与说明 ---------- */
+.page-title{font-family:var(--serif);font-size:27px;font-weight:400;margin:0 0 6px;color:var(--ink)}
+.page-sub{font-size:14px;color:var(--ink-mute);margin:0 0 26px;line-height:1.7}
+.eyebrow{font-size:12px;color:var(--ink-mute);letter-spacing:.14em;margin:0 0 10px}
+
+/* ---------- 正文：三项不许调 ---------- */
+/* 正文直接排在纸上，不装在盒子里。不要给它加 border / background / border-radius */
+.prose{
+  font-family:var(--serif);
+  font-size:18px;line-height:2.1;max-width:30em;
+  color:var(--ink);
+  border:none;background:none;padding:0;
+}
+.prose p{margin:0 0 1.5em}
+.prose p:last-child{margin:0}
+/* 作者标过的句子 */
+.mark{background:linear-gradient(transparent 64%,var(--mark-bg) 64%)}
+
+/* ---------- 按钮四级 ---------- */
+/* 一屏只有一个实心。.b1 与 .primary 同义，两个类名都要能用 */
+button,.btn{font-family:var(--sans);font-weight:400;cursor:pointer}
+.b1,.primary,button.primary{
+  background:var(--ink-solid);color:var(--paper);border:none;
+  height:40px;padding:0 28px;border-radius:3px;
+  font-size:15px;letter-spacing:.1em;font-family:var(--sans);font-weight:400;
+  width:auto;
+}
+.b2,.secondary{
+  background:transparent;border:1px solid var(--ink-faint);color:var(--ink-soft);
+  height:40px;padding:0 20px;border-radius:3px;font-size:14px;width:auto;
+}
+.b3,.tertiary{
+  background:transparent;border:none;color:var(--ink-mute);
+  height:40px;padding:0 10px;font-size:14px;width:auto;
+}
+.b4,.destructive{
+  background:transparent;border:1px dashed var(--btn-border);color:var(--ink-faint);
+  height:40px;padding:0 18px;border-radius:3px;font-size:14px;width:auto;
+}
+.bs{height:31px;padding:0 13px;font-size:13px}
+/* 按钮永远按内容宽度。width:auto 在 flex 父容器里挡不住拉伸，必须同时给这两条 */
+.b1,.b2,.b3,.b4,.primary,.secondary,.tertiary,.destructive{
+  display:inline-flex;align-items:center;justify-content:center;
+  align-self:flex-start;flex:0 0 auto;
+  transition:border-color .12s ease-out,background .12s ease-out,color .12s ease-out;
+}
+.b1:active,.b2:active,.b3:active,.b4:active,.primary:active{
+  transform:scale(.98);transition:transform .08s var(--ease);
+}
+.b2:hover,.b4:hover{border-color:var(--ink-soft);color:var(--ink)}
+.b1:hover,.primary:hover{background:var(--ink)}
+button[disabled],button:disabled{
+  cursor:not-allowed;border:1px solid var(--rule);color:var(--ink-faint);
+  background:transparent!important;transform:none;box-shadow:none;
+}
+.b1:disabled,.primary:disabled{background:var(--ink-mute)!important;color:var(--paper);border:none}
+.b3:disabled,.tertiary:disabled{border:none}
+/* 灰键必须写真话理由，紧跟按钮下方 */
+.reason{font-size:12px;color:var(--ink-faint);margin:9px 0 0;line-height:1.7}
+.row{display:flex;gap:13px;align-items:center;flex-wrap:wrap}
+
+/* ---------- 链接 ---------- */
+/* 全站不许出现浏览器默认蓝紫链接 */
+a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--btn-border);padding-bottom:1px}
+a:hover{border-bottom-color:var(--ink-solid)}
+a:visited{color:var(--ink)}
+a.nav,.nav-link{color:var(--ink);border-bottom:1px solid var(--btn-border);font-size:14px;text-decoration:none;padding-bottom:1px}
+a.nav:hover,.nav-link:hover{color:var(--ink);border-bottom-color:var(--ink-solid)}
+a.quiet{color:var(--ink-mute);border:none;font-size:13px}
+
+/* ---------- 卡片与列表 ---------- */
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:17px 19px;
+  transition:border-color .12s ease-out}
+.card:hover{border-color:var(--btn-border)}
+.card.lead{border-color:var(--btn-border)}
+.card-title{font-family:var(--serif);font-size:19px;font-weight:400;margin:0 0 7px;color:var(--ink)}
+.card-meta{font-size:13px;color:var(--ink-mute);margin:0 0 14px}
+.card-sub{font-size:13px;color:var(--ink-mute);margin:0}
+.grid{display:grid;gap:13px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+
+.list{background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.list-item{display:flex;align-items:center;gap:14px;padding:13px 19px;border-bottom:1px solid var(--rule-soft)}
+.list-item:last-child{border-bottom:none}
+.list-item .ch{font-size:13px;color:var(--ink-faint);width:52px;flex:0 0 52px}
+.list-item .ti{font-size:15px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list-item .rt{font-size:13px;color:var(--ink-mute)}
+.list-item .tm{font-size:13px;color:var(--ink-faint);width:62px;flex:0 0 62px;text-align:right}
+/* 长列表左侧竖条分档：扫的是这一列，不是逐行读字 */
+.list-item.m-act{border-left:3px solid var(--mark);padding-left:16px}
+.list-item.m-act .ch{color:var(--ink-soft)}
+.list-item.m-not{border-left:3px solid var(--ink-faint);padding-left:16px}
+.list-item.m-done{border-left:3px solid transparent;padding-left:16px}
+
+/* 好句：句子是正文不是数据 */
+.quote{padding:17px 19px 15px 16px;border-left:3px solid transparent;border-bottom:1px solid var(--rule-soft)}
+.quote:last-child{border-bottom:none}
+.quote .qm{font-size:12px;color:var(--ink-faint);margin:0 0 7px;letter-spacing:.06em}
+.quote .qt{font-family:var(--serif);font-size:17px;line-height:1.95;color:var(--ink);margin:0}
+
+/* ---------- 统计卡 ---------- */
+.stat{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:15px 17px}
+.stat .l{font-size:12px;color:var(--ink-mute);margin:0 0 5px}
+.stat .v{font-family:var(--serif);font-size:25px;font-weight:400;margin:0;color:var(--ink)}
+.stat .n{font-size:11px;color:var(--ink-faint);margin:5px 0 0}
+
+/* ---------- 工具条：控件最密的一行，必须分出层次 ---------- */
+/* 一行里有下拉、数字框、四个按钮时，不能全做成同尺寸方块。
+   规则：输入类（下拉/数字框）＝浅底无边框感；动作类＝描边；主动作＝实心。 */
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.toolbar .field,.toolbar select,.toolbar input{
+  height:34px;padding:0 10px;font-size:14px;width:auto;
+  background:var(--rule-soft);border:1px solid transparent;border-radius:3px;
+}
+.toolbar select{padding-right:26px;background-color:var(--rule-soft)}
+.toolbar .field:focus,.toolbar select:focus,.toolbar input:focus{
+  background:var(--surface);border-color:var(--ink-soft)}
+.toolbar input[type=number],.toolbar .chapter-num{width:58px;text-align:center}
+.toolbar .b2,.toolbar .b3{height:34px;padding:0 14px;font-size:14px}
+.toolbar .sep{width:1px;height:18px;background:var(--rule);margin:0 4px}
+
+/* ---------- 分段切换（阅读／编辑）：不是主动作，不许用实心 ---------- */
+.segmented{display:inline-flex;border:1px solid var(--ink-faint);border-radius:3px;overflow:hidden;height:32px}
+.segmented button{
+  height:100%;padding:0 16px;font-size:13px;border:none;border-radius:0;
+  background:transparent;color:var(--ink-mute);
+}
+.segmented button + button{border-left:1px solid var(--ink-faint)}
+.segmented button[aria-pressed=true],.segmented button.current{
+  background:var(--rule-soft);color:var(--ink);font-weight:500}
+
+/* ---------- 徽章 / 标签：不可点，所以永远不带边框 ---------- */
+/* 判定规则（全站唯一）：
+     实心墨底  = 主动作，能点
+     描边      = 次动作，能点
+     浅底无边框 = 标签／状态，不能点
+     纯文字    = 说明
+   带边框的东西必须能点。标签一律不许有 border。 */
+.badge,.pill,.meta-chip,.status-badge,.genre-chip{
+  display:inline-block;font-size:12px;padding:2px 9px;border-radius:3px;
+  border:none;background:var(--rule-soft);color:var(--ink-mute);
+  line-height:1.6;white-space:nowrap;width:auto;
+}
+/* 需要作者动手的状态：赭红字，仍然无边框 */
+.badge.need,.pill.need,.status-badge.need{background:var(--mark-bg);color:var(--mark)}
+/* 纯说明性的状态文字（有修改未保存、上次写到第 N 章）不套任何容器 */
+.status-text{font-size:13px;color:var(--ink-mute)}
+.status-text.need{color:var(--mark)}
+
+/* ---------- 提示条 ---------- */
+.banner{border-left:2px solid var(--mark);background:var(--surface);padding:12px 16px;
+  font-size:14px;color:var(--ink-soft);border-radius:0;animation:u1-fade-up .24s var(--ease)}
+.notice{border-left:2px solid var(--btn-border);background:var(--surface);padding:12px 16px;
+  font-size:14px;color:var(--ink-soft);border-radius:0;animation:u1-fade-up .24s var(--ease)}
+.error-banner{border-left:2px solid var(--mark);background:var(--surface);padding:12px 16px;
+  font-size:14px;color:var(--ink-soft);border-radius:0;animation:u1-fade-up .24s var(--ease)}
+
+/* ---------- 表单 ---------- */
+.field,input[type=text],input[type=password],input[type=number],textarea,select{
+  width:100%;background:var(--surface);border:1px solid var(--rule);border-radius:3px;
+  padding:10px 12px;font-family:var(--sans);font-size:14px;color:var(--ink);
+}
+textarea{resize:vertical}
+/* 写作品内容的文本域用衬线 */
+textarea.prose-input,.editing-pane{font-family:var(--serif);font-size:16px;line-height:1.9}
+.field:focus,input:focus,textarea:focus,select:focus{
+  border-color:var(--ink-soft);outline:2px solid var(--mark-bg);outline-offset:1px;
+}
+::placeholder{color:var(--ink-faint)}
+input:disabled,textarea:disabled,select:disabled{background:var(--paper);color:var(--ink-faint)}
+select{
+  appearance:none;-webkit-appearance:none;padding-right:30px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238C8471' stroke-width='1.4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+}
+input[type=checkbox],input[type=radio]{
+  appearance:none;-webkit-appearance:none;width:14px;height:14px;margin:0 8px 0 0;
+  border:1px solid var(--btn-border);background:var(--surface);vertical-align:-2px;
+  flex:0 0 14px;padding:0;
+}
+input[type=checkbox]{border-radius:2px}
+input[type=radio]{border-radius:50%}
+input[type=checkbox]:checked,input[type=radio]:checked{background:var(--ink-solid);border-color:var(--ink-solid)}
+input[type=checkbox]:checked{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8'%3E%3Cpath d='M1 4l3 3 5-6' fill='none' stroke='%23F8F5EE' stroke-width='1.6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:center;
+}
+input[type=radio]:checked{box-shadow:inset 0 0 0 3px var(--surface)}
+
+/* ---------- 空状态 ---------- */
+.empty-state{text-align:center;padding:40px 20px;border:1px dashed var(--rule);
+  border-radius:6px;background:var(--surface)}
+.empty-state .et{font-family:var(--serif);font-size:19px;font-weight:400;margin:0 0 7px;color:var(--ink)}
+.empty-state .ed{font-size:13px;color:var(--ink-mute);margin:0 0 16px}
+
+/* ---------- 加载 ---------- */
+.skeleton{height:13px;border-radius:2px;
+  background:linear-gradient(90deg,var(--rule-soft),var(--rule),var(--rule-soft));
+  background-size:200% 100%;animation:u1-shimmer 1.4s ease-in-out infinite}
+.loading-inline{display:inline-flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-mute)}
+.loading-inline::before{content:'';width:13px;height:13px;border:1.5px solid var(--rule);
+  border-top-color:var(--ink-mute);border-radius:50%;animation:u1-spin .7s linear infinite}
+
+/* ---------- 弹窗 ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(38,33,25,.32);
+  display:flex;align-items:center;justify-content:center;z-index:200;
+  animation:u1-fade-in .16s var(--ease)}
+.modal,.setup-card{background:var(--paper);border-radius:10px;max-width:460px;width:100%;
+  padding:26px 28px;box-shadow:none;animation:u1-pop .24s var(--ease)}
+.modal h2,.setup-card h2{font-family:var(--serif);font-size:20px;font-weight:400;margin:0 0 12px}
+.modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:22px}
+
+/* ---------- 折叠 ---------- */
+details>summary{list-style:none;cursor:pointer;font-size:14px;min-height:34px;
+  display:flex;align-items:center;gap:8px;color:var(--ink-soft)}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:'▸';color:var(--ink-mute);font-size:11px;
+  transition:transform .15s var(--ease);display:inline-block}
+details[open]>summary::before{transform:rotate(90deg)}
+
+/* ---------- 焦点：只在键盘操作时出现 ---------- */
+/* 鼠标点完不许留下焦点环。必须用 :focus-visible，不许用 :focus */
+:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+:focus:not(:focus-visible){outline:none;box-shadow:none}
+button:focus:not(:focus-visible),select:focus:not(:focus-visible),
+a:focus:not(:focus-visible){outline:none;box-shadow:none}
+
+/* ---------- 滚动条 ---------- */
+*{scrollbar-width:thin;scrollbar-color:#D8D1C0 transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#D8D1C0;border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:var(--numeral)}
+
+/* ---------- 表格 ---------- */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:500;color:var(--ink-mute);font-size:12px;
+  padding:0 12px 8px 0;border-bottom:1px solid var(--rule)}
+td{padding:9px 12px 9px 0;border-bottom:1px solid var(--rule-soft);
+  vertical-align:top;line-height:1.75;color:var(--ink-soft)}
+
+/* ---------- 分隔线 ---------- */
+hr,.hr{height:1px;background:var(--rule);border:none;margin:26px 0 18px}
+.hr-soft{height:1px;background:var(--rule-soft);border:none;margin:0}
+
+/* ---------- 标签页 ---------- */
+.tabs{display:flex;gap:26px;border-bottom:1px solid var(--rule);margin:0 0 26px}
+.tabs a,.tabs button,.tabs span,.stage-button{
+  font-size:14px;color:var(--ink-mute);padding:0 0 10px;position:relative;
+  background:none;border:none;height:auto;text-decoration:none;
+}
+.tabs .current,.stage-button.current{color:var(--ink);font-weight:500}
+.tabs .current::after,.stage-button.current::after{
+  content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--ink-solid)}
+.stage-button.done{color:var(--ink-soft)}
+.stage-button:disabled{color:var(--ink-faint)}
+
+/* ---------- 动效 ---------- */
+/* 只动 transform / opacity。正文区一律不动 */
+@keyframes u1-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes u1-fade-up{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes u1-fade-right{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}
+@keyframes u1-pop{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:none}}
+@keyframes u1-spin{to{transform:rotate(360deg)}}
+@keyframes u1-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.stage-panel{animation:u1-fade-up .24s var(--ease)}
+.layer-in{animation:u1-fade-right .24s var(--ease)}
+.list-item,.quote,.card{animation:u1-fade-in .18s var(--ease) both}
+.prose,.prose *{animation:none!important;transition:none!important}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .skeleton{background:var(--rule-soft)}
+}
+
+/* ---------- 窄屏 ---------- */
+@media(max-width:760px){
+  .page{padding:24px 20px}
+  .spread{flex-direction:column;gap:14px}
+  .margin-col{width:auto;flex:none;border-right:none;border-bottom:1px solid var(--rule);
+    padding:0 0 12px;text-align:left;display:flex;align-items:baseline;gap:10px}
+  .margin-col .unit,.margin-col .meta{margin-top:0}
+  .prose{max-width:none}
+  .grid-3,.grid-4{grid-template-columns:1fr 1fr}
+  .b1,.b2,.b3,.b4,.primary{height:44px}
+}

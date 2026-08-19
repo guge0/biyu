@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔驭作者工作台 · 立项屏</title>
+  <link rel="stylesheet" href="/styles.css?v=w1-1">
+<link rel="stylesheet" href="/biyu-paper.css?v=w1-1"></head>
+<body>
+  <!-- 顶部 nav(T2)-->
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">笔驭</a>
+    <div class="nav-links">
+      <a href="/">书架</a>
+      <a href="/workbench.html">工作台</a>
+    </div>
+    <div class="nav-badges">
+</div>
+  </nav>
+
+  <main class="container">
+    <header class="page-header">
+      <h1>想法体检</h1>
+      <p class="subtitle">输入一个网文设想,看看它在当前榜单里的处境、套路参照与创作提示。</p>
+    </header>
+
+    <!-- 输入区 -->
+    <section class="input-card">
+      <label for="idea-input" class="input-label">你的设想(可留空 → 看纯市场行情)</label>
+      <textarea
+        id="idea-input"
+        class="idea-input"
+        placeholder="例:校车进秘境、轻喜剧爽文 / 想写穿越的 / (留空看行情)"
+        rows="3"
+      ></textarea>
+      <div class="input-actions">
+        <button id="submit-btn" class="btn-primary" type="button">
+          <span class="btn-label">体检</span>
+          <span class="btn-loading" hidden>生成中…</span>
+        </button>
+        <button id="rescan-btn" class="btn-secondary" type="button" title="忽略缓存,重新扫榜(T4)">
+          重新扫榜
+        </button>
+        <span id="session-cost" class="session-cost" hidden>
+          本次会话累计:<span class="money" id="cumulative-cost">¥0.00</span>
+          <span class="softcap-hint" id="softcap-hint"></span>
+          <span class="peak-hint" id="peak-hint"></span>
+        </span>
+      </div>
+      <div id="scan-cache-badge" class="scan-cache-badge" hidden></div>
+    </section>
+
+    <!-- 错误提示(全局) -->
+    <section id="error-banner" class="error-banner" hidden></section>
+
+    <!-- 进度列表(T3,替换"生成中…")-->
+    <ol id="progress-list" class="progress-list" hidden aria-live="polite"></ol>
+
+    <!-- 卡片渲染区 -->
+    <section id="result-area" class="result-area" hidden>
+      <!-- 路径行 -->
+      <div class="path-line" id="path-line"></div>
+
+      <!-- 红蓝海卡(SPECIFIC 才显示) -->
+      <article id="redblue-card" class="card redblue-card" hidden>
+        <h2 class="card-title">红蓝海对照</h2>
+        <div class="card-body" id="redblue-body"></div>
+      </article>
+
+      <!-- 风险(死海/荒漠才显红色 seal) -->
+      <aside id="risk-warning" class="risk-warning" hidden></aside>
+
+      <!-- 市场套路归纳 -->
+      <article id="analysis-card" class="card">
+        <h2 class="card-title">市场套路归纳</h2>
+        <div class="card-body" id="analysis-body"></div>
+      </article>
+
+      <!-- 创作规律 -->
+      <article id="craft-card" class="card">
+        <h2 class="card-title">创作规律参考提示</h2>
+        <div class="card-body craft-body" id="craft-body"></div>
+      </article>
+
+      <!-- 诚实声明 -->
+      <aside class="honesty-note" id="honesty-note"></aside>
+
+      <!-- T7 起名器:命名建议区 -->
+      <article id="naming-card" class="card" hidden>
+        <h2 class="card-title">起名建议</h2>
+        <div class="card-body">
+          <p class="naming-hint">基于你的设想和题材,这里是一些候选书名供参考。</p>
+          <div id="naming-candidates" class="naming-candidates"></div>
+          <div class="naming-actions">
+            <button id="refresh-names-btn" class="btn-secondary" type="button">换一批</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- 元数据(成本/耗时/落盘路径) -->
+      <details class="meta-details">
+        <summary>元数据(成本 · 耗时 · 落盘路径)</summary>
+        <div id="meta-body"></div>
+      </details>
+    </section>
+  </main>
+
+  <!-- 软顶确认弹窗 -->
+  <div id="softcap-modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <h3>已到软顶,确认继续花钱吗?</h3>
+      <p id="softcap-modal-text"></p>
+      <div class="modal-actions">
+        <button type="button" id="softcap-cancel" class="btn-secondary">取消</button>
+        <button type="button" id="softcap-confirm" class="btn-primary">确认继续</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- R4 T4.6 起名选用确认弹窗 -->
+  <div id="naming-apply-modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <h3>选用书名</h3>
+      <p>将书名应用到哪本书?(会更新该书 display_name)</p>
+      <div class="naming-apply-preview" id="naming-apply-preview"></div>
+      <label for="naming-apply-book" style="font-size:13px;color:var(--ink-dim);display:block;margin:12px 0 4px;">目标书:</label>
+      <select id="naming-apply-book" class="rename-input" style="width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:14px;font-family:inherit;background:var(--paper);color:var(--ink);"></select>
+      <div class="modal-actions">
+        <button type="button" id="naming-apply-cancel" class="btn-secondary">取消</button>
+        <button type="button" id="naming-apply-confirm" class="btn-primary">应用</button>
+      </div>
+      <div id="naming-apply-result" class="naming-apply-result" hidden></div>
+    </div>
+  </div>
+
+  <script src="/propose.js"></script>
+</body>
+</html>

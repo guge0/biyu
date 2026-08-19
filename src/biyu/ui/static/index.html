@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔驭作者工作台 · 书架</title>
+  <link rel="stylesheet" href="/styles.css?v=jj1-1">
+<link rel="stylesheet" href="/biyu-paper.css?v=w1-3"></head>
+<body>
+  <!-- 顶部 nav(T2 首页)-->
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">笔驭</a>
+    <div class="nav-links">
+      <a href="/" class="active">书架</a>
+      <a href="/workbench.html">工作台</a>
+    </div>
+    <div class="nav-badges">
+      <button id="connection-settings-button" class="nav-command" type="button">换 Key / 换模型</button>
+      <div id="version-badge" class="env-badge env-test" title="当前运行版本">
+        <span class="env-dot"></span>
+        <span id="version-label">版本检测中…</span>
+      </div>
+      <!-- 峰谷时段徽标(T7-3,D-81) -->
+<!-- 环境章 -->
+</div>
+  </nav>
+
+  <main class="container home-container">
+    <div class="spread">
+      <div class="margin-col">
+        <div class="num" id="shelf-count">0</div>
+        <div class="unit">本</div>
+        <div class="meta">本次累计<br>¥0.00</div>
+      </div>
+      <div class="main-col">
+        <header class="page-header">
+          <h1>书架</h1>
+          <p class="subtitle">接着写，或者新建一本。</p>
+        </header>
+
+        <!-- 顶部快捷(P8-M2.5 T2 spec line 10)-->
+        <section class="quick-actions" id="quick-actions" hidden>
+          <a id="continue-link" class="btn-secondary continue-btn" href="#">
+            继续:<span id="continue-book">最近的书</span> · 上次审到第 <span id="continue-chapter">N</span> 章
+          </a>
+          <button class="btn-primary" id="create-book-button" type="button">新建书</button>
+        </section>
+
+        <!-- 无最近书时显示独立建书入口 -->
+        <section class="quick-actions" id="quick-actions-empty">
+          <button class="btn-primary" id="create-book-empty-button" type="button">新建第一本书</button>
+        </section>
+
+        <!-- 会话成本（W-1：纯文字说明，不套盒子）-->
+        <p id="session-cost-card" class="status-text" hidden><span class="cost-label">本次会话累计:</span> <span class="money" id="cumulative-cost">¥0.00</span><span class="peak-hint" id="peak-hint"></span></p>
+        <p id="backup-status" class="status-text">备份状态读取中…</p>
+        <p class="status-text"><a href="/trash.html">打开回收站</a></p>
+
+        <!-- 书架 -->
+        <section class="book-shelf">
+          <h2 class="shelf-title">我的书</h2>
+          <div id="book-list" class="book-grid">
+            <!-- JS 渲染书卡 -->
+            <div class="loading-placeholder">书架加载中…</div>
+          </div>
+
+          <!-- 空态(spec line 10:"空态是邀请,不是空白")-->
+          <div id="empty-shelf" class="empty-shelf" hidden>
+            <div class="empty-illustration">📚</div>
+            <h3>书架是空的</h3>
+            <p class="empty-hint">
+              还没有书。取个名字，选个题材，就可以开始。
+            </p>
+          </div>
+
+          <!-- P8-M3-pre T0.1:测试/归档折叠区(mock/验证/旧数据不占主视觉) -->
+          <section id="archived-section" class="archived-section" hidden>
+            <details>
+              <summary>测试/归档 (<span id="archived-count">0</span>)</summary>
+              <div id="archived-book-list" class="book-grid"></div>
+            </details>
+          </section>
+        </section>
+
+        <!-- 错误提示 -->
+        <section id="error-banner" class="error-banner" hidden></section>
+      </div>
+    </div>
+  </main>
+
+  <div id="create-book-overlay" class="modal-overlay" hidden>
+    <form id="create-book-form" class="setup-card">
+      <h2>新建书</h2>
+      <p>这里只建立写作档案，不会调用模型。</p>
+      <label>书名<input id="create-book-title" required maxlength="120"></label>
+      <label>题材<select id="create-book-genre" required>
+        <option value="xuanhuan">玄幻</option><option value="qihuan">奇幻</option>
+        <option value="dushi">都市</option><option value="kehuan">科幻</option>
+        <option value="lishi">历史</option><option value="xuanyi">悬疑</option>
+      </select></label>
+      <div class="modal-actions">
+        <button id="create-book-cancel" class="btn-secondary" type="button">取消</button>
+        <button id="create-book-submit" class="btn-primary" type="submit">创建</button>
+      </div>
+      <p id="create-book-status" role="status"></p>
+    </form>
+  </div>
+
+  <div id="setup-overlay" class="modal-overlay" hidden>
+    <form id="setup-form" class="setup-card">
+      <h2 id="setup-heading">第一次使用，先完成连接</h2>
+      <p id="setup-description">API Key 只存进系统钥匙串；系统会用一次极短请求校验连通性。</p>
+      <p id="setup-key-state" class="status-text">API Key：未配置</p>
+      <label>API Key<input id="setup-key" type="password" autocomplete="off" required placeholder="输入后不会再次显示"></label>
+      <label>模型<select id="setup-model" required></select></label>
+      <div id="setup-book-fields">
+        <label>书籍<select id="setup-book"></select></label>
+        <label><input id="setup-create" type="checkbox"> 新建一本书</label>
+        <label id="setup-title-row" hidden>新书名<input id="setup-title"></label>
+        <label id="setup-genre-row" hidden>题材<select id="setup-genre">
+          <option value="xuanhuan">玄幻</option><option value="qihuan">奇幻</option>
+          <option value="dushi">都市</option><option value="kehuan">科幻</option>
+          <option value="lishi">历史</option><option value="xuanyi">悬疑</option>
+        </select></label>
+      </div>
+      <div class="modal-actions">
+        <button id="setup-cancel" class="btn-secondary" type="button" hidden>取消</button>
+        <button id="setup-submit" class="btn-primary" type="submit">保存并校验连接</button>
+      </div>
+      <p id="setup-status" role="status"></p>
+    </form>
+  </div>
+
+  <script src="/icons.js"></script>
+  <script src="/genre.js"></script>
+  <script src="/cn-num.js"></script>
+  <script src="/setup.js?v=u1-1"></script>
+  <script src="/app.js?v=jj1-1"></script>
+</body>
+</html>

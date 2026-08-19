@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>章节工作台 · 笔驭</title>
+  <link rel="stylesheet" href="/styles.css?v=l1-1">
+  <link rel="stylesheet" href="/workbench.css?v=n2-1">
+  <link rel="stylesheet" href="/workbench-samples.css?v=w1-3">
+  <link rel="stylesheet" href="/workbench-revision.css?v=w1-3">
+  <link rel="stylesheet" href="/workbench-history.css?v=r3-2-6">
+  <style>@media (min-width:801px){body{margin:0}.workbench{margin:7px auto}}</style>
+<link rel="stylesheet" href="/biyu-paper.css?v=w1-3"></head>
+<body>
+  <nav class="top-nav"><a href="/" class="nav-brand">笔驭</a><div class="nav-links"><a href="/">书架</a><a id="workbench-self-link" href="/workbench.html" class="active">工作台</a></div></nav>
+  <main class="workbench">
+    <div id="error-banner" class="error-banner" hidden></div>
+    <div id="memory-banner" class="error-banner" role="status" hidden><div class="error-banner-row"><span class="error-banner-icon">!</span><span class="error-banner-msg">这一章的记忆还没更新；正文已经保留，不影响继续写。</span><button data-action="refresh_memory">重算记忆</button></div></div>
+    <section id="setup-restore-notice" class="error-banner notice-banner" role="status" hidden><div class="error-banner-row"><span class="error-banner-icon">i</span><span id="setup-restore-message" class="error-banner-msg"></span><a id="setup-restore-link" href="/book.html">去书籍页查看和恢复</a><button id="setup-restore-ack" class="error-banner-close" type="button" aria-label="关闭提醒">×</button></div></section>
+    <header class="workbench-header workbench-title-row">
+      <div class="wb-title">
+        <span class="wb-h">章节工作台</span>
+        <span id="entry-status" class="status-text" role="status">正在读取本章…</span>
+        <span id="global-dirty" class="badge need" hidden>有修改未保存</span>
+        <span class="wb-links"><a id="memory-link" href="/memory.html" class="nav">本书记忆</a><span class="dot">·</span><a id="voiceprint-link" href="/voiceprint.html" class="nav">本书声纹</a></span>
+      </div>
+      <div class="toolbar">
+        <label><span class="sr-only">书籍</span><select id="book" aria-label="书籍"></select></label><span id="reading-readonly-tag" class="reading-readonly-tag" title="" hidden>只读</span>
+        <span class="sep"></span>
+        <button id="previous-chapter" class="b3">上一章</button>
+        <label><span class="sr-only">章节</span><input id="chapter" class="chapter-num" type="number" min="1" value="1" aria-label="章节号"></label>
+        <button id="next-chapter" class="b3">下一章</button>
+        <span class="sep"></span>
+        <button id="load" class="b2">读取此章</button>
+        <button id="open-import" type="button" class="b2">导入稿件</button>
+      </div>
+    </header>
+    <section id="replica-warning" class="replica-warning" role="status" hidden>
+      <span id="replica-warning-message">防手滑副本尚未设置。它不是防灾措施：机器丢失或损坏时会和原件一起丢失。</span>
+      <button id="replica-warning-ack" type="button">我知道，先不做</button>
+    </section>
+    <section id="stage-bar" class="stage-bar" aria-label="写作阶段"></section>
+    <div id="failure-card" class="error-banner" role="alert" hidden><button id="failure-close" class="error-banner-close" type="button" aria-label="关闭失败提示">×</button><span class="fail-title">上次操作没有完成</span><p id="failure-reason"></p><p>正文和当前步骤都没有改变，可以直接重试或返回方案调整。</p></div>
+    <button id="diagnosis-restore" hidden>回到刚才的候选稿</button>
+    <section id="stage-shell" class="stage-shell">
+      <div id="run-surface" class="run-surface reading-paper-veil" hidden>
+        <div class="run-card reading-paper" role="status" aria-live="polite">
+          <h3>本次操作正在进行</h3>
+          <ol id="run-progress" class="progress-list"></ol>
+          <p id="run-result" class="save-receipt" role="status" hidden></p>
+          <details id="log-drawer" class="log-drawer" hidden><summary>本次运行详情</summary><pre id="log" aria-live="polite"></pre></details>
+          <div class="run-foot"><span id="run-elapsed">已用 0:00</span><button id="run-surface-close" type="button" hidden>返回读稿</button></div>
+        </div>
+      </div>
+      <article class="stage-panel" data-panel="0">
+        <div class="panel-head"><div><h2>细纲</h2><p>先写清本章人物、转折和章末钩子。</p></div><div class="segmented" role="group" aria-label="视图切换"><button data-view="outline-read" class="current">阅读</button><button data-view="outline-edit">编辑</button></div></div>
+        <div id="outline-read" class="markdown reading-pane"></div><textarea id="outline" class="editing-pane" hidden></textarea>
+        <div class="action-row"><button id="prefill-outline" class="b2">用模板开始</button><button data-save="outline" class="b1">保存并确认</button></div><section id="outline-fact-status" class="outline-fact-status" aria-live="polite" hidden></section><p class="disabled-reason" data-reason="prefill_outline"></p><section class="version-section"><h3>细纲版本</h3><p class="aside-hint">每次保存都会留一版；可以查看或回到任意一版。</p><div id="outline-version-list"></div></section>
+      </article>
+      <article class="stage-panel" data-panel="1" hidden>
+        <div class="panel-head"><div><h2>写作方案 <span id="planning-dirty" class="stale-badge" hidden>尚未保存</span></h2><p>阅读会预览你正在修改的内容；保存前不会覆盖盘上版本。</p></div><div class="segmented" role="group" aria-label="视图切换"><button data-view="planning-read" class="current">阅读</button><button data-view="planning-edit">编辑</button></div></div>
+        <p id="planning-source" class="planning-source">方案来源：尚未保存</p>
+        <div id="planning-empty" class="planning-empty-note" hidden>这一章还没有写作方案。<br>可以让导演先写一版，你在这上面改；也可以切到「编辑」自己从头写。</div>
+        <div id="planning-run" class="planning-run-card" role="status" aria-live="polite" hidden><h3>导演正在写这一章的方案</h3><ol><li>读细纲、世界观、人物卡 <span>完成</span></li><li class="now">拟必检项与戏核</li><li>校验格式</li></ol><p id="planning-run-elapsed">已用 0:00 · 页面可以离开，写完会留在这里</p></div>
+        <div id="planning-reject" class="planning-reject-card" role="alert" hidden><h3>导演写完了，但这一版没收下</h3><p>方案里的必检项不完整，系统没有覆盖盘上的内容。</p><ul id="planning-missing-list"></ul><p>可以让它重写一次，或者切到「编辑」自己补上这些类别。</p></div>
+        <div id="planning-compare" class="planning-compare">
+          <section class="planning-compare-pane"><h3>本章细纲 <span class="readonly-label">只读</span></h3><div id="planning-outline-read" class="markdown reading-pane"></div></section>
+          <section class="planning-compare-pane"><h3>写作方案</h3><div id="planning-read" class="markdown reading-pane"></div></section>
+        </div>
+        <textarea id="planning" class="editing-pane" hidden></textarea>
+        <p id="architect-cost-line" class="architect-cost-line">让导演写一版，预估 <em id="architect-cost-num">¥—</em> · 超过 <em>¥0.60</em> 自动停</p>
+        <div class="action-row planning-actions"><div><button id="run-architect" class="b1">让导演写方案</button><p data-reason="architect" class="disabled-reason"></p></div><div><button data-save="planning" class="b3">只保存</button><p data-reason="save_planning" class="disabled-reason"></p></div><div><button id="save-confirm-planning" class="b1">确认方案</button><p data-reason="approve_planning" class="disabled-reason"></p></div><div><button data-action="revoke_planning" class="b3">退回重写</button><p data-reason="revoke_planning" class="disabled-reason"></p></div></div>
+        <section class="version-section"><h3>方案版本</h3><p class="aside-hint">每次确认会保存一版；可以查看或回到任意一版。</p><div id="plan-version-list"></div></section>
+      </article>
+      <article class="stage-panel" data-panel="2" hidden>
+        <div class="panel-head"><div><h2>生成正文</h2><p>开始前会显示费用预估；完成后自动进入读稿。</p></div></div>
+        <div id="generation-status" class="generation-status"></div>
+        <section id="generation-voiceprint" class="generation-voiceprint" aria-live="polite" hidden>
+          <div class="generation-voiceprint-head"><div><h3>第一次生成正文前</h3><p>确认这本书当前生效的声纹。</p></div><a id="generation-voiceprint-link" href="/voiceprint.html">去声纹页查看或新建</a></div>
+          <p id="generation-voiceprint-current">正在读取当前生效声纹…</p>
+          <div id="generation-voiceprint-options"></div>
+          <div class="action-row"><button id="save-generation-voiceprint" type="button" class="b2">保存当前声纹</button></div>
+          <p id="generation-voiceprint-status" class="disabled-reason" role="status"></p>
+        </section>
+        <div class="action-row"><button data-action="write" class="b1">生成正文</button></div><p data-reason="write" class="disabled-reason"></p>
+        <section class="version-section"><h3>正文版本</h3><p class="aside-hint">成功版本可查看、比较或设为当前候选；失败原因直接显示在上方。</p><div id="candidate-version-list"></div></section>
+      </article>
+      <article id="reading-decision" class="stage-panel reading-layout reading-view-read" data-panel="3" hidden>
+        <header class="reading-decision-head">
+            <div class="reading-head-line">
+              <span id="reading-state" class="status-text">当前候选稿</span><span id="reading-planning-source" class="status-text">方案来源：尚未保存</span>
+              <span id="review-stale" class="reading-stale" hidden>正文已改动，下面的意见基于改动前的版本</span>
+              <div class="reading-head-tools">
+                <div class="segmented" role="group" aria-label="正文视图切换"><button id="reading-mode-read" data-view="chapter-read" class="current">阅读</button><button id="reading-mode-edit" data-view="chapter-edit">编辑</button><button id="reading-mode-official" data-view="chapter-official" hidden>正式稿</button></div>
+                <button id="copy-chapter" type="button" class="b3">复制全文</button><span id="copy-chapter-status" class="entry-status" role="status"></span>
+              </div>
+            </div>
+            <div class="reading-meta-line"><a id="active-voiceprint" href="/voiceprint.html">声纹：正在读取…</a><span class="dot">·</span><span id="reading-word-count"></span><span class="dot">·</span><span id="stale-badge" class="stale-badge" hidden>基于旧方案</span><span id="reading-check-state" class="status-text"></span><button id="review-entry" type="button" class="reading-review-entry" hidden></button></div>
+            <p>满意才采用；小问题可以直接自己改。</p>
+        </header>
+        <section class="reading-column">
+          <div class="reading-prose-grid" id="reading-scroll">
+            <div class="margin-col read-margin" aria-hidden="true"><div class="num" id="read-chapter-num">0</div><div class="unit">章</div><div class="meta" id="read-margin-meta" hidden></div></div>
+            <div class="reading-prose"><div id="chapter-read" class="markdown reading-pane selectable"></div><textarea id="chapter-edit" class="editing-pane" hidden></textarea><div id="official-chapter" class="markdown reading-pane" hidden></div></div>
+          </div>
+          <details id="diagnosis-card" class="diagnosis-card reading-interruption" aria-live="polite" hidden>
+            <summary>第三轮返工诊断 · <span id="diagnosis-message"></span></summary>
+            <button id="diagnosis-close" class="diagnosis-close" aria-label="关闭诊断卡">×</button>
+            <div class="action-row"><button id="diagnose-button" class="b3">诊断首要根因</button><button id="diagnosis-route" hidden></button></div>
+            <div id="diagnosis-reason" class="markdown aside-hint" hidden></div>
+          </details>
+          <section id="reading-failure-card" class="reading-interruption reading-failure-card reading-paper" role="alert" hidden>
+            <div><span class="fail-title">上次操作没有完成</span><p id="reading-failure-reason"></p></div>
+            <button id="reading-failure-close" type="button" aria-label="关闭失败卡">×</button>
+          </section>
+        </section>
+        <button id="reading-aside-backdrop" class="reading-aside-backdrop" type="button" aria-label="收起意见栏" hidden></button>
+        <aside class="review-column">
+          <div id="review-list-view" class="review-list-view">
+            <div class="review-toolbar"><p id="review-position">本轮返修清单 · <span id="revision-count">0</span> 项</p><div class="review-bulk-actions"><button id="revision-select-all" type="button" class="b3">全选</button><button id="revision-clear-all" type="button" class="b3">清空</button><button id="review-exit" type="button" class="b3">收起意见</button></div><details><summary>检查详情</summary><div id="check-summary" class="check-summary"></div><h4>已通过 / 已跳过</h4><div id="completed-check-list"></div></details></div>
+            <div id="revision-list-shell" class="revision-list-shell"><p id="revision-echo" class="revision-echo" role="status" hidden></p><div id="issue-list" class="issue-list" tabindex="-1"></div><details class="revision-fold" open><summary>整体意见 <span id="general-comment-status">未填写</span></summary><label class="general-comment"><textarea id="general-comment" placeholder="例如：保留开头，压缩中段，结尾再狠一点"></textarea></label></details><div class="revision-mode" id="revision-mode"><p class="revision-mode-title">返修模式（必须选择）</p><div class="revision-mode-options" role="group" aria-label="返修模式"><label><input type="radio" name="revision-mode" value="local_revision"><span>局部返修</span></label><label><input type="radio" name="revision-mode" value="deep_rewrite"><span>深度重写</span></label></div></div><details class="revision-fold"><summary>原始审读报告 <span><b id="completed-count">0</b> 项已通过</span></summary><div id="report" class="markdown report-pane"></div></details><details id="sample-preview" class="revision-fold sample-preview"><summary>本章记录：问题 <span id="sample-preview-problems">0</span> · 好句 <span id="sample-preview-good">0</span></summary><div id="sample-preview-list"></div><p class="record-hint">问题记录不会直接变成负例——蒸馏时你复核一遍才算。</p></details></div>
+            <div class="revision-actions"><button id="submit-revision" class="b2 wide">提交本轮修改（0 项）</button><p id="revision-dirty-reason" class="disabled-reason"></p><p data-reason="rewrite" class="disabled-reason"></p></div>
+          </div>
+          <div id="review-detail-view" class="review-detail-view" hidden>
+            <header class="review-detail-head"><button id="review-detail-back" type="button" class="b3">← 回清单</button><span id="review-detail-position">第 1 条 / 共 1 条</span></header>
+            <article id="issue-detail" class="issue-detail"><div id="issue-detail-meta" class="issue-detail-meta"></div><h4>结论</h4><div id="issue-detail-conclusion" class="markdown"></div><section id="issue-detail-quote-wrap"><h4>正文里</h4><blockquote id="issue-detail-quote"></blockquote></section><section id="issue-detail-explanation-wrap"><h4>为什么</h4><div id="issue-detail-explanation" class="markdown"></div></section><h4>改法建议</h4><div id="issue-detail-suggestion" class="markdown"></div><h4>你的补充意见</h4><textarea id="issue-detail-comment" rows="3" placeholder="可不填"></textarea><div class="issue-detail-actions"><label><input id="issue-detail-selected" type="checkbox"> 送去返修</label><button id="issue-detail-locate" type="button" class="b3">定位正文</button><button id="issue-detail-ignore" type="button" class="b3">本轮忽略</button></div><footer><button id="issue-detail-prev" type="button" class="b3">← 上一条</button><button id="issue-detail-next" type="button" class="b3">下一条 →</button><span>勾选后回清单提交</span></footer></article>
+          </div>
+        </aside>
+        <footer class="reading-actions"><div class="reading-actions-main"><button id="adopt-button" data-action="adopt" class="b1">采 用</button><button id="save-chapter" class="b2">保存正文修改</button><div class="reading-more"><button id="reading-more-toggle" type="button" class="b3" aria-expanded="false">更多 ▾</button><div id="reading-more-menu" class="reading-more-menu" hidden><button data-action="revoke_planning" class="b3">退回方案</button><button data-action="regenerate" class="b3">重新生成</button><button id="reading-history-toggle" type="button" class="b3">本章文件与回收站</button><p id="reading-more-replica" class="reading-more-replica"></p></div></div><span id="global-dirty-reading" class="reading-dirty-note" hidden>有修改未保存</span><p id="adopt-reason" data-reason="adopt"></p><p data-reason="edit_chapter"></p><p data-reason="rewrite"></p><p data-reason="regenerate"></p></div><div class="reading-actions-side" aria-hidden="true"></div></footer>
+      </article>
+      <article class="stage-panel" data-panel="4" hidden>
+        <div class="panel-head"><div><h2>评章摘句</h2><p>从“读稿定夺”选中文字记录；这里查看数量、整理条目并保存章评。</p></div><div class="sample-counts">好句 <b id="good-count">0</b> · 问题句 <b id="bad-count">0</b></div></div>
+        <details class="sample-drawer"><summary>查看和整理摘句（<span id="sample-total">0</span>）</summary><div id="sample-list"></div></details>
+        <textarea id="chapter-review" placeholder="本章哪里好、哪里水、还想不想追……"></textarea>
+        <div class="action-row"><button id="save-review" class="b1">保存章评</button><button id="undo-adopt" class="b3">撤销采用</button><button id="complete-chapter" class="b2" hidden>本章完成，进入下一章</button></div><p class="disabled-reason">撤销采用会把本章退回候选状态，世界观和角色卡自动跟着退回；其他已写正文不会改动。</p><p data-reason="chapter_review" class="disabled-reason"></p><p id="save-receipt" class="save-receipt" hidden></p>
+      </article>
+    </section>
+    <div id="selection-tools" class="selection-tools" hidden><span id="selection-preview"></span><button id="selection-revision" class="selection-primary">让写手改这句</button><div class="selection-secondary"><button data-feedback="note_problem">记下问题（暂不修改）</button><button data-feedback="good">记为好句</button></div><small>“让写手改这句”会自动记下问题，不用重复点。</small></div>
+    <div id="leave-dialog" class="modal-overlay" hidden><div class="modal"><h3>还有修改没有保存</h3><p>你想怎么处理后再离开这一章？</p><div class="modal-actions"><button id="leave-save" class="primary">保存后离开</button><button id="leave-discard" class="b3">放弃本次修改</button><button id="leave-stay" class="b2">留在本章</button></div></div></div>
+    <div id="candidate-dialog" class="modal-overlay" hidden><div class="modal"><h3>这一章已有候选稿</h3><p>确认新方案后，你想怎样处理现在这份候选稿？</p><div class="modal-actions"><button id="candidate-continue" class="primary">继续改现有候选稿</button><button id="candidate-regenerate" class="b2">归档候选稿，按新方案重写</button><button id="candidate-cancel" class="b3">暂不确认</button></div><p class="disabled-reason">归档稿会留在正文版本卡中，随时可以设回当前候选。</p></div></div>
+    <div id="adopt-gate" class="modal-overlay adopt-veil" hidden><section class="adopt-slip" role="dialog" aria-modal="true" aria-labelledby="adopt-gate-title"><header class="adopt-slip-head"><h3 id="adopt-gate-title"></h3><p>下面是全部未处理项。已勾进返修清单的、已本轮忽略的，不在这里。</p></header><div id="adopt-gate-list" class="adopt-slip-list"></div><footer class="adopt-slip-foot"><p>采用之后这一章进书，世界观与角色卡会跟着更新。这一步不可撤销。</p><div class="modal-actions"><button id="adopt-confirm" class="b1">仍然采用</button><button id="adopt-review" class="b3">去看看</button><button id="adopt-cancel" class="b3">取消</button><span>Esc 关闭</span></div></footer></section></div>
+    <div id="regenerate-gate" class="modal-overlay reading-paper-veil" hidden><section class="reading-paper regenerate-slip" role="dialog" aria-modal="true" aria-labelledby="regenerate-gate-title"><h3 id="regenerate-gate-title">重新生成会覆盖这一版</h3><p>当前这一版 <span id="regenerate-word-count">0</span> 字会被新生成的正文替换。回收站会留一份，保留 30 天。</p><div class="modal-actions"><button id="regenerate-confirm" class="b1">重新生成</button><button id="regenerate-cancel" class="b3">先不要</button><span>Esc 关闭</span></div></section></div>
+    <div id="history-dialog" class="modal-overlay reading-paper-veil" hidden><section class="reading-paper history-slip" role="dialog" aria-modal="true" aria-labelledby="history-dialog-title"><header class="history-slip-head"><h3 id="history-dialog-title">本章文件与回收站</h3><p>取回或彻底删除某一版。回收站保留 30 天。</p></header><div id="history-list" class="history-slip-list"></div><footer class="history-slip-foot"><button id="history-dialog-close" type="button" class="b3">取消</button><span>Esc 关闭</span></footer></section></div>
+    <div id="import-dialog" class="modal-overlay" hidden><div class="modal import-modal"><h3>导入稿件</h3><p>导入本身不花钱，也不会改动世界观和角色卡。</p><label>从第几章开始<input id="import-chapter" type="number" min="1" value="1"></label><div class="import-source"><label>粘贴正文<textarea id="import-text" placeholder="粘贴单章；多章请用“第N章”作为明确分隔"></textarea></label><label>或选择本地 .md / .txt<input id="import-files" type="file" accept=".md,.txt,text/plain,text/markdown" multiple></label></div><fieldset><legend>这批稿件是什么身份？（必须选择）</legend><label><input type="radio" name="import-identity" value="candidate">作为候选稿</label><p>进入待定夺，可继续审读、批注和返修。</p><label><input type="radio" name="import-identity" value="official">作为正式稿</label><p>直接存为定稿；不会自动建立记忆。</p></fieldset><div id="import-preview" class="import-preview" hidden></div><div class="modal-actions"><button id="import-cancel" class="b3">取消</button><button id="import-next" class="primary">预览落点</button><button id="import-confirm" class="primary" hidden>确认导入</button></div></div></div>
+    <div id="memory-import-dialog" class="modal-overlay" hidden><div class="modal import-modal"><h3>要不要根据导入稿建立记忆？</h3><div id="memory-cost" class="import-cost"></div><div id="memory-preview" class="import-preview"></div><div class="modal-actions"><button id="memory-later" class="b3">先不建立</button><button id="memory-stop" class="b3" hidden>结果不对，停下</button><button id="memory-start" class="primary">先看首章结果</button><button id="memory-continue" class="primary" hidden>结果正确，继续其余章节</button></div></div></div>
+  </main>
+  <script src="/mini-md.js?v=u1-1"></script><script src="/cn-num.js"></script><script src="/workbench.js?v=c2-1"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+# CH{{ chapter_num }} 审稿报告
+
+> 生成时间：{{ generated_at }}
+> 章节路径：chapters/ch{{ chapter_num }}.md
+> 字数：{{ word_count }}
+
+---
+
+## 1. 总体评价
+
+- **整体状态**：{{ overall_status }}
+
+---
+
+## 2. 检查结果
+
+<details><summary>检查完成 {{ completed_count }} 项</summary>
+
+{% for result in completed_results %}- {{ result.icon }} {{ result.checker }}：{{ result.message }}
+{% endfor %}
+</details>
+
+{% if problem_cards %}
+### 问题卡
+
+{% for result in problem_cards %}
+#### {{ result.icon }} {{ result.severity }} · {{ result.checker }}
+
+{{ result.message }}
+
+{% endfor %}
+{% endif %}
+---
+
+## 3. 后处理
+
+{% if postproc_summary %}
+{{ postproc_summary }}
+{% else %}
+_无后处理_
+{% endif %}
+
+---
+
+## 4. Editor 审稿
+
+{% if editor_section %}
+{{ editor_section }}
+{% else %}
+_等 Editor 模块上线后此段填充_
+{% endif %}
+
+---
+
+## 5. 修改历史（git log）
+
+{% for entry in git_history %}
+{{ loop.index }}. **{{ entry.type }}** ({{ entry.date }}) {{ entry.message }}
+{% endfor %}
+{% if not git_history %}
+_无 git 历史_
+{% endif %}
+
+---
+
+## 6. 操作建议
+
+{{ operation_suggestion }}

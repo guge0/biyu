@@ -1,0 +1,99 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "biyu"
+version = "0.1.0"
+description = "笔驭 - 专为中文网文连载设计的AI创作伙伴"
+requires-python = ">=3.9"
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "questionary>=2.0.0",
+    "httpx>=0.27.0",
+    "jinja2>=3.1.0",
+    "pyyaml>=6.0",
+    "ruamel.yaml>=0.18.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "tiktoken>=0.7.0",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "keyring>=25.0.0",
+    "cryptography>=42.0.0",
+    # P7-8: LLM 输出的 tool-call arguments JSON 兜底修复(BAD_ARGUMENTS 治理)
+    "json-repair>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
+    # T6 E2E 基建:Playwright(chromium headless)+ pytest fixture 集成
+    "pytest-playwright>=0.5.0",
+]
+rag = ["chromadb>=0.5.0"]
+
+[project.scripts]
+biyu = "biyu.cli.main:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+biyu = ["ui/static/*", "ui/static/fonts/*"]
+
+[tool.setuptools.exclude-package-data]
+biyu = [
+    "ui/static/editor.html",
+    "ui/static/editor.js",
+    "ui/static/propose.html",
+    "ui/static/propose.js",
+    "ui/static/prompts.html",
+    "ui/static/prompts.js",
+    "ui/static/preferences.html",
+    "ui/static/reviews.html",
+]
+
+[tool.setuptools.data-files]
+config = ["config/models.yaml.example"]
+"Lib/config" = [
+    "config/auditor.yaml",
+    "config/default.yaml",
+    "config/editor.yaml",
+]
+"Lib/prompts/assets" = [
+    "prompts/assets/命名范式_v0.md",
+    "prompts/assets/网文Craft蒸馏_v0.md",
+    "prompts/assets/章节细纲模板.md",
+]
+"Lib/prompts/editor" = [
+    "prompts/editor/fragments.json",
+    "prompts/editor/system.md",
+]
+"Lib/prompts/fingerprint" = ["prompts/fingerprint/distillation.md"]
+"Lib/prompts/workbench" = ["prompts/workbench/diagnosis.md"]
+"Lib/prompts/writer" = [
+    "prompts/writer/fragments.json",
+    "prompts/writer/layer3.md",
+    "prompts/writer/revision.md",
+    "prompts/writer/system.md",
+]
+"Lib/assets/声纹库/内置" = ["assets/声纹库/内置/江南文风.json"]
+
+[tool.pytest.ini_options]
+norecursedirs = ["scratch", "build"]
+# 编辑态装包位(quill-pipeline)与开发源(biyu/src)分离:
+# 测试优先吃本地 src/, 保证 TDD 看见刚写的代码, 不吃旧装包。
+pythonpath = ["src"]
+# T7-2: manual marker 标"需真 LLM/真配置的手动调试脚本",默认 deselect。
+# 显式跑:`pytest -m manual` 或 `pytest tests/test_llm_manual.py -m manual`。
+# T6: e2e marker 标"需 Playwright 浏览器基础设施的端到端测试",默认 deselect;
+# 显式跑:`pytest -m e2e`(单测套件零影响)。
+markers = [
+    "manual: 手动调试脚本(非 pytest 单测),需真 LLM 调用/真配置,默认跳过",
+    "e2e: 端到端测试(需 Playwright + chromium),默认跳过;显式 `pytest -m e2e`",
+]
+addopts = "-m 'not manual and not e2e'"

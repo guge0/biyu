@@ -1,0 +1,21 @@
+# Editor 模式配置
+# mode: "multi_agent" | "single"
+mode: "single"
+
+# 成本控制
+fallback_on_budget_exceed: true
+fallback_threshold_yuan_per_chapter: 0.05
+
+# 输出 token 预算（reasoning + content 共享）
+# V4-Pro 等 reasoning 模型：reasoning_tokens 消耗此预算的一部分
+# 设得太小会导致 reasoning 吃完预算后 content 为空（T2 的失败模式）
+# P7-4: 8192 → 16384（治 6.25% TRUNCATION；6.25% 章节因 reasoning + issues JSON 撞上限被截断）
+# 16384 给 reasoning 留约 12K tokens，content 留约 4K（足够多 issue 的 JSON 输出）
+# 注意:输出上限翻倍会小幅涨每章成本（已知、已批准）
+max_completion_tokens: 16384
+
+# Agent 限制
+agents:
+  max_tool_calls_per_agent_phase1: 3
+  prompt_char_limit: 800
+  max_issues_per_agent: 8

@@ -1,0 +1,21 @@
+project:
+  default_words_per_chapter: 5000
+  default_genre: "玄幻"
+  default_platform: "起点中文网"
+
+generation:
+  temperature: 0.7
+  max_tokens: 8000
+  max_retries: 3
+  stream: true
+
+consistency:
+  check_dead_characters: true
+  check_setting_conflicts: true
+  recent_chapters_for_context: 5
+
+# 网文特化配置
+webnovel:
+  rhythm_types: ["buildup", "minor_climax", "major_climax", "transition", "golden_chapter"]
+  hook_types: ["cliffhanger", "mystery", "reversal", "none"]
+  target_words_range: [4500, 6000]

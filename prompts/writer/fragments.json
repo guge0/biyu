@@ -1,0 +1,64 @@
+{
+  "markers": {
+    "layer1_begin": "【Layer 1 硬规则 - 违反这些 = 废稿】",
+    "layer1_end": "【Layer 1 结束】",
+    "layer2_begin": "【Layer 2 导演分镜与上下文 — 按此执行】",
+    "layer2_end": "【Layer 2 结束】",
+    "layer3_begin": "【Layer 3 写作约束 - 写完前自检】",
+    "layer3_end": "【Layer 3 结束】"
+  },
+  "layer1": {
+    "chapter_rule": "1. 章节号: 第 {chapter_num} 章",
+    "protagonist_rule": "2. 主角姓名: {protagonist_name}",
+    "death_rule": "{index}. 已死亡角色不得有任何活动、台词、动作"
+  },
+  "layer2_intro": [
+    "下面这份【导演分镜】是导演(Architect)读了作者的章节细纲之后,为本章写的分镜脚本。",
+    "戏核 = 本章存在的唯一理由,所有笔墨围绕戏核展开。",
+    "笔墨分配:关键处展开(文笔细一些),过渡处节制(简练带过)。",
+    "sub-md(剧情简介)已由 Architect 转化为本分镜,你不需要再读 sub-md。"
+  ],
+  "sections": {
+    "worldbook": "# 世界观",
+    "characters": "# 角色档案",
+    "present_characters": "# 本章在场角色",
+    "truth": "# 故事现状",
+    "prev_tail": "# 上一章末段(衔接锚点)",
+    "history": "# 历史章节",
+    "outline": "# 创作者细纲",
+    "planning": "# 本章规划"
+  },
+  "tier_labels": {
+    "protagonist": "主角",
+    "antagonist": "反派",
+    "major_supporting": "重要配角",
+    "supporting": "配角"
+  },
+  "character": {
+    "heading": "## {name}",
+    "tier_heading": "### {label}",
+    "background": "背景: {value}",
+    "voice_examples": "语声样本: {value}",
+    "personality": "性格: {value}"
+  },
+  "naming": {
+    "title": "# 称谓使用指引(每个角色不同人嘴里有不同叫法)",
+    "character_heading": "\n## {name}",
+    "narrator_default": "- 叙述者默认: {value}",
+    "self_referent": "- 自称: {value}",
+    "called_by_title": "- 别人怎么叫他/她:",
+    "called_by_item": "  - {caller} → {call}",
+    "forbidden": "- **正文绝对禁用**: {values}(这些是工程层代号)",
+    "default_self_referent": "我"
+  },
+  "present_characters": {
+    "rule": "本章正文中只能出现以下有名角色。新角色仅限路人NPC，不可后续登场。",
+    "status": "状态: {value}",
+    "location": "位置: {value}",
+    "emotional": "情绪: {value}",
+    "power": "实力: {value}",
+    "with_state": "- {name}（{state}）",
+    "without_state": "- {name}"
+  },
+  "final_instruction": "现在开始写第 {chapter_num} 章正文。只输出正文,不要输出元信息。"
+}

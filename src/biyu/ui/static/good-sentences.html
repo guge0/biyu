@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>全书好句 · 笔驭</title>
+  <link rel="stylesheet" href="/styles.css?v=w1-1">
+  <link rel="stylesheet" href="/good-sentences.css?v=u1-1">
+<link rel="stylesheet" href="/biyu-paper.css?v=w1-1"></head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">笔驭</a>
+    <div class="nav-links">
+      <a href="/">书架</a>
+      <a id="workbench-link" href="/workbench.html">工作台</a>
+    </div>
+  </nav>
+  <main class="good-sentences-page">
+    <div id="error-banner" class="error-banner" role="alert" hidden></div>
+    <div class="spread">
+      <div class="margin-col">
+        <div class="num" id="good-count-num">0</div>
+        <div class="unit">句</div>
+        <div class="meta">跨 <span id="good-chapter-count">零</span> 章</div>
+      </div>
+      <div class="main-col">
+        <header class="good-sentences-header">
+          <div>
+            <h1>全书好句</h1>
+            <p id="book-name">正在确认当前书…</p>
+          </div>
+          <label class="chapter-filter-label">按章筛选
+            <select id="chapter-filter" disabled>
+              <option value="all">全部章节</option>
+            </select>
+          </label>
+        </header>
+        <div class="row chapter-pills" id="chapter-pills" aria-label="按章筛选"></div>
+        <p id="load-status" class="good-sentences-status" role="status">正在读取好句…</p>
+        <section id="good-sentences-list" class="good-sentences-list" hidden></section>
+      </div>
+    </div>
+  </main>
+  <script src="/good-sentences.js?v=u1-1"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+.aside-hint { color: var(--muted); font-size: 13px; }
+.check-summary { padding: 8px 10px; background: #f1efe8; border-radius: 8px; margin-bottom: 8px; }
+.issue-list { display: grid; gap: 8px; }
+.issue-card { border: 1px solid var(--line); border-left: 4px solid #ba7517; border-radius: 9px; padding: 10px; background: #fff; }
+.issue-card.block { border-left-color: var(--mark); }
+.issue-card-head { display: flex; gap: 7px; align-items: center; }
+.issue-card h4 { margin: 0; }
+.issue-card p { margin: 6px 0; font-size: 13px; }
+.issue-card input[type="text"] { width: 100%; box-sizing: border-box; }
+.issue-card-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
+.issue-card-actions button { font-size: 12px; }
+.general-comment { display: grid; gap: 5px; margin-top: 10px; font-size: 13px; }
+.general-comment textarea { min-height: 72px; padding: 8px; }
+.wide { margin-top: 8px; } /* V-1: 按钮按内容宽度，不再 width:100% 撑满 */
+
+#official-copy { margin: 8px 0; }
+#official-copy .reading-pane { max-height: 260px; overflow: auto; }

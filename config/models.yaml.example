@@ -1,0 +1,80 @@
+# 笔驭模型配置示例（不含密钥）
+# 首次向导会把密钥存进系统钥匙串；也可自行设置下列环境变量。
+providers:
+  deepseek:
+    base_url: https://api.deepseek.com/v1
+    api_key_env: DEEPSEEK_API_KEY
+  kimi:
+    base_url: https://api.moonshot.cn/v1
+    api_key_env: KIMI_API_KEY
+  glm:
+    base_url: https://open.bigmodel.cn/api/paas/v4
+    api_key_env: GLM_API_KEY
+  doubao:
+    base_url: https://ark.cn-beijing.volces.com/api/v3
+    api_key_env: DOUBAO_API_KEY
+
+models:
+  deepseek-r1:
+    provider: deepseek
+    model_id: deepseek-reasoner
+    max_tokens: 8000
+    cost_per_1k_input: 0.004
+    cost_per_1k_output: 0.016
+  deepseek-v3:
+    provider: deepseek
+    model_id: deepseek-chat
+    max_tokens: 8000
+    cost_per_1k_input: 0.002
+    cost_per_1k_output: 0.008
+  kimi-k2.5:
+    provider: kimi
+    model_id: kimi-k2.5
+    max_tokens: 8000
+    cost_per_1k_input: 0.004
+    cost_per_1k_output: 0.021
+  glm-4.6:
+    provider: glm
+    model_id: glm-4.6
+    max_tokens: 8000
+  doubao-1.6:
+    provider: doubao
+    model_id: doubao-1.6
+    # 火山方要求每个用户创建自己的推理接入点；设置 DOUBAO_ENDPOINT_ID=ep-xxx 后可用。
+    endpoint_id: ${DOUBAO_ENDPOINT_ID}
+    max_tokens: 8000
+  glm-embedding-3:
+    provider: glm
+    model_id: embedding-3
+    type: embedding
+    dimensions: 2048
+
+pipeline:
+  # pipeline.planner = 导演（现役）
+  planner: deepseek-r1
+  # pipeline.writer = 写手（现役）；Editor 与 Observer 当前也借用这一档
+  writer: deepseek-v3
+  # pipeline.polisher = 独立润色（现役），不是编辑
+  polisher: kimi-k2.5
+  # pipeline.observer 当前无生产消费者，改了不生效
+  observer: deepseek-r1
+
+routing:
+  # routing 九项当前无生产消费者，改了不生效；以下仅保留历史兼容配置
+  planning: deepseek-r1
+  consistency_check: deepseek-r1
+  chapter_generate: deepseek-v3
+  chapter_expand: deepseek-v3
+  chapter_skeleton: deepseek-v3
+  key_segment_polish: kimi-k2.5
+  opening_polish: kimi-k2.5
+  dialogue_polish: kimi-k2.5
+  embedding: glm-embedding-3
+
+features:
+  injection_v2: false
+  # 已由老板验收并收口的功能默认开启；未验收的实验功能默认关闭。
+  settings_page: true
+  web_architect: true
+  planner_guard: true
+  checklist: true

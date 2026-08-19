@@ -1,0 +1,67 @@
+# CH{{ chapter_num }} Issue 追踪
+
+> 生成时间：{{ generated_at }}
+> Editor 模式：{{ editor_mode }}
+> Editor 成本：¥{{ "%.4f"|format(editor_cost_yuan) }}
+> Reviser 总成本：¥{{ "%.4f"|format(reviser_total_cost_yuan) }}
+> Reviser 调用次数：{{ reviser_call_count }}
+
+---
+
+<details><summary>检查完成 {{ completed_count }} 项</summary>
+
+{% for result in completed_results %}- {{ result.icon }} {{ result.checker }}：{{ result.message }}
+{% endfor %}
+</details>
+
+{% for result in problem_cards %}
+### {{ result.icon }} 问题卡 · {{ result.checker }}
+
+{{ result.message }}
+
+{% endfor %}
+
+{% if issues %}
+## Issue 列表
+
+{% for issue in issues %}
+- {{ issue.checked }} {{ issue.severity_icon }} **#{{ issue.id }}** · {{ issue.type }} · 段 {{ issue.paragraph }}
+
+### {{ issue.severity_icon }} [{{ issue.status_label }}] {{ issue.type }} — {{ issue.id }}
+
+- **位置**：第 {{ issue.paragraph }} 行
+- **描述**：{{ issue.description }}
+- **建议**：{{ issue.suggestion }}
+- **状态**：{{ issue.status }}
+{% if issue.voters %}- **投票**：{{ issue.voters | join(", ")}}
+{% endif %}
+{% if issue.suggestions_history | length > 1 %}
+- **建议历史**：
+{% for sv in issue.suggestions_history %}
+  - [{{ sv.source }}] {{ sv.suggestion }} ({{ sv.timestamp }}{% if sv.cost_yuan > 0 %}, ¥{{ "%.4f"|format(sv.cost_yuan) }}{% endif %})
+{% endfor %}
+{% endif %}
+{% if issue.status == "open" %}
+- **操作**：
+  - `biyu revise --issue {{ issue.id }} --apply` — 应用 Reviser 改写
+  - `biyu revise --issue {{ issue.id }} --regen` — 重新生成建议
+  - `biyu revise --issue {{ issue.id }} --resolve-self` — 标记自行解决
+  - `biyu revise --issue {{ issue.id }} --dismiss` — 忽略
+{% elif issue.status == "resolved_by_biyu" %}
+- ✅ 已由 BiYu Reviser 自动修复
+{% elif issue.status == "resolved_by_author" %}
+- ✅ 已由作者手动解决
+{% elif issue.status == "dismissed" %}
+- ⊘ 已忽略
+{% endif %}
+---
+{% endfor %}
+{% else %}
+✅ 无 Editor 问题。
+{% endif %}
+
+{% if is_finalized %}
+## 📋 章节定稿
+
+所有 issue 已处理完毕。此章节可以定稿。
+{% endif %}

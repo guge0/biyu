@@ -1,0 +1,6 @@
+.sample-drawer{margin:10px 0}
+.sample-item{display:grid;grid-template-columns:70px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.sample-item p{margin:0}
+.sample-item .problem{color:var(--mark)}
+.sample-item .good{color:var(--ink-soft)}
+[hidden]{display:none!important}

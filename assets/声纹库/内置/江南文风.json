@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "id": "builtin:jiangnan",
+  "name": "江南文风",
+  "kind": "builtin",
+  "source_ref": "data/jiangnan_fingerprint.json",
+  "projection_note": "从现役旧声纹提取可注入的原则与理由；省略长篇原文，不重新分析或另造来源。",
+  "usage_policy": [
+    "这是参考，不是硬规则。",
+    "不必每句话都对应某个特征，只在合适的场景与情绪节点让这种气质自然浮现。",
+    "学习的是气质、节奏和处理方式，不照搬原文、人物、意象或具体场景。",
+    "题材、人物与本章任务优先；与本书自身声纹冲突时，以本书自蒸馏为准。"
+  ],
+  "lines": [
+    {
+      "id": "jiangnan-core-tone",
+      "dimension": "整体气质",
+      "text": "少年感不是明亮昂扬，而是让浪漫、渴望和脆弱藏在冷硬、粗粝或故作无所谓的表层之下。",
+      "why": "这种内外反差让人物既有锋利外壳又保留真实软处；若只写漂亮忧伤，会退化成空泛抒情。",
+      "source": "signed_projection"
+    },
+    {
+      "id": "jiangnan-emotion-body",
+      "dimension": "情绪落点",
+      "text": "重要情绪尽量落到身体感觉、具体物象或可感知的动作上，不直接用一串抽象形容词宣布情绪。",
+      "why": "把心理变化变成能触摸、能看见的东西，读者才是在身体上感到情绪，而不是听作者解释情绪。",
+      "source": "signed_projection"
+    },
+    {
+      "id": "jiangnan-rhythm",
+      "dimension": "句子长短与节奏",
+      "text": "需要铺陈时可用绵密长句累积画面和情绪，到真正落点时用短句或突然收束形成截断；不要机械地长短交替。",
+      "why": "长句负责把读者带进情绪，短句负责击中和定格；若节奏始终工整，冲击会被平均掉。",
+      "source": "signed_projection"
+    },
+    {
+      "id": "jiangnan-image-anchor",
+      "dimension": "比喻与通感",
+      "text": "比喻必须有具体、可感甚至带痛感的锚点，并与人物当下处境相连；宁可少而准，不连续堆叠漂亮意象。",
+      "why": "具体锚点使华丽表达落地；没有人物处境支撑的比喻只会显得像模型在展示文采。",
+      "source": "signed_projection"
+    },
+    {
+      "id": "jiangnan-action-ritual",
+      "dimension": "关键动作",
+      "text": "只有关键动作才适合写出仪式感：通过构图、节奏和周围事物的反应赋予动作重量，普通动作保持自然。",
+      "why": "仪式感的价值是让决定性瞬间获得尊严和命运感；所有动作都拔高，会让重点消失并显得刻意。",
+      "source": "signed_projection"
+    },
+    {
+      "id": "jiangnan-dialogue",
+      "dimension": "人物对白",
+      "text": "人物可用不耐烦、嘲讽、粗粝或故作轻松的话遮掩真实需要，让软处从缝隙里露出；不要让所有人都说完整哲理句。",
+      "why": "人物很少直接交代脆弱，防御性的说话方式能同时表现关系距离和被理解的渴望；统一抒情腔会抹平人物。",
+      "source": "signed_projection"
+    },
+    {
+      "id": "jiangnan-scale-cut",
+      "dimension": "镜头尺度",
+      "text": "宏大、毁灭性或近似神迹的场面之后，落回一个具体、渺小、脆弱甚至略显狼狈的人间细节。",
+      "why": "尺度切换让奇观最终服务于人，也避免宏大语调一路维持到底而失真、发冷。",
+      "source": "signed_projection"
+    },
+    {
+      "id": "jiangnan-tragic-tenderness",
+      "dimension": "悲剧语气",
+      "text": "沉重命运可借天真、私密、近似悄悄话的载体表达，人物在极端痛苦时优先克制或内收，不急着公开宣言。",
+      "why": "轻的表达承载重的后果会形成残忍与温柔的反差；直接哭喊和解释容易把余味消耗掉。",
+      "source": "signed_projection"
+    },
+    {
+      "id": "jiangnan-scene-fit",
+      "dimension": "适用时机",
+      "text": "把上述处理留给人物脆弱显露、命运转折、关键动作和情绪高潮；过渡、信息交代和普通生活段落按本章需要简洁处理。",
+      "why": "风格只有在合适节点出现才有辨识度；每段都用力会造成审美疲劳，并挤压故事信息。",
+      "source": "signed_projection"
+    },
+    {
+      "id": "jiangnan-pitfalls",
+      "dimension": "明确避坑",
+      "text": "避免空泛华丽比喻、全员哲理对白、持续煽情、整齐对仗式节奏，以及把旧作中的人物、意象和场景直接换名复刻。",
+      "why": "这些是模型最容易抓到的表面特征，却会丢掉原声纹真正重视的具体锚点、人物防御和节奏反差。",
+      "source": "signed_projection"
+    }
+  ]
+}

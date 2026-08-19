@@ -1,0 +1,110 @@
+{
+  "P1C/ch8": {
+    "runs": [
+      {
+        "plot_coherence": 5.0,
+        "character_consistency": 5.0,
+        "setting_consistency": 4.0,
+        "style_naturalness": 4.0,
+        "chapter_hook": 5.0,
+        "overall": 4.6
+      },
+      {
+        "plot_coherence": 5.0,
+        "character_consistency": 5.0,
+        "setting_consistency": 5.0,
+        "style_naturalness": 4.0,
+        "chapter_hook": 5.0,
+        "overall": 4.8
+      },
+      {
+        "plot_coherence": 5.0,
+        "character_consistency": 5.0,
+        "setting_consistency": 5.0,
+        "style_naturalness": 4.0,
+        "chapter_hook": 5.0,
+        "overall": 4.8
+      }
+    ],
+    "stats": {
+      "plot_coherence": {
+        "mean": 5.0,
+        "std": 0.0
+      },
+      "character_consistency": {
+        "mean": 5.0,
+        "std": 0.0
+      },
+      "setting_consistency": {
+        "mean": 4.67,
+        "std": 0.58
+      },
+      "style_naturalness": {
+        "mean": 4.0,
+        "std": 0.0
+      },
+      "chapter_hook": {
+        "mean": 5.0,
+        "std": 0.0
+      },
+      "overall": {
+        "mean": 4.73,
+        "std": 0.12
+      }
+    }
+  },
+  "P1C/ch5": {
+    "runs": [
+      {
+        "plot_coherence": 4.0,
+        "character_consistency": 4.0,
+        "setting_consistency": 4.0,
+        "style_naturalness": 4.0,
+        "chapter_hook": 5.0,
+        "overall": 4.4
+      },
+      {
+        "plot_coherence": 5.0,
+        "character_consistency": 5.0,
+        "setting_consistency": 4.0,
+        "style_naturalness": 4.0,
+        "chapter_hook": 5.0,
+        "overall": 4.6
+      },
+      {
+        "plot_coherence": 4.0,
+        "character_consistency": 5.0,
+        "setting_consistency": 4.0,
+        "style_naturalness": 4.0,
+        "chapter_hook": 4.0,
+        "overall": 4.2
+      }
+    ],
+    "stats": {
+      "plot_coherence": {
+        "mean": 4.33,
+        "std": 0.58
+      },
+      "character_consistency": {
+        "mean": 4.67,
+        "std": 0.58
+      },
+      "setting_consistency": {
+        "mean": 4.0,
+        "std": 0.0
+      },
+      "style_naturalness": {
+        "mean": 4.0,
+        "std": 0.0
+      },
+      "chapter_hook": {
+        "mean": 4.67,
+        "std": 0.58
+      },
+      "overall": {
+        "mean": 4.4,
+        "std": 0.2
+      }
+    }
+  }
+}

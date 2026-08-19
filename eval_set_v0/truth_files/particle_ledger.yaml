@@ -1,0 +1,4 @@
+# particle_ledger.yaml
+clues:
+  - { id: clue-001, name: "苏皓最后通话基站定位回声巷", status: "已获" }
+  - { id: clue-002, name: "六名失踪者通报名单", status: "已获" }

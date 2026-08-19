@@ -1,0 +1,4 @@
+# pending_hooks.yaml
+hooks:
+  - { id: hook-001, desc: "苏皓最后通话对象是谁", status: open, from_chapter: T0 }
+  - { id: hook-002, desc: "警方为何对四起失踪快速结案", status: open, from_chapter: T0 }

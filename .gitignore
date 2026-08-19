@@ -1,0 +1,40 @@
+# Private runtime data and credentials
+data/
+config/models.yaml
+*.env
+**/api_key*
+**/secret*
+**/secrets.enc
+**/.biyu/
+
+# Python and build artifacts
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# Logs, reports, and delivery archives
+*.log
+*_报告*
+*.zip
+*.tar.gz
+
+# Local editor and agent settings
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.cursor/
+.claude/settings*.json
+.claude/hooks/guard_invocations.log
+.codex/
+.agents/
+.anchor/
+AGENTS.md
+.reasonix/

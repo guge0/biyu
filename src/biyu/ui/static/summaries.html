@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔驭 · 责编纪要</title>
+  <link rel="stylesheet" href="/styles.css?v=w1-1">
+<link rel="stylesheet" href="/biyu-paper.css?v=w1-1"></head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">笔驭</a>
+    <div class="nav-links">
+      <a href="/">书架</a>
+      <a href="/workbench.html">工作台</a>
+    </div>
+    <div class="nav-badges">
+</div>
+  </nav>
+
+  <main class="container">
+    <div class="spread">
+      <div class="margin-col">
+        <div class="num" id="summary-count-num">0</div>
+        <div class="unit">份</div>
+        <div class="meta">责编纪要</div>
+      </div>
+      <div class="main-col">
+        <header class="page-header">
+          <h1 id="page-title">责编纪要</h1>
+          <p class="subtitle">责编维护的一份滚动工作笔记（被否方向 + 理由 / 还没定的分歧 / 作者口味信号）。</p>
+        </header>
+
+        <section id="error-banner" class="error-banner" hidden></section>
+
+        <div class="summaries-layout">
+          <aside class="summary-list" id="summary-sidebar">
+            <h3>纪要列表</h3>
+            <div id="summary-list-body">
+              <div class="loading-inline">加载中…</div>
+            </div>
+          </aside>
+
+          <section class="summary-display" id="summary-display">
+            <div class="empty-state">
+              <p class="es-title">从左侧选择纪要查看全文。</p>
+              <p class="es-hint">责编会持续更新本书的同一份工作笔记。</p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/mini-md.js"></script>
+  <script src="/cn-num.js"></script>
+  <script>
+  /* R4-T4.2 纪要列表页:GET /api/summaries?book=X 列表 + 点击查看。U-1 样式全部走 styles.css 全局。 */
+  (function () {
+    "use strict";
+
+    var $ = function (id) { return document.getElementById(id); };
+    var params = new URLSearchParams(window.location.search);
+    var bookId = params.get("book") || params.get("name");
+    var displayEl = $("summary-display");
+    var listBodyEl = $("summary-list-body");
+
+    if (!bookId) {
+      showError("URL 缺 book 参数。例:/summaries.html?book=dao-1");
+      return;
+    }
+
+    async function init() {
+      try {
+        var resp = await fetch("/api/books");
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        // F3 (P8-M3R-fix):/api/books 返 dict schema {books, count}
+        var books = (await resp.json()).books;
+        var book = books.find(function (b) { return b.id === bookId || b.name === bookId; });
+        if (!book) {
+          showError("书不存在:" + bookId);
+          return;
+        }
+        var displayName = book.display_name || book.title || book.name;
+        $("page-title").textContent = "责编纪要 · " + displayName;
+        document.title = "责编纪要 · " + displayName;
+
+        await loadSummaries(book);
+      } catch (e) {
+        showError("加载失败:" + e.message);
+      }
+    }
+
+    async function loadSummaries(book) {
+      var bookRef = book.id || book.name;
+      var resp = await fetch("/api/summaries?book=" + encodeURIComponent(bookRef));
+      if (!resp.ok) {
+        showError("纪要列表加载失败:HTTP " + resp.status);
+        return;
+      }
+      var items = await resp.json();
+      if (!items || items.length === 0) {
+        var countNum = $("summary-count-num");
+        if (countNum) countNum.textContent = "0";
+        listBodyEl.innerHTML =
+          '<div class="empty-state" style="padding:24px 8px;">' +
+          '<p class="es-title">本书暂无纪要。</p>' +
+          '<p class="es-hint">与责编聊过需要留存的未决事项后，由责编维护。</p>' +
+          '</div>';
+        return;
+      }
+      // U-1 留白栏：纪要份数（中文数字）
+      var countNum = $("summary-count-num");
+      if (countNum) countNum.textContent = String(items.length);
+      var html = "";
+      items.forEach(function (it) {
+        var safeFile = window.MiniMd.esc(it.filename || "");
+        var safeDate = window.MiniMd.esc(it.date || "");
+        var seq = it.seq != null ? "#" + it.seq : "";
+        html +=
+          '<div class="summary-item" data-filename="' + safeFile + '">' +
+          '<div class="summary-date">' + safeDate + ' ' + seq + '</div>' +
+          '<div class="summary-meta">' + safeFile + '</div>' +
+          '</div>';
+      });
+      listBodyEl.innerHTML = html;
+
+      Array.prototype.forEach.call(listBodyEl.querySelectorAll(".summary-item"), function (el) {
+        el.addEventListener("click", function () {
+          var fn = el.getAttribute("data-filename");
+          Array.prototype.forEach.call(listBodyEl.querySelectorAll(".summary-item"), function (x) {
+            x.classList.remove("active");
+          });
+          el.classList.add("active");
+          loadSummaryDetail(book, fn);
+        });
+      });
+
+      // 默认选第一份
+      var first = listBodyEl.querySelector(".summary-item");
+      if (first) first.click();
+    }
+
+    async function loadSummaryDetail(book, filename) {
+      var bookRef = book.id || book.name;
+      displayEl.innerHTML = '<div class="loading-inline">加载纪要 ' + window.MiniMd.esc(filename) + '…</div>';
+      try {
+        var resp = await fetch("/api/summaries/" + encodeURIComponent(bookRef) + "/" + encodeURIComponent(filename));
+        if (resp.status === 404) {
+          displayEl.innerHTML = '<div class="empty-state"><p class="es-title">纪要不存在(可能已被删除)。</p></div>';
+          return;
+        }
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        var data = await resp.json();
+        var md = data.markdown || "(空)";
+        displayEl.innerHTML = window.MiniMd.render(md);
+      } catch (e) {
+        displayEl.innerHTML = '<div class="error-banner">加载失败:' + window.MiniMd.esc(e.message) + '</div>';
+      }
+    }
+
+    function showError(msg) {
+      var banner = $("error-banner");
+      banner.textContent = msg;
+      banner.hidden = false;
+      listBodyEl.innerHTML = "";
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笔驭 BiYu</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <aside id="sidebar">
+            <h1>笔驭 BiYu</h1>
+            <div id="book-selector">
+                <select id="book-list"></select>
+            </div>
+            <div id="chapter-list"></div>
+            <div id="sidebar-actions">
+                <button id="btn-auto" onclick="startAutoGenerate()">批量生成</button>
+                <button id="btn-refresh-all" onclick="refreshAll()">刷新列表</button>
+                <button id="btn-build-memory" onclick="showBuildMemoryModal()" title="为所有已签章节建记忆(truth_files)">
+                    建记忆
+                </button>
+            </div>
+        </aside>
+        <main id="main">
+            <div id="welcome" class="panel">
+                <h2>欢迎使用笔驭</h2>
+                <p>选择一本书开始</p>
+            </div>
+            <div id="editor" class="panel" style="display:none">
+                <div id="editor-header">
+                    <h2 id="editor-title"></h2>
+                    <div id="editor-actions">
+                        <button id="btn-save-outline" onclick="saveOutline()">保存大纲</button>
+                        <button id="btn-generate" onclick="generateChapter()">生成</button>
+                        <button id="btn-check" onclick="checkChapter()">一致性检查</button>
+                        <button id="btn-refresh" onclick="refreshChapter()">刷新设定</button>
+                    </div>
+                </div>
+                <div id="editor-tabs">
+                    <button class="tab active" data-tab="outline" onclick="switchTab('outline')">大纲</button>
+                    <button class="tab" data-tab="content" onclick="switchTab('content')">正文</button>
+                    <button class="tab" data-tab="meta" onclick="switchTab('meta')">元数据</button>
+                    <button class="tab" data-tab="review" onclick="switchTab('review')">审读</button>
+                </div>
+                <div id="tab-outline" class="tab-content active">
+                    <textarea id="outline-text" placeholder="在此编写大纲..."></textarea>
+                </div>
+                <div id="tab-content" class="tab-content">
+                    <div id="content-display"></div>
+                </div>
+                <div id="tab-meta" class="tab-content">
+                    <pre id="meta-display"></pre>
+                </div>
+                <div id="tab-review" class="tab-content">
+                    <div id="review-actions">
+                        <button id="btn-run-review" onclick="triggerReview()">审读此章</button>
+                        <button id="btn-reload-review" onclick="loadReview()" title="重新加载已生成的问题卡">刷新问题卡</button>
+                        <button id="btn-chat-editor" disabled title="M3 接">和编辑聊聊(M3)</button>
+                    </div>
+                    <div id="review-status" class="review-status">未审读</div>
+                    <div id="review-display" class="review-display">
+                        <p class="review-empty">点击「审读此章」开始,或选择已有问题卡的章节。</p>
+                    </div>
+                </div>
+            </div>
+            <div id="progress-panel" style="display:none">
+                <h3>生成进度</h3>
+                <div id="progress-log"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 建记忆确认弹窗(P8-M2 T4):显示成本估算 -->
+    <div id="build-memory-modal" class="modal-overlay" hidden>
+        <div class="modal">
+            <h3>建记忆会刷新所有章节的 truth_files</h3>
+            <p id="build-memory-text">估算中...</p>
+            <div id="build-memory-log" class="build-memory-log"></div>
+            <div class="modal-actions">
+                <button type="button" id="build-memory-cancel" class="btn-secondary" onclick="closeBuildMemoryModal()">取消</button>
+                <button type="button" id="build-memory-confirm" class="btn-primary" onclick="triggerBuildMemory()">确认建记忆</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

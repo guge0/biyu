@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔驭 · 偏好</title>
+  <link rel="stylesheet" href="/styles.css?v=w1-1">
+  <style>
+    .pref-toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin: 16px 0;
+      flex-wrap: wrap;
+    }
+    .pref-toolbar .scope-switch {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .pref-toolbar .scope-btn {
+      padding: 6px 14px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--ink);
+      font-family: inherit;
+    }
+    .pref-toolbar .scope-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .pref-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .pref-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      position: relative;
+    }
+    .pref-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--ink-dim);
+    }
+    .pref-card-header .pref-meta {
+      display: flex;
+      gap: 10px;
+    }
+    .pref-card-header .pref-source a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .pref-card-header .pref-source a:hover { text-decoration: underline; }
+    .pref-delete-btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: #c0392b;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .pref-delete-btn:hover { background: #ffebee; }
+    .pref-delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .pref-content {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink);
+    }
+    .pref-content p { margin: 4px 0; }
+    .empty-state {
+      color: var(--ink-dim);
+      font-style: italic;
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .loading-state {
+      color: var(--ink-dim);
+      text-align: center;
+      padding: 40px;
+    }
+  </style>
+<link rel="stylesheet" href="/biyu-paper.css?v=w1-1"></head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">笔驭</a>
+    <div class="nav-links">
+      <a href="/">书架</a>
+      <a href="/workbench.html">工作台</a>
+    </div>
+    <div class="nav-badges">
+</div>
+  </nav>
+
+  <main class="container">
+    <header class="page-header">
+      <h1 id="page-title">偏好沉淀</h1>
+      <p class="subtitle">责编/导演对话中存下的创作偏好(本书范围 / 通用范围)。</p>
+    </header>
+
+    <section id="error-banner" class="error-banner" hidden></section>
+
+    <div class="pref-toolbar">
+      <div class="scope-switch">
+        <button class="scope-btn active" data-scope="book" type="button">本书范围</button>
+        <button class="scope-btn" data-scope="global" type="button">通用范围</button>
+      </div>
+      <button id="refresh-btn" class="btn-secondary" type="button" style="padding:6px 14px;font-size:13px;">刷新</button>
+    </div>
+
+    <div id="pref-list" class="pref-list">
+      <div class="loading-state">加载中…</div>
+    </div>
+  </main>
+
+  <script src="/mini-md.js"></script>
+  <script>
+  /* R4-T4.3 偏好列表页:GET /api/preferences 列表 + DELETE 删除。 */
+  (function () {
+    "use strict";
+
+    var $ = function (id) { return document.getElementById(id); };
+    var params = new URLSearchParams(window.location.search);
+    var bookId = params.get("book") || params.get("name");
+    var listEl = $("pref-list");
+    var currentScope = "book";
+    var currentBook = null;
+
+    async function init() {
+      // env
+      try {
+        var envResp = await fetch("/api/env");
+        
+      } catch (e) { /* 非关键 */ }
+
+      // 如果带 book 参数,标到标题
+      if (bookId) {
+        try {
+          var booksResp = await fetch("/api/books");
+          if (booksResp.ok) {
+            // F3 (P8-M3R-fix):/api/books 返 dict schema {books, count}
+            var books = (await booksResp.json()).books;
+            currentBook = books.find(function (b) { return b.id === bookId || b.name === bookId; });
+            if (currentBook) {
+              var dn = currentBook.display_name || currentBook.title || currentBook.name;
+              $("page-title").textContent = "偏好 · " + dn;
+              document.title = "偏好 · " + dn;
+            }
+          }
+        } catch (e) { /* 非关键,可继续 */ }
+      }
+
+      // scope 切换
+      Array.prototype.forEach.call(document.querySelectorAll(".scope-btn"), function (btn) {
+        btn.addEventListener("click", function () {
+          Array.prototype.forEach.call(document.querySelectorAll(".scope-btn"), function (b) {
+            b.classList.remove("active");
+          });
+          btn.classList.add("active");
+          currentScope = btn.getAttribute("data-scope");
+          loadPrefs();
+        });
+      });
+
+      $("refresh-btn").addEventListener("click", loadPrefs);
+
+      await loadPrefs();
+    }
+
+    async function loadPrefs() {
+      listEl.innerHTML = '<div class="loading-state">加载中…</div>';
+      var url = "/api/preferences?scope=" + encodeURIComponent(currentScope);
+      if (currentScope === "book") {
+        if (!bookId) {
+          listEl.innerHTML =
+            '<div class="empty-state">' +
+            '<p>本书范围需要指定书。</p>' +
+            '<p style="font-size:13px;margin-top:8px;">从书详情页「偏好」入口进,或加 ?book=&lt;id&gt; URL 参数。</p>' +
+            '</div>';
+          return;
+        }
+        url += "&book=" + encodeURIComponent(currentBook ? (currentBook.id || currentBook.name) : bookId);
+      }
+
+      try {
+        var resp = await fetch(url);
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        var items = await resp.json();
+        renderPrefList(items);
+      } catch (e) {
+        showError("加载失败:" + e.message);
+      }
+    }
+
+    function renderPrefList(items) {
+      if (!items || items.length === 0) {
+        listEl.innerHTML =
+          '<div class="empty-state">' +
+          '<p>暂无' + (currentScope === "book" ? "本书" : "通用") + '偏好。</p>' +
+          '<p style="font-size:13px;margin-top:8px;">在编辑部对话某条助手回复点「存为偏好」生成。</p>' +
+          '</div>';
+        return;
+      }
+
+      var html = "";
+      items.forEach(function (it) {
+        var safeContent = window.MiniMd.render(it.content || "");
+        var safeDate = window.MiniMd.esc(it.date || "");
+        var safeSource = window.MiniMd.esc(it.source || "");
+        var safeEntryId = window.MiniMd.esc(it.entry_id || "");
+        // source 可能含会话 ID,解析成链接(若可)
+        var sessionMatch = (it.source || "").match(/([a-f0-9]{8}|[A-Za-z0-9_-]{6,})/);
+        var sessionLink = "";
+        if (sessionMatch && currentBook) {
+          var sid = sessionMatch[1];
+          var bookRef = currentBook.id || currentBook.name || bookId || "";
+          sessionLink = ' · <a href="/editor.html?book=' + encodeURIComponent(bookRef) + '#session=' + encodeURIComponent(sid) + '">来源会话</a>';
+        }
+        html +=
+          '<div class="pref-card" data-entry-id="' + safeEntryId + '">' +
+          '<div class="pref-card-header">' +
+          '<div class="pref-meta">' +
+          '<span>' + safeDate + '</span>' +
+          '<span class="pref-source">来源:' + safeSource + sessionLink + '</span>' +
+          '</div>' +
+          '<button class="pref-delete-btn" data-entry-id="' + safeEntryId + '" type="button">删除</button>' +
+          '</div>' +
+          '<div class="pref-content">' + safeContent + '</div>' +
+          '</div>';
+      });
+      listEl.innerHTML = html;
+
+      Array.prototype.forEach.call(listEl.querySelectorAll(".pref-delete-btn"), function (btn) {
+        btn.addEventListener("click", function () {
+          var entryId = btn.getAttribute("data-entry-id");
+          handleDelete(entryId, btn);
+        });
+      });
+    }
+
+    async function handleDelete(entryId, btn) {
+      if (!entryId) {
+        alert("无法删除:条目缺少 entry_id");
+        return;
+      }
+      if (!confirm("确认删除该偏好条目?")) return;
+      btn.disabled = true;
+      btn.textContent = "删除中…";
+      try {
+        var url = "/api/preferences/" + encodeURIComponent(currentScope) + "/" + encodeURIComponent(entryId);
+        if (currentScope === "book") {
+          var bookRef = currentBook ? (currentBook.id || currentBook.name) : bookId;
+          url += "?book=" + encodeURIComponent(bookRef);
+        }
+        var resp = await fetch(url, { method: "DELETE" });
+        if (!resp.ok) {
+          var err = await resp.json().catch(function () { return {}; });
+          throw new Error(err.detail || "HTTP " + resp.status);
+        }
+        // 删除成功:从 DOM 移除该卡片
+        var card = listEl.querySelector('.pref-card[data-entry-id="' + CSS.escape(entryId) + '"]');
+        if (card) {
+          card.style.opacity = "0.5";
+          card.style.transition = "opacity 0.3s";
+          setTimeout(function () {
+            card.remove();
+            // 若列表空了,显 empty state
+            if (!listEl.querySelector(".pref-card")) loadPrefs();
+          }, 250);
+        }
+      } catch (e) {
+        alert("删除失败:" + e.message);
+        btn.disabled = false;
+        btn.textContent = "删除";
+      }
+    }
+
+    function showError(msg) {
+      var banner = $("error-banner");
+      banner.textContent = msg;
+      banner.hidden = false;
+      listEl.innerHTML = "";
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+  })();
+  </script>
+</body>
+</html>

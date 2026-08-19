@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔驭 · 书详情</title>
+  <link rel="stylesheet" href="/styles.css?v=w1-1">
+  <style>
+    /* P8-M3-fix F0: 书详情页专属样式 → S-1 规范换新 */
+    .book-detail-header {
+      margin-bottom: 24px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 16px;
+      color: var(--ink-mute);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .back-link:hover {
+      color: var(--ink);
+    }
+    .book-detail-title {
+      font-family: var(--serif);
+      font-size: 27px;
+      font-weight: 400;
+      color: var(--ink);
+      margin: 0 0 6px;
+    }
+    .book-detail-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 4px;
+    }
+    /* U-1 收敛：meta 徽章唯一定义在 styles.css 全局（两档），此处删除内联套 */
+    .book-detail-genre {
+      font-size: 13px;
+      color: var(--ink-mute);
+      margin: 0 0 24px;
+    }
+
+    /* S-1 六入口主次：工作台大卡两列 + 概览一列；其余四卡一行 */
+    .entry-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .entry-grid-main {
+      grid-template-columns: 2fr 1fr;
+    }
+    .entry-grid-sub {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .entry-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 16px;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      background: var(--surface);
+      text-decoration: none;
+      color: inherit;
+    }
+    .entry-grid-main .entry-card:first-child {
+      border-color: var(--btn-border);
+    }
+    .entry-icon {
+      font-size: 22px;
+    }
+    .entry-label {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--ink);
+    }
+    .entry-grid-main .entry-card:first-child .entry-label {
+      font-family: var(--serif);
+      font-size: 24px;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+    .entry-desc {
+      font-size: 12.5px;
+      color: var(--ink-mute);
+    }
+    .entry-back-btn {
+      margin-top: 16px;
+      align-self: flex-start;
+    }
+
+    /* 改名弹窗(复用 app.js 弹窗样式；输入框样式 U-1 收敛到 styles.css 全局) */
+    .entry-state { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+  </style>
+<link rel="stylesheet" href="/biyu-paper.css?v=w1-1"></head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">笔驭</a>
+    <div class="nav-links">
+      <a href="/" class="active">书架</a>
+      <a href="/workbench.html">工作台</a>
+    </div>
+    <div class="nav-badges">
+</div>
+  </nav>
+
+  <main class="container book-container">
+    <div class="spread">
+      <div class="margin-col">
+        <div class="num" id="book-chapter-num">0</div>
+        <div class="unit">章</div>
+        <div class="meta" id="book-margin-meta"></div>
+      </div>
+      <div class="main-col">
+        <div id="book-detail" class="book-detail" hidden>
+          <!-- JS 渲染 -->
+        </div>
+
+        <section id="error-banner" class="error-banner" hidden></section>
+      </div>
+    </div>
+  </main>
+
+  <script src="/icons.js"></script>
+  <script src="/genre.js"></script>
+  <script src="/cn-num.js"></script>
+  <script>
+  /* P8-M3-fix F0: 书详情页 */
+  (function () {
+    "use strict";
+
+    const $ = (id) => document.getElementById(id);
+    const detailEl = $("book-detail");
+
+    // 从 URL 取 book id(R1 slug ID:param 名从 name 改 book)
+    const params = new URLSearchParams(window.location.search);
+    const bookId = params.get("book") || params.get("name"); // 回退旧 URL
+
+    async function init() {
+      try {
+        const [booksResp] = await Promise.all([
+          fetch("/api/books"),
+        ]);
+
+        // F3 (P8-M3R-fix):/api/books 返 dict schema {books, count}
+        const books = (await booksResp.json()).books;
+        // R1: 同时匹配 id 或 name(旧 URL ?name=X 仍可工作)
+        const book = books.find(function (b) {
+          return b.id === bookId || b.name === bookId;
+        });
+        if (!book) {
+          showError("书不存在: " + (bookId || "(空)"));
+          return;
+        }
+        renderBookDetail(book);
+      } catch (e) {
+        showError("加载失败: " + e.message);
+      }
+    }
+
+    function renderBookDetail(book) {
+      var displayName = book.display_name || book.title || book.name;
+      var genre = book.genre || "";
+      // S-1 留白栏：章号中文数字 + meta
+      var chapterNum = document.getElementById("book-chapter-num");
+      if (chapterNum) {
+        chapterNum.textContent = String(book.last_chapter || 0);
+      }
+      var marginMeta = document.getElementById("book-margin-meta");
+      if (marginMeta) {
+        var metaLines = [];
+        if (genre) metaLines.push(genre);
+        if (book.word_count) metaLines.push(book.word_count);
+        marginMeta.innerHTML = metaLines.join("<br>");
+      }
+      var titleEl = document.createElement("h1");
+      titleEl.className = "book-detail-title";
+      titleEl.textContent = displayName;
+
+      // meta line
+      var metaDiv = document.createElement("div");
+      metaDiv.className = "book-detail-meta";
+
+      if (book.last_chapter != null) {
+        var ch = document.createElement("span");
+        ch.className = "meta-chip";
+        ch.textContent = "已写到第 " + book.last_chapter + " 章 · 其中 " + (book.finalized_count || 0) + " 章已定稿";
+        metaDiv.appendChild(ch);
+      }
+      if (book.last_chapter == null) {
+        var empty = document.createElement("span");
+        empty.className = "meta-chip meta-chip-empty";
+        empty.textContent = "立项完成,未开写";
+        metaDiv.appendChild(empty);
+      }
+
+      // genre(R5 T5.5:中文 chip)
+      var genreP = document.createElement("p");
+      genreP.className = "book-detail-genre";
+      if (genre && window.genreChipHtml) {
+        genreP.innerHTML = window.genreChipHtml(genre);
+      } else {
+        genreP.textContent = genre || "";
+      }
+
+      // 入口点(R4 T4.4:审读/纪要/偏好 各独立屏;R5 T5.7:统一 SVG 图标;S-1 六入口主次)
+      var bookIdOrName = book.id || book.name;
+      var entriesDiv = document.createElement("div");
+      var iconHtml = window.BiyuIcons ? window.BiyuIcons.iconHtml : function (n) { return ""; };
+      var lastChapter = book.last_chapter;
+      var backSuffix = lastChapter ? "&chapter=" + encodeURIComponent(lastChapter) : "";
+      entriesDiv.innerHTML =
+        '<h2 style="font-size:18px;margin:28px 0 12px;">入口</h2>' +
+        '<div class="entry-grid entry-grid-main">' +
+        '  <a href="/workbench.html?book=' + encodeURIComponent(bookIdOrName) + backSuffix + '" class="entry-card">' +
+        '    <div class="entry-icon">✍</div>' +
+        '    <div class="entry-label">章节工作台</div>' +
+        '    <div class="entry-desc">细纲、方案、生成、读稿、采用 —— 一条路走完一章</div>' +
+        (lastChapter
+          ? '<span class="entry-back-btn b2 bs" style="align-self:flex-start">回到第 ' + lastChapter + ' 章</span>'
+          : '') +
+        '  </a>' +
+        '  <a id="settings-entry" href="/settings.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card" hidden>' +
+        '    <div class="entry-icon">📖</div>' +
+        '    <div class="entry-label">设定集</div>' +
+        '    <div class="entry-desc">北极星、大纲、世界观七格、人物卡 —— 写手和导演每章都读这里</div>' +
+        '    <span id="settings-entry-state" class="entry-state">9 格 · 一格没填</span>' +
+        '  </a>' +
+        '</div>' +
+        '<div class="entry-grid entry-grid-sub">' +
+        '  <a href="/overview.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
+        '    <div class="entry-icon">▤</div>' +
+        '    <div class="entry-label">整书概览</div>' +
+        '    <div class="entry-desc">全书进度，哪些等你处理</div>' +
+        '  </a>' +
+        '  <a href="/good-sentences.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
+        '    <div class="entry-icon">❝</div>' +
+        '    <div class="entry-label">好句</div>' +
+        '    <div class="entry-desc">标过的句子</div>' +
+        '  </a>' +
+        // D-148：总导演入口退回环5；后端、CLI 与书级会话注册表保留休眠。
+        '  <button class="entry-card" id="rename-entry" style="cursor:pointer;text-align:left;font-family:inherit;font-size:inherit;">' +
+        '    <div class="entry-icon">' + iconHtml("rename") + '</div>' +
+        '    <div class="entry-label">起名/改名</div>' +
+        '    <div class="entry-desc">修改书名或起名候选</div>' +
+        '  </button>' +
+        '  <a href="/summaries.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
+        '    <div class="entry-icon">' + iconHtml("summary") + '</div>' +
+        '    <div class="entry-label">纪要</div>' +
+        '    <div class="entry-desc">导演会诊生成的结构化纪要</div>' +
+        '  </a>' +
+        '  <button class="entry-card" id="zebian-entry" style="cursor:pointer;text-align:left;font-family:inherit;font-size:inherit;">' +
+        '    <div class="entry-icon">编</div>' +
+        '    <div class="entry-label">打开 Claude Code</div>' +
+        '    <div class="entry-desc">每次都是新对话；责编会读你已存进设定集的内容。</div>' +
+        '    <span id="zebian-entry-status" class="entry-state"></span>' +
+        '    <span id="zebian-copy" class="entry-back-btn b2 bs" hidden>一键复制开场白</span>' +
+        '  </button>' +
+        '</div>';
+
+      // 组装
+      detailEl.innerHTML = "";
+      detailEl.appendChild(backLink());
+      detailEl.appendChild(titleEl);
+      detailEl.appendChild(metaDiv);
+      if (genre) detailEl.appendChild(genreP);
+      detailEl.appendChild(entriesDiv);
+      detailEl.hidden = false;
+
+      // 改名弹窗绑定
+      document.getElementById("rename-entry").addEventListener("click", function () {
+        showRenameModal(book);
+      });
+      document.getElementById("zebian-entry").addEventListener("click", function (event) {
+        if (event.target.id === "zebian-copy") return;
+        launchZebian(book, event.currentTarget);
+      });
+      document.getElementById("zebian-copy").addEventListener("click", function (event) {
+        event.stopPropagation();
+        copyZebianPrompt(book);
+      });
+      fetch("/api/settings/status").then(function (response) { return response.json(); }).then(function (payload) {
+        document.getElementById("settings-entry").hidden = !payload.enabled;
+        if (!payload.enabled) return;
+        return fetch("/api/settings/books/" + encodeURIComponent(bookIdOrName)).then(function (response) {
+          if (!response.ok) throw new Error("设定状态没有读取成功");
+          return response.json();
+        }).then(function (settings) {
+          var filled = (settings.cells || []).filter(function (cell) { return Boolean((cell.content || "").trim()); }).length;
+          document.getElementById("settings-entry-state").textContent = filled ? "9 格 · 已填 " + filled : "9 格 · 一格没填";
+        });
+      }).catch(function () { document.getElementById("settings-entry").hidden = true; });
+    }
+
+    function backLink() {
+      var a = document.createElement("a");
+      a.className = "back-link";
+      a.href = "/";
+      a.innerHTML = "← 书架";
+      return a;
+    }
+
+    function showPersistentError(msg) {
+      var banner = $("error-banner");
+      banner.replaceChildren();
+      var row = document.createElement("div");
+      row.className = "error-banner-row";
+      var icon = document.createElement("span");
+      icon.className = "error-banner-icon";
+      icon.textContent = "✗";
+      var text = document.createElement("span");
+      text.className = "error-banner-msg";
+      text.textContent = msg;
+      var close = document.createElement("button");
+      close.type = "button";
+      close.className = "error-banner-close";
+      close.textContent = "×";
+      close.addEventListener("click", function () { banner.hidden = true; });
+      row.append(icon, text, close);
+      banner.append(row);
+      banner.hidden = false;
+    }
+
+    function showError(msg) { showPersistentError(msg); }
+
+    var zebianOpeningPrompt = "";
+
+    function fallbackOpeningPrompt(book) {
+      var title = book.display_name || book.title || book.name || "未命名新书";
+      return "我们在写《" + title + "》。请使用 zebian skill 担任本书责编，先读取我已经存进设定集的内容。";
+    }
+
+    async function launchZebian(book, button) {
+      if (button.disabled) return;
+      var status = document.getElementById("zebian-entry-status");
+      var copy = document.getElementById("zebian-copy");
+      button.disabled = true;
+      copy.hidden = true;
+      status.textContent = "正在打开…";
+      try {
+        var response = await fetch("/api/workbench/books/" + encodeURIComponent(book.id || book.name) + "/zebian", { method: "POST" });
+        var payload = await response.json().catch(function () { return {}; });
+        if (!response.ok) {
+          var detail = payload.detail || {};
+          zebianOpeningPrompt = detail.opening_prompt || fallbackOpeningPrompt(book);
+          throw new Error(detail.message || "责编没有启动");
+        }
+        zebianOpeningPrompt = payload.opening_prompt || fallbackOpeningPrompt(book);
+        status.textContent = payload.message;
+      } catch (error) {
+        zebianOpeningPrompt = zebianOpeningPrompt || fallbackOpeningPrompt(book);
+        copy.hidden = false;
+        status.textContent = "没有拉起 Claude Code，请复制开场白后手动打开。";
+        showPersistentError(error.message);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function copyZebianPrompt(book) {
+      try {
+        await navigator.clipboard.writeText(zebianOpeningPrompt || fallbackOpeningPrompt(book));
+        document.getElementById("zebian-entry-status").textContent = "开场白已复制。";
+      } catch (_error) {
+        showPersistentError("复制失败，请手动选择开场白。");
+      }
+    }
+
+    // ---------- 改名弹窗(同 app.js) ----------
+    var renameModal = null;
+    var renameBookName = null;
+
+    function showRenameModal(book) {
+      // R1 slug ID:用 book.id 作标识
+      renameBookName = book.id || book.name;
+      if (!renameModal) {
+        renameModal = document.createElement("div");
+        renameModal.className = "modal-overlay";
+        renameModal.id = "book-detail-rename-modal";
+        renameModal.innerHTML =
+          '<div class="modal">' +
+          '<h3>改名</h3>' +
+          '<p>为新书名输入名称:</p>' +
+          '<input id="book-detail-rename-input" class="rename-input" type="text" placeholder="输入新书名…" />' +
+          '<div class="modal-actions">' +
+          '<button id="book-detail-rename-cancel" class="btn-secondary" type="button">取消</button>' +
+          '<button id="book-detail-rename-confirm" class="btn-primary" type="button">确认</button>' +
+          '</div>' +
+          '</div>';
+        document.body.appendChild(renameModal);
+        document.getElementById("book-detail-rename-cancel").addEventListener("click", closeRenameModal);
+        document.getElementById("book-detail-rename-confirm").addEventListener("click", confirmRename);
+      }
+      document.getElementById("book-detail-rename-input").value = book.display_name || book.title || book.name;
+      renameModal.hidden = false;
+    }
+
+    function closeRenameModal() {
+      if (renameModal) renameModal.hidden = true;
+    }
+
+    async function confirmRename() {
+      var input = document.getElementById("book-detail-rename-input");
+      var newTitle = input.value.trim();
+      if (!newTitle) { alert("书名不能为空"); return; }
+      if (!renameBookName) return;
+      try {
+        var resp = await fetch("/api/naming/apply", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ book: renameBookName, title: newTitle }),
+        });
+        if (!resp.ok) {
+          var err = await resp.json().catch(function () { return {}; });
+          alert("改名失败: " + (err.detail || resp.statusText));
+          return;
+        }
+        alert("书名已更新为: " + newTitle);
+        closeRenameModal();
+        // 刷新当前页
+        window.location.reload();
+      } catch (e) {
+        alert("改名失败: " + e.message);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", init);
+  })();
+  </script>
+</body>
+</html>

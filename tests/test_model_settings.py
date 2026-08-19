@@ -1,0 +1,124 @@
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+from fastapi.testclient import TestClient
+
+
+def test_fallback_secret_file_is_encrypted_and_settings_never_store_key(tmp_path: Path, monkeypatch) -> None:
+    import biyu.secure_config as secure
+
+    monkeypatch.setenv("BIYU_USER_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setitem(sys.modules, "keyring", SimpleNamespace(
+        set_password=lambda *_args: (_ for _ in ()).throw(RuntimeError("no keyring")),
+        get_password=lambda *_args: (_ for _ in ()).throw(RuntimeError("no keyring")),
+    ))
+    secret = "sk-test-plain-value"
+    assert secure.store_provider_secret("provider", secret) == "本地加密文件"
+    assert secure.load_provider_secret("provider") == secret
+    assert secret.encode() not in (tmp_path / "secrets.enc").read_bytes()
+
+    secure.save_setup({"selected_model": "model-a", "api_key": secret, "complete": True})
+    assert secret not in (tmp_path / "setup.json").read_text(encoding="utf-8")
+
+
+def test_setup_status_never_returns_provider_keys(tmp_path: Path, monkeypatch) -> None:
+    import biyu.ui.setup as setup
+    from biyu.ui.app import app
+
+    config = tmp_path / "models.yaml"
+    config.write_text(
+        "providers:\n  demo:\n    api_key_env: DEMO_KEY\nmodels:\n  demo-model:\n    provider: demo\n    model_id: demo-chat\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(setup, "get_config_path", lambda: config)
+    monkeypatch.setattr(setup, "get_data_root", lambda: tmp_path / "data")
+    monkeypatch.setattr(setup, "load_setup", lambda: {})
+    monkeypatch.setattr(setup, "_configured_without_wizard", lambda: False)
+    response = TestClient(app).get("/api/setup/status")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ready"] is False
+    assert body["models"] == [{"alias": "demo-model", "provider": "demo", "label": "demo-chat"}]
+    assert body["configured_providers"] == {"demo": False}
+    assert "api_key" not in json.dumps(body)
+
+
+def test_regular_setup_update_reuses_secret_store_and_keeps_selected_book(monkeypatch) -> None:
+    import biyu.ui.setup as setup
+    from biyu.ui.app import app
+
+    saved: list[dict[str, object]] = []
+    stored: list[tuple[str, str]] = []
+
+    class Adapter:
+        async def generate(self, messages, max_tokens):
+            assert messages == [{"role": "user", "content": "连通性检查：只回复 OK"}]
+            assert max_tokens == 4
+
+    class Registry:
+        def __init__(self, _path):
+            pass
+
+        def get_adapter(self, alias):
+            assert alias == "model-b"
+            return Adapter()
+
+    monkeypatch.setattr(setup, "_catalog", lambda: [
+        {"alias": "model-a", "provider": "one", "label": "Model A"},
+        {"alias": "model-b", "provider": "two", "label": "Model B"},
+    ])
+    monkeypatch.setattr(setup, "get_config_path", lambda: Path("catalog.yaml"))
+    monkeypatch.setattr(setup, "ModelRegistry", Registry)
+    monkeypatch.setattr(setup, "load_setup", lambda: {
+        "selected_model": "model-a", "selected_book": "book-1", "complete": True,
+    })
+    monkeypatch.setattr(setup, "save_setup", lambda value: saved.append(value))
+    monkeypatch.setattr(setup, "store_provider_secret", lambda provider, secret: stored.append((provider, secret)) or "系统钥匙串")
+
+    response = TestClient(app).post("/api/setup/update", json={"model": "model-b", "api_key": "replacement-secret"})
+
+    assert response.status_code == 200
+    assert stored == [("two", "replacement-secret")]
+    assert saved == [{"selected_model": "model-b", "selected_book": "book-1", "complete": True}]
+    assert "replacement-secret" not in response.text
+
+
+def test_regular_setup_update_rejects_typed_unknown_model(monkeypatch) -> None:
+    import biyu.ui.setup as setup
+    from biyu.ui.app import app
+
+    monkeypatch.setattr(setup, "_catalog", lambda: [
+        {"alias": "model-a", "provider": "one", "label": "Model A"},
+    ])
+    response = TestClient(app).post("/api/setup/update", json={"model": "typed-by-user", "api_key": "secret"})
+    assert response.status_code == 400
+    assert response.json()["detail"] == "请选择列表中的模型"
+
+
+def test_first_run_ui_masks_key_and_redirects_direct_workbench() -> None:
+    index = Path("src/biyu/ui/static/index.html").read_text(encoding="utf-8")
+    setup_js = Path("src/biyu/ui/static/setup.js").read_text(encoding="utf-8")
+    workbench_js = Path("src/biyu/ui/static/workbench.js").read_text(encoding="utf-8")
+    gitignore = Path(".gitignore").read_text(encoding="utf-8")
+    assert 'type="password"' in index
+    assert "保存并校验连接" in index
+    assert "document.getElementById('setup-key').value=''" in setup_js
+    assert "location.href='/?setup=1'" in workbench_js
+    assert "**/secrets.enc" in gitignore
+
+
+def test_shelf_has_regular_model_settings_without_rendering_saved_key() -> None:
+    index = Path("src/biyu/ui/static/index.html").read_text(encoding="utf-8")
+    setup_js = Path("src/biyu/ui/static/setup.js").read_text(encoding="utf-8")
+
+    assert 'id="connection-settings-button"' in index
+    assert 'id="setup-key-state"' in index
+    assert 'id="setup-key" type="password"' in index
+    assert 'value=' not in index.split('id="setup-key"', 1)[1].split(">", 1)[0]
+    assert "/api/setup/update" in setup_js
+    assert "configured_providers" in setup_js
+    assert "换 Key / 换模型" in index

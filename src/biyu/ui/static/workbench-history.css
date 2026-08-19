@@ -1,0 +1,27 @@
+.history-drawer[open] {
+  max-height: 42vh;
+  overflow: auto;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.history-item p { margin: 0; }
+.history-item button { flex: none; }
+
+@media (max-width: 800px) {
+  .history-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

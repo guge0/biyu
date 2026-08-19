@@ -1,0 +1,62 @@
+江叙白:
+  tier: protagonist
+  background: "32 岁,独立调查记者,五年前从市局刑侦支队离职。受苏蔓委托调查其弟苏皓失踪案。左肩有旧伤,阴雨天隐痛。"
+  personality: "克制,多疑,记细节;对'结案太快的案子'有职业性反感。"
+  voice_examples: "『巧合出现一次是巧合,出现三次是安排。』『我不信路灯,我信监控。』"
+  aliases:
+    narrator_default: "江叙白"
+    self_referent: "我"
+    called_by:
+      苏蔓: "江老师"
+      何沛: "老江"
+      聂守仁: "这位先生"
+  forbidden_in_narrative: ["主角", "记者江"]
+
+聂守仁:
+  tier: antagonist
+  background: "守拙斋老板,年纪约六十,左手常年戴黑色手套。守拙斋只在雨夜亮灯。"
+  personality: "礼貌而拒人千里,说话留半句。"
+  voice_examples: "『旧东西认人,人不认旧东西。』『下雨天,才有人想起当掉点什么。』"
+  aliases:
+    narrator_default: "聂守仁"
+    self_referent: "老朽"
+    called_by:
+      江叙白: "聂老板"
+  forbidden_in_narrative: ["反派", "凶手"]
+
+何沛:
+  tier: major_supporting
+  background: "市局刑侦支队副队长,江叙白旧同事。明面配合结案口径,私下愿意帮老江递材料。"
+  personality: "谨慎,讲程序,但讲义气。"
+  voice_examples: "『我能给你的只有一张调阅函,别让我后悔。』"
+  aliases:
+    narrator_default: "何沛"
+    self_referent: "我"
+    called_by:
+      江叙白: "何沛"
+  forbidden_in_narrative: ["警察朋友"]
+
+苏蔓:
+  tier: supporting
+  background: "26 岁,苏皓之姐,委托人。在医院做护士,夜班多。"
+  personality: "克制的焦虑,做事有条理。"
+  aliases:
+    narrator_default: "苏蔓"
+    self_referent: "我"
+    called_by:
+      江叙白: "苏小姐"
+
+老覃:
+  tier: supporting
+  background: "市档案馆三楼管理员,临近退休,认调阅函不认人。"
+  personality: "古板,守规矩。"
+  aliases:
+    narrator_default: "老覃"
+    self_referent: "我"
+    called_by:
+      何沛: "覃老师"
+
+报刊亭老板:
+  tier: npc
+  role: "回声巷口报刊亭老板"
+  brief: "一次性出场,提供'守拙斋雨夜亮灯'的闲谈佐证"

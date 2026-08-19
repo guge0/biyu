@@ -1,0 +1,43 @@
+.voice-page{max-width:1120px;margin:0 auto;padding:20px 28px 48px}
+.voice-page header{margin-bottom:14px}.voice-page h1{font-family:var(--serif);font-size:27px;font-weight:400;margin:0 0 6px}
+.voice-header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.book-picker{display:grid;gap:5px;font-weight:500;font-size:13px;color:var(--ink-mute)}.book-picker select{min-width:220px}
+.voice-section{border:1px solid var(--rule);border-radius:6px;padding:18px;margin:18px 0;background:var(--surface)}.voice-section>h2{margin-top:0}
+.voice-section h2{font-size:16px;font-weight:500}
+.voice-active-head{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:6px}
+.voice-active-name{font-family:var(--serif);font-size:20px;font-weight:400;color:var(--ink)}
+.voice-section .muted,.muted{color:var(--ink-mute);font-size:13px}
+/* 新建四卡 */
+.create-card{text-align:left;font-family:inherit;cursor:pointer}
+.create-card .ct{font-family:var(--serif);font-size:16px;font-weight:400;color:var(--ink);display:block;margin:0 0 5px}
+.create-card .cs{font-size:13px;color:var(--ink-mute);line-height:1.6;display:block}
+.create-card:hover{border-color:var(--btn-border)}
+/* 第二层表单 */
+.create-method{border-top:1px solid var(--rule-soft);padding-top:18px;margin-top:18px}
+.create-method h3{font-family:var(--serif);font-size:16px;font-weight:400;margin:0 0 6px}
+.summary-card,.voice-card,.voice-line,.catalog-item{border:1px solid var(--rule);border-radius:6px;padding:14px;margin:10px 0;background:var(--surface)}
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.summary-grid div{font-size:13px;color:var(--ink-mute)}
+.summary-grid strong{display:block;font-size:1.35rem;font-weight:500;color:var(--ink)}
+.guard{padding:10px 12px;background:var(--surface);border-left:4px solid var(--ink-faint);color:var(--ink-soft);font-size:13px}
+.source-list{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 18px;margin:8px 0}.source-note{font-size:13px;color:var(--ink-mute)}.review-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.primary{background:var(--ink-solid);color:var(--paper);border:0;padding:0 28px;height:40px;border-radius:3px;font-size:15px;letter-spacing:.1em}
+/* V-1: disabled 由 biyu-paper.css 统一 */
+.voice-card footer{display:flex;gap:8px;margin-top:12px}.voice-card blockquote{margin:8px 0;padding-left:12px;border-left:3px solid var(--rule);color:var(--ink-soft);font-size:14px;line-height:1.75}
+.voice-card h3{font-size:15px;font-weight:500;margin:0 0 6px}
+.review-decision{display:inline-block;margin:0 0 8px;padding:4px 8px;background:var(--mark-bg);color:var(--mark);border-radius:3px;font-size:13px}.voice-card button[aria-pressed="true"]{background:var(--ink-solid);color:var(--paper)}
+.voice-line label{display:block;font-weight:500;margin-bottom:6px;font-size:13px;color:var(--ink-soft)}.voice-line textarea{width:100%;min-height:76px;border:1px solid var(--rule);border-radius:3px;padding:10px 12px;font-family:var(--sans);font-size:14px;background:var(--paper);color:var(--ink)}
+.voice-line h3{font-size:15px;font-weight:500}
+.editable-profile{margin:16px 0 22px}.editable-profile>h3,.imported-profile-editor>h4{margin-bottom:4px}.editable-profile>h3{font-family:var(--serif);font-size:16px;font-weight:400}.imported-profile-editor{margin-top:16px}
+.author-edited-badge{display:inline-block;margin-left:6px;padding:2px 7px;border-radius:3px;background:var(--mark-bg);color:var(--mark);font-size:12px;font-weight:400;vertical-align:middle}
+.catalog-item{display:flex;gap:10px;align-items:center;justify-content:space-between}.catalog-item label{display:flex;gap:10px;align-items:flex-start;min-width:0}.catalog-item input{margin-top:5px}
+.catalog-item strong{font-size:15px;font-weight:400;color:var(--ink)}
+.catalog-item small{display:block;color:var(--ink-mute);font-size:12px;margin-top:4px}.source-warning{padding:10px 12px;background:var(--surface);border-left:4px solid var(--mark);color:var(--ink-soft);font-size:13px}.voice-section label{display:grid;gap:6px;margin:10px 0}.voice-section input[type="text"],.voice-section textarea{width:100%;box-sizing:border-box;border:1px solid var(--rule);border-radius:3px;padding:10px 12px;font-family:var(--sans);font-size:14px;background:var(--paper);color:var(--ink)}#combine-sources{display:grid;gap:6px;margin:12px 0}#combine-sources label{display:flex;align-items:center;gap:8px;margin:0;font-size:14px;color:var(--ink)}
+.panel-heading{display:flex;align-items:start;justify-content:space-between;gap:16px}.panel-heading h2{margin-bottom:6px}
+.import-card{display:grid;gap:12px;border:1px solid var(--rule);border-radius:6px;padding:16px;background:var(--surface)}.import-card label{display:grid;gap:6px;font-weight:500;font-size:13px;color:var(--ink-soft)}.import-card input[type="text"],.import-card textarea{width:100%;box-sizing:border-box;border:1px solid var(--rule);border-radius:3px;padding:10px 12px;font-family:var(--sans);font-size:14px;background:var(--paper);color:var(--ink)}.import-card textarea{min-height:240px;resize:vertical}.file-picker{max-width:520px}.import-actions{display:flex;gap:8px;flex-wrap:wrap}
+.import-cost-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.import-cost-grid span,.import-cost-grid strong{display:block}.import-cost-grid span{font-size:12px;color:var(--ink-mute)}.import-cost-grid strong{margin-top:4px;font-size:1.08rem;font-weight:500;color:var(--ink)}.import-blocked{padding:9px 11px;border-left:4px solid var(--mark);background:var(--surface);color:var(--ink-soft);font-size:13px}.ready-note{padding:9px 11px;border-left:4px solid var(--ink-faint);background:var(--surface);color:var(--ink-soft);font-size:13px}
+.active-line{padding:10px 0;border-bottom:1px solid var(--rule-soft)}.active-line:last-child{border-bottom:0}.active-line p{margin:5px 0;color:var(--ink)}.active-line small{color:var(--ink-mute);font-size:12px}
+.active-line strong{font-weight:500}
+.merged-prompt-details{margin-top:14px}.merged-prompt-details summary{cursor:pointer;font-weight:500;font-size:13px;color:var(--ink-soft)}
+.merged-prompt-details .markdown-body{max-width:30em;font-family:var(--serif);font-size:17px;line-height:1.95;color:var(--ink)}
+/* button[disabled] 唯一见 styles.css U-1 段（U-1.5 下），此处不重复 */
+@media(max-width:720px){.voice-page{padding:14px}.summary-grid,.import-cost-grid{grid-template-columns:1fr}.voice-header,.review-heading,.panel-heading{display:block}.book-picker select{width:100%}.catalog-item{align-items:flex-start}}

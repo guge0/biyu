@@ -1,0 +1,65 @@
+{
+  "baseline": {
+    "writer_system": {
+      "chars": 973,
+      "utf8_bytes": 2503,
+      "sha256": "ae0c76c02b451234977a9e75be5e4e9761459a4241447424bf24bd9715369132"
+    },
+    "writer_user_full": {
+      "chars": 2151,
+      "utf8_bytes": 4947,
+      "sha256": "894c37fbc94d75a489c114b50e2a9fe8b1869781bf86e439735083846685d4fb"
+    },
+    "editor_system": {
+      "chars": 4891,
+      "utf8_bytes": 12527,
+      "sha256": "b47112109d6e9d879a7404f077c527297f2f5453e1e44891ae3693a79fc1d56f"
+    },
+    "editor_system_without_planning": {
+      "chars": 4366,
+      "utf8_bytes": 11082,
+      "sha256": "61cfebe568f5d9348f7f805e192aed740da160d0639e3f7ab3e12908d6f1bdef"
+    },
+    "editor_user_full": {
+      "chars": 105,
+      "utf8_bytes": 207,
+      "sha256": "68a4aed26e465ad1c85f0d7a2caeb7ff0e838f06d447705e80a039a05ee3b469"
+    }
+  },
+  "current": {
+    "writer_system": {
+      "chars": 973,
+      "utf8_bytes": 2503,
+      "sha256": "ae0c76c02b451234977a9e75be5e4e9761459a4241447424bf24bd9715369132"
+    },
+    "writer_user_full": {
+      "chars": 2129,
+      "utf8_bytes": 4967,
+      "sha256": "4b8dcbaf4edf80d58fb23c005e5ba3b31d819275dbb3217ab45cd9163c49ec9c"
+    },
+    "editor_system": {
+      "chars": 5351,
+      "utf8_bytes": 13731,
+      "sha256": "41ebbc1d4914f85161eb22c14b333b2f3d456850fe66f94a5330995be66ed7ab"
+    },
+    "editor_system_without_planning": {
+      "chars": 4429,
+      "utf8_bytes": 11261,
+      "sha256": "9f73c8d5d759a3c07c74fe967602b0f20f4a5e400dec1c58fd4ae7a99593114b"
+    },
+    "editor_user_full": {
+      "chars": 105,
+      "utf8_bytes": 207,
+      "sha256": "68a4aed26e465ad1c85f0d7a2caeb7ff0e838f06d447705e80a039a05ee3b469"
+    }
+  },
+  "approved_differences": [
+    "AD-01: W-03 软化词阈值由≤3次/千字统一为≤2次/章",
+    "AD-02: W-03 删除 punctuation_density 已等价覆盖的3/2/8数字阈值",
+    "AD-03: W-03 删除 dialogue_ratio 已等价覆盖的60%数字阈值",
+    "AD-04: E-01 软化词改为单章3次起提示",
+    "AD-05: E-01 确认老板亲改审稿规程；逻辑常识示例为“人在水里正常说话”，删除【老板测试】（D-121）",
+    "AD-06: 十号裁定：Writer 字数改为参考篇幅，情节自然收束时不为贴近数字硬扩写",
+    "AD-07: X-1 Writer 删除独立上一章末 500 字，并把角色卡改为在场/主角整卡、其余一行速查"
+  ]
+}

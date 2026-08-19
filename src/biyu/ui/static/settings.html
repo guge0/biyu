@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>笔驭 · 设定集</title>
+  <link rel="stylesheet" href="/styles.css?v=w1-1">
+  <link rel="stylesheet" href="/biyu-paper.css?v=w1-1">
+  <link rel="stylesheet" href="/settings.css?v=r1-2">
+</head>
+<body>
+  <nav class="top-nav"><a href="/" class="nav-brand">笔驭</a><div class="nav-links"><a href="/">书架</a><a id="workbench-link">工作台</a><a class="active">设定集</a></div><div id="runtime-identity" class="env-badge" title="当前运行环境">版本检测中…</div></nav>
+  <main class="settings-page"><div class="spread">
+    <aside class="margin-col"><div class="num">九</div><div class="unit">格</div><div class="meta">已填<br><span id="filled-count">〇</span></div></aside>
+    <div class="main-col">
+    <header class="settings-head"><div><h1 id="book-title">设定集</h1><p id="book-subtitle">写手和导演每一章都会读这里</p></div><div class="context-note">人物卡合计 <b id="character-total">0 字</b> · 写手每章读到的是本章和上一章出场的人，加上主角</div></header>
+    <div class="settings-grid">
+      <aside class="settings-nav">
+        <div class="nav-group">书级</div><div id="book-cells"></div>
+        <div class="nav-group">世界观 · 七格</div><div id="world-cells"></div>
+        <div class="nav-group">人物卡</div>
+        <label class="search-label">搜索人物<input id="character-search" type="search" placeholder="输入姓名"></label>
+        <button class="nav-item" id="roster-entry" type="button">人物卡总览</button><div id="character-links"></div>
+        <div class="nav-group">其他</div><a class="nav-item" id="voiceprint-link">声纹 <span>→</span></a>
+        <div class="nav-group">责编</div>
+        <button class="nav-item" id="zebian-launch" type="button">打开 Claude Code</button>
+        <p class="tier-tip">每次都是新对话；责编会读你已存进设定集的内容。</p>
+        <button class="nav-item" id="zebian-copy" type="button" hidden>一键复制开场白</button>
+        <p id="zebian-status" class="tier-tip" role="status"></p>
+      </aside>
+      <article class="settings-pane">
+        <div class="pane-head"><div><h2 id="cell-title">选择一格</h2><p id="cell-meta"></p></div><div class="segmented"><button id="read-tab" class="current">阅读</button><button id="edit-tab">编辑</button></div></div>
+        <section id="roster" hidden>
+          <p class="roster-rule">这一章没出场的人，写手只看到一行：姓名、档位、一句话定位。</p><div id="roster-groups"></div><details id="deleted-roster" hidden><summary>已删除的卡（0）· 展开</summary><div id="deleted-roster-list"></div></details>
+        </section>
+        <section id="reader" class="reading"></section>
+        <section id="editor-view" hidden><div id="character-editor"></div><textarea id="editor" class="editor" placeholder="直接写这一格的内容"></textarea><p class="paste-hint">保存只修改当前这一格；旧版会自动进入历史。</p></section>
+        <div class="actions"><button id="save-button" class="b1">保存这张卡</button><button id="back-button" class="b3">切回编辑</button><button id="archive-button" class="b3" hidden>删掉这张卡</button></div>
+        <p id="action-status" role="status"></p>
+        <section class="history"><h3>这一格的历史</h3><p>默认显示最近 5 版；同格 2 分钟内连存合并为一版。</p><div id="history-list"></div><details id="older-history" hidden><summary id="older-summary">更早的版本</summary><div id="older-history-list"></div></details></section>
+      </article>
+    </div></div></div>
+  </main>
+  <section id="error-banner" class="error-banner" hidden></section>
+  <script src="/settings.js?v=u1-2"></script><script src="/runtime-identity.js?v=a2-1"></script>
+</body>
+</html>

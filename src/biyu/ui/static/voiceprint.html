@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>声纹 · 笔驭</title>
+  <link rel="stylesheet" href="/styles.css?v=w1-1">
+  <link rel="stylesheet" href="/voiceprint.css?v=w1-1">
+<link rel="stylesheet" href="/biyu-paper.css?v=w1-1"></head>
+<body>
+  <nav class="top-nav"><a href="/" class="nav-brand">笔驭</a><div class="nav-links"><a href="/">书架</a><a id="workbench-link" href="/workbench.html">工作台</a><a id="memory-link" href="/memory.html">本书记忆</a></div></nav>
+  <main class="voice-page">
+    <div id="error-banner" class="error-banner" role="alert" hidden></div>
+    <header class="voice-header">
+      <div><h1>声纹</h1><p>一本书同时只使用一份；这里看到的就是写手会收到的。</p></div>
+      <label class="book-picker">当前书<select id="book" aria-label="书籍"></select></label>
+    </header>
+
+    <!-- S-1 第一层：只管选。逐行修改与四种新建点进去，返回停在原位。 -->
+    <div id="select-view">
+      <div class="spread">
+        <div class="margin-col">
+          <div class="num" id="voice-count-num">0</div>
+          <div class="unit">条</div>
+          <div class="meta" id="voice-active-meta">当前<br>无</div>
+        </div>
+        <div class="main-col">
+          <section class="voice-section" id="current-section">
+            <p class="eyebrow">当前生效</p>
+            <div class="card lead">
+              <div class="voice-active-head">
+                <span class="voice-active-name" id="active-name">正在读取…</span>
+                <span id="active-count" class="muted"></span>
+              </div>
+              <p id="active-source-warning" class="source-warning" hidden>来源已有变化，可以重新机械合并一份。</p>
+              <div class="row">
+                <button id="open-lines" type="button" class="b2 bs">逐行修改</button>
+                <details class="merged-prompt-details"><summary>看写手收到的原文</summary><div id="merged" class="markdown-body"></div></details>
+              </div>
+            </div>
+          </section>
+
+          <section class="voice-section" id="library-section">
+            <h2>我的声纹</h2>
+            <p class="muted">点“设为当前”即可切换。每一行都可以修改；保存后会标记“你改过”。</p>
+            <div id="catalog"></div>
+          </section>
+
+          <section class="voice-section" id="create-section">
+            <h2>新建一份</h2>
+            <div class="grid g4" id="create-cards">
+              <button type="button" class="card create-card" data-create="import">
+                <span class="ct">导入一份作品</span><span class="cs">提炼它怎么写</span>
+              </button>
+              <button type="button" class="card create-card" data-create="distill">
+                <span class="ct">从本书好坏句</span><span class="cs">你标过的句子</span>
+              </button>
+              <button type="button" class="card create-card" data-create="combine">
+                <span class="ct">合并已有的</span><span class="cs">拼在一起再改</span>
+              </button>
+              <button type="button" class="card create-card" data-create="manual">
+                <span class="ct">自己写</span><span class="cs">从空白开始</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- S-1 第二层：逐行修改 -->
+    <section id="lines-view" hidden>
+      <div class="row" style="margin-bottom:14px">
+        <button id="back-to-select" type="button" class="b3">← 返回声纹</button>
+      </div>
+      <div id="lines"></div>
+    </section>
+
+    <!-- S-1 第二层：四种新建（原有表单原样保留，点卡进入） -->
+    <section id="create-view" hidden>
+      <div class="row" style="margin-bottom:14px">
+        <button id="back-to-select-2" type="button" class="b3">← 返回声纹</button>
+      </div>
+
+      <section class="create-method" id="create-method-import" hidden>
+        <h3>从导入的作品提取</h3>
+        <p class="muted">只提炼处理方式，不保存原文，也不会把范文段落交给写手。</p>
+        <div class="import-card">
+          <label>来源名称<input id="import-source-name" type="text" maxlength="240" placeholder="例如：我喜欢的短篇.txt"></label>
+          <label>粘贴文本<textarea id="import-text" rows="12" placeholder="粘贴至少 3000 字；也可以选择下方的 .txt / .md 文件"></textarea></label>
+          <label class="file-picker">或选择本地文本<input id="import-file" type="file" accept=".txt,.md,text/plain,text/markdown"></label>
+          <p id="import-source-status" class="muted" role="status">原文只用于这次提取，不会保存到书稿目录。</p>
+          <div class="import-actions"><button id="import-preflight" type="button" class="b2">先看字数和费用</button><button id="import-extract" type="button" class="primary" disabled>确认提取</button></div>
+        </div>
+        <section id="import-preflight-result" class="summary-card" aria-live="polite" hidden></section>
+        <section id="import-result" class="summary-card" aria-live="polite" hidden></section>
+      </section>
+
+      <section class="create-method" id="create-method-distill" hidden>
+        <h3>从本书好坏句蒸馏</h3>
+        <div id="estimate" class="summary-card">正在读取反馈账…</div>
+        <div id="source-breakdown" class="summary-card">正在核对反馈来源…</div>
+        <button id="distill" type="button" class="primary">开始蒸馏</button>
+        <p class="muted">只有点击此按钮才会调用模型；提示词未签时硬闸会阻止调用。</p>
+        <div class="review-heading"><p class="guard">未判定的组不会进声纹。</p><label><input id="show-all-groups" type="checkbox">查看全部（含已判定）</label></div>
+        <p id="redistill-meta" class="muted"></p><div id="groups"></div>
+      </section>
+
+      <section class="create-method" id="create-method-combine" hidden>
+        <h3>合并已有的几份</h3>
+        <p class="muted">保留选中声纹的所有行，包括同一维度的不同写法；不调用模型，也不替你判断冲突。</p>
+        <label>新声纹名称<input id="combine-name" type="text" value="合并声纹"></label>
+        <div id="combine-sources"></div>
+        <button id="combine-create" type="button" class="primary">合并为新声纹</button>
+      </section>
+
+      <section class="create-method" id="create-method-manual" hidden>
+        <h3>从零手写</h3>
+        <label>名称<input id="manual-name" type="text" value="我的声纹"></label>
+        <label>维度<input id="manual-dimension" type="text" placeholder="例如：人物对白"></label>
+        <label>规则是什么<textarea id="manual-text" rows="4"></textarea></label>
+        <label>为什么<textarea id="manual-why" rows="3"></textarea></label>
+        <button id="manual-create" type="button" class="primary">保存并设为当前</button>
+      </section>
+    </section>
+  </main>
+  <script src="/mini-md.js?v=u1-1"></script>
+  <script src="/cn-num.js"></script>
+  <script src="/voiceprint.js?v=u1-1"></script>
+</body>
+</html>

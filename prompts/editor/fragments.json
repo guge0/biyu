@@ -1,0 +1,7 @@
+{
+  "review_header": "请审阅第 {chapter_num} 章正文：\n",
+  "prev_tail_header": "--- 上一章末 500 字 ---",
+  "chapter_header": "--- 本章正文 ---\n",
+  "planning_header": "\n--- 创作者规划件(合同) ---",
+  "characters_header": "\n--- 角色速查 ---"
+}

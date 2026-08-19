@@ -1,0 +1,23 @@
+body{overflow-x:hidden}
+.good-sentences-page{width:min(900px,calc(100% - 32px));margin:0 auto;padding:24px 0 48px}
+.good-sentences-header{display:flex;align-items:end;justify-content:space-between;gap:20px}
+.good-sentences-header h1{font-family:var(--serif);margin:0;font-size:27px;font-weight:400}
+.good-sentences-header p{margin:3px 0 0;color:var(--ink-mute)}
+.good-sentences-header label{display:grid;gap:5px;color:var(--ink-mute);font-size:13px}
+/* S-1：筛选视觉用 pill 行；原生 select 保留为驱动源（R-1 契约），视觉隐藏 */
+.chapter-filter-label{display:none !important}
+/* S-1：筛选视觉用 pill 行；原生 select 保留为驱动源（R-1 契约） */
+.chapter-filter-label select{min-width:150px;padding:10px 12px;border:1px solid var(--rule);border-radius:3px;background:var(--surface);font:inherit;color:var(--ink)}
+.chapter-pills{margin:0 0 16px;gap:9px}
+.good-sentences-status{color:var(--ink-mute);font-size:13px}
+.good-sentences-list{display:grid;gap:0}
+/* S-1 2d：句子是正文不是数据——每条独占一块，衬线 17px 行距 1.95 */
+.good-sentence-card{padding:17px 19px 15px 16px;border-left:3px solid transparent;border-bottom:1px solid var(--rule-soft);background:var(--surface)}
+.good-sentence-card:first-child{border-top-left-radius:6px;border-top-right-radius:6px}
+.good-sentence-card:last-child{border-bottom:none;border-bottom-left-radius:6px;border-bottom-right-radius:6px}
+.good-sentence-card{border:1px solid var(--rule);border-bottom:none}
+.good-sentence-card:last-child{border-bottom:1px solid var(--rule)}
+.good-sentence-meta{margin:0 0 7px;color:var(--ink-faint);font-size:12px;letter-spacing:.06em}
+.good-sentence-card blockquote{margin:0;white-space:pre-wrap;font-family:var(--serif);font-size:17px;line-height:1.95;color:var(--ink)}
+.good-sentences-empty{padding:24px;border:1px dashed var(--rule);border-radius:6px;text-align:center;color:var(--ink-mute)}
+@media(max-width:640px){.good-sentences-header{display:block}.good-sentences-header label{margin-top:14px}.good-sentences-header select{width:100%}}

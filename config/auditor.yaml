@@ -1,0 +1,38 @@
+# Auditor 配置 — 控制每个检查器的开关和阈值
+# 不存在此文件时使用默认值，不影响 pipeline
+
+checkers:
+  dedup:
+    enabled: true
+    jaccard_threshold: 0.7    # jaccard > 70% → BLOCK
+
+  worldbook_check:
+    enabled: true
+
+  character_presence:
+    enabled: true
+
+  transition:
+    enabled: true
+
+  style_repeat:
+    enabled: true
+    max_per_chapter: 1       # 同一句式模板在本章最多出现次数
+    max_per_3chapters: 2     # 同一句式模板在近 4 章(含本章)最多出现次数
+
+  # T-P3-A.1 新增（T-P3-C P1 退役，Editor 替代）
+  punctuation_density:
+    enabled: false               # 退役：Editor 通读 + dash_fixer 已处理
+    em_dash_threshold: 3.0      # /千字
+    ellipsis_threshold: 2.0
+    exclamation_threshold: 8.0
+  meta_vocab:
+    enabled: false               # 退役：Editor 字面伪影检测替代
+  chapter_ending:
+    enabled: false               # 退役：Editor 通读判断替代
+    jaccard_threshold: 0.4
+  dialogue_ratio:
+    enabled: true
+    ratio_threshold: 0.6
+  character_naming:
+    enabled: true

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔驭作者工作台 · 编辑部</title>
+  <link rel="stylesheet" href="/styles.css?v=w1-1">
+<link rel="stylesheet" href="/biyu-paper.css?v=w1-1"></head>
+<body>
+  <!-- 顶部 nav -->
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">笔驭</a>
+    <div class="nav-links">
+      <a href="/">书架</a>
+      <a href="/workbench.html">工作台</a>
+    </div>
+    <div class="nav-badges">
+</div>
+  </nav>
+
+  <main class="container editor-container">
+    <header class="page-header">
+      <h1>编辑部</h1>
+      <p class="subtitle">与责编或导演对话,讨论创作方向、剧情规划与设定问题。</p>
+    </header>
+
+    <!-- 占位模式黄条 -->
+    <div id="placeholder-banner" class="placeholder-banner" hidden>
+      占位模式:当前仅代查资料,编辑人格待定稿。创作提示词审核通过后将接入完整能力。
+    </div>
+
+    <!-- D-96 无档案提示(R2):导入书未建档时显 -->
+    <div id="archive-warning" class="placeholder-banner archive-warning" hidden>
+      本书未建档(无真相文件或细纲),建议先倒灌(<code>biyu refresh</code>)再会诊,否则工具查询会大量返空。
+    </div>
+
+    <!-- 错误 banner -->
+    <section id="error-banner" class="error-banner" hidden></section>
+
+    <div class="editor-layout">
+      <!-- 左侧:会话侧栏 -->
+      <aside class="session-sidebar" id="session-sidebar">
+        <div class="sidebar-header">
+          <h3>会话历史</h3>
+        </div>
+        <!-- 新建会话配置区 -->
+        <div class="session-config" id="session-config">
+          <div class="config-row">
+            <label for="book-select">书</label>
+            <select id="book-select" class="config-select">
+              <option value="">— 选择书 —</option>
+            </select>
+          </div>
+          <div class="config-row">
+            <label for="role-select">角色</label>
+            <select id="role-select" class="config-select">
+              <option value="editor">责编</option>
+              <option value="director">导演</option>
+            </select>
+          </div>
+          <button id="new-session-btn" class="btn-primary btn-block" type="button">开始新会话</button>
+        </div>
+
+        <!-- 会话列表 -->
+        <div class="session-list" id="session-list">
+          <div class="loading-placeholder sidebar-loading">会话加载中…</div>
+        </div>
+      </aside>
+
+      <!-- 右侧:聊天区 -->
+      <section class="chat-area" id="chat-area">
+        <!-- 当前会话信息 -->
+        <div class="chat-header" id="chat-header" hidden>
+          <span class="chat-book-role" id="chat-book-role"></span>
+          <span class="chat-cost" id="chat-cost-display"></span>
+        </div>
+
+        <!-- 消息列表 -->
+        <div class="message-list" id="message-list">
+          <div class="chat-placeholder" id="chat-placeholder">
+            <p>选择一本书和角色,点击「开始新会话」,或从左侧选择一个已有会话。</p>
+          </div>
+        </div>
+
+        <!-- 输入区 -->
+        <div class="input-area" id="input-area" hidden>
+          <textarea
+            id="chat-input"
+            class="chat-input"
+            placeholder="输入你想与责编讨论的创作问题…"
+            rows="2"
+          ></textarea>
+          <div class="input-area-actions">
+            <button id="send-btn" class="btn-primary" type="button">
+              <span class="btn-label">发送</span>
+              <span class="btn-loading" hidden>发送中…</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="/mini-md.js"></script>
+  <script src="/editor.js"></script>
+</body>
+</html>

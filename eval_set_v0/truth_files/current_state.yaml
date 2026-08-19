@@ -1,0 +1,9 @@
+# current_state.yaml
+characters:
+  江叙白: { status: "受苏蔓委托第 9 天", holding: ["苏皓案材料复印件"], location: "临江市" }
+  苏蔓: { status: "委托人,情绪焦虑但配合", location: "市一院" }
+  何沛: { status: "在职,刑侦支队副队长,尚未正面卷入" }
+  聂守仁: { status: "未接触" }
+locations:
+  回声巷: { status: "未实地踩点" }
+  守拙斋: { status: "仅档案照片" }

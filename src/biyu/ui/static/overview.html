@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>整书概览 · 笔驭</title>
+  <link rel="stylesheet" href="/styles.css?v=w1-1">
+  <link rel="stylesheet" href="/overview.css?v=u1-1">
+<link rel="stylesheet" href="/biyu-paper.css?v=w1-1"></head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">笔驭</a>
+    <div class="nav-links">
+      <a href="/">书架</a>
+      <a id="workbench-link" href="/workbench.html">工作台</a>
+    </div>
+  </nav>
+  <main class="overview-page">
+    <div id="error-banner" class="error-banner" role="alert" hidden></div>
+    <div class="spread">
+      <div class="margin-col">
+        <div class="num" id="overview-chapter-num">0</div>
+        <div class="unit">章</div>
+        <div class="meta">已定稿<br><span id="overview-finalized-num">零</span></div>
+      </div>
+      <div class="main-col">
+        <header class="overview-header">
+          <div>
+            <h1>整书概览</h1>
+            <p id="book-name">正在确认当前书…</p>
+          </div>
+          <span id="load-status" class="overview-loading" role="status">正在读取整书概览…</span>
+        </header>
+
+        <div id="overview-content" hidden>
+          <section id="breakpoint-card" class="breakpoint-card" aria-label="最近进度"></section>
+          <section id="metrics" class="overview-metrics" aria-label="全书数字"></section>
+          <section class="export-bar" aria-label="导出正文">
+            <div><span class="export-title">导出正文</span><p>只可选择已定稿章节，导出顺序按章号排列。</p></div>
+            <span id="export-status" role="status">尚未选择章节</span>
+            <button id="export-selected" type="button" disabled>导出所选 TXT</button>
+          </section>
+          <section id="waiting-group" class="chapter-group"></section>
+          <section id="problem-group" class="chapter-group"></section>
+          <section id="finalized-group" class="chapter-group"></section>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="/cn-num.js"></script>
+  <script src="/overview.js?v=u1-1"></script>
+</body>
+</html>

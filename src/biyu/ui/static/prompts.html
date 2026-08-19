@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔驭作者工作台 · 提示词索引</title>
+  <link rel="stylesheet" href="/styles.css?v=w1-1">
+<link rel="stylesheet" href="/biyu-paper.css?v=w1-1"></head>
+<body>
+  <!-- 顶部 nav(T5 加入「提示词」链接)-->
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">笔驭</a>
+    <div class="nav-links">
+      <a href="/">书架</a>
+      <a href="/workbench.html">工作台</a>
+    </div>
+    <div class="nav-badges">
+</div>
+  </nav>
+
+  <main class="container prompts-container">
+    <header class="page-header">
+      <h1>提示词全文</h1>
+      <p id="texts-export-date" class="subtitle">导出日期加载中…</p>
+    </header>
+
+    <!-- 严格只读声明(spec line 13)-->
+    <aside class="readonly-notice">
+      <strong>严格只读</strong> · 提示词创作内容修改走 spec 流程(立项书 → 老板拍 → code 改)。
+      页面无任何写入口。
+    </aside>
+
+    <!-- 主体:prompt_texts_<date>.md 全文(中枢裁定)-->
+    <section id="texts-body" class="prompts-body prompts-main">
+      <p class="loading-placeholder">加载中…</p>
+    </section>
+
+    <!-- 辅:inventory 索引(可折叠)-->
+    <details class="prompts-aux">
+      <summary>索引(三层 prompt 位置 + 文件 + 最后改动)</summary>
+      <section id="inventory-body" class="prompts-body">
+        <p class="loading-placeholder">加载中…</p>
+      </section>
+    </details>
+
+    <section id="error-banner" class="error-banner" hidden></section>
+  </main>
+
+  <script src="/prompts.js"></script>
+</body>
+</html>
