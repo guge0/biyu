@@ -1,4 +1,4 @@
-"""E-1 兜底 · pipeline 级埋雷:planning 空/失败时禁止继续走 Writer。
+"""Pipeline 级埋雷:planning 空/失败时禁止继续走 Writer。
 
 两态:装上修复(architect 段 generate_guarded + 失败拦截)→ 绿;
 注掉拦截 → Writer 会被调用(红)。

@@ -1,4 +1,4 @@
-"""N-1: zero-cost guards for outline custody and Architect North Star input."""
+"""Zero-cost guards for outline custody and Architect North Star input."""
 from __future__ import annotations
 
 from pathlib import Path

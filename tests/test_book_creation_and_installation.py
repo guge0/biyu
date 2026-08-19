@@ -1,4 +1,4 @@
-"""Q-1 backend/install contracts; all filesystem work stays under tmp_path."""
+"""Backend/install contracts; all filesystem work stays under tmp_path."""
 from __future__ import annotations
 
 import json

@@ -1,4 +1,4 @@
-"""Q-1 static injection catalogs, read-only queries and tool-call telemetry."""
+"""Static injection catalogs, read-only queries and tool-call telemetry."""
 from __future__ import annotations
 
 import json

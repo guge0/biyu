@@ -1,4 +1,4 @@
-"""P6-13-A: DEBT-Config-1 / DEBT-COST-1 修复单测。"""
+"""Config and cost accounting regression tests."""
 import asyncio
 import json
 import logging

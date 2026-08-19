@@ -81,7 +81,7 @@ def test_acknowledgement_endpoint_persists_across_clients_without_llm(
     monkeypatch.setenv("BIYU_USER_CONFIG_DIR", str(tmp_path))
 
     def fail_if_called(*args, **kwargs):
-        raise AssertionError("H-5 acknowledgement must not call a model")
+        raise AssertionError("Replica acknowledgement must not call a model")
 
     monkeypatch.setattr(ModelRegistry, "get_adapter", fail_if_called)
     first_client = TestClient(app)

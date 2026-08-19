@@ -259,7 +259,7 @@ def test_overview_is_read_only_and_zero_llm(tmp_path: Path, monkeypatch) -> None
     }
 
     def fail_if_called(*args, **kwargs):
-        raise AssertionError("R5-3A overview must not call a model")
+        raise AssertionError("Book overview must not call a model")
 
     monkeypatch.setattr(ModelRegistry, "get_adapter", fail_if_called)
     build_overview(book, "book-id")
