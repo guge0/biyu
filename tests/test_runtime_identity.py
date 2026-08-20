@@ -9,7 +9,7 @@ import re
 def test_runtime_version_exposes_checkout_identity(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setenv("BIYU_RUNTIME_ROLE", "test")
     monkeypatch.setenv("BIYU_PROJECT_ROOT", str(Path.cwd()))
-    monkeypatch.setenv("BIYU_DATA_ROOT", r"E:\BiyuTestData")
+    monkeypatch.setenv("BIYU_DATA_ROOT", r"E:\webnovel\BiyuTestData")
     from biyu.ui import app as app_module
 
     monkeypatch.setattr(app_module.subprocess, "check_output", lambda *args, **kwargs: "00a7b752\n")

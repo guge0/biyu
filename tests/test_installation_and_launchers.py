@@ -15,7 +15,7 @@ def test_new_user_readme_has_complete_install_and_start_path() -> None:
         "GitHub",
         "Python 3.12",
         "D:\\BiyuProductionData",
-        "E:\\BiyuTestData",
+        "E:\\webnovel\\BiyuTestData",
         "API Key",
         "本地加密文件",
     ):

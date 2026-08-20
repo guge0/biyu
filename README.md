@@ -47,14 +47,14 @@
   还必须新增 adapter 并在模型注册表登记，不能只靠网页下拉完成。
 
 生产启动器固定使用 `D:\BiyuProductionData` 作为生产数据根，首次启动必须是空目录；测试启动器
-测试版继续读取仓外数据根 `E:\BiyuTestData`。书稿数据根是作者自己的本地目录，没有远端地址，
+测试版继续读取仓外数据根 `E:\webnovel\BiyuTestData`。书稿数据根是作者自己的本地目录，没有远端地址，
 不会被推送到程序源码仓库。需要改位置时，在启动前设置对应的 `BIYU_DATA_ROOT`。
 点击“采用”会在书稿数据仓创建本地 Git 提交，因此数据根必须可写，并已配置 Git 提交身份。
 
 ### 生产版与测试版
 
 - 日常写作只双击 `start_biyu_ui.bat`：生产版、端口 8080、数据在 `D:\BiyuProductionData`。
-- 工程调试才双击 `start_biyu_ui_dev.bat`：测试版、端口 8090、数据在 `E:\BiyuTestData`。
+- 工程调试才双击 `start_biyu_ui_dev.bat`：测试版、端口 8090、数据在 `E:\webnovel\BiyuTestData`。
 - 两个端口均不自动换号。若被旧进程占用，启动器会显示 PID 和命令并停止，避免把新页面接到旧后端。
 
 ### 备份与恢复
@@ -111,7 +111,7 @@ biyu/
 ```
 
 书稿不在源码仓内：生产数据固定在 `D:\BiyuProductionData`，测试数据固定在
-`E:\BiyuTestData`。`.venv/`、API Key、本机编辑器设置和 AI 编程助手配置也都不进入 Git。
+`E:\webnovel\BiyuTestData`。`.venv/`、API Key、本机编辑器设置和 AI 编程助手配置也都不进入 Git。
 
 ## 开发
 

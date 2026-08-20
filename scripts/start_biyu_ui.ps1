@@ -52,8 +52,8 @@ if ($Mode -eq 'Production') {
 } else {
     $env:BIYU_ENV = 'test'
     $env:BIYU_RUNTIME_ROLE = 'test'
-    $env:BIYU_DATA_ROOT = 'E:\BiyuTestData'
-    $env:BIYU_TEST_DATA_ROOT = 'E:\BiyuTestData'
+    $env:BIYU_DATA_ROOT = 'E:\webnovel\BiyuTestData'
+    $env:BIYU_TEST_DATA_ROOT = 'E:\webnovel\BiyuTestData'
     Remove-Item Env:BIYU_PRODUCTION_DATA_ROOT -ErrorAction SilentlyContinue
     Remove-Item Env:BIYU_DATA_ROOT_2 -ErrorAction SilentlyContinue
     $title = 'BIYU TEST / engineering only'
