@@ -38,6 +38,10 @@ def test_installer_rejects_unsupported_python_with_human_message() -> None:
 
     assert "Python 3.10" in text
     assert "sys.version_info" in text
+    venv_assignment = "$venvPython = Join-Path $repo '.venv\\Scripts\\python.exe'"
+    existing_venv_gate = "if (-not (Test-Path -LiteralPath $venvPython)) {"
+    assert text.index(venv_assignment) < text.index("Get-Command python")
+    assert text.index(existing_venv_gate) < text.index("Get-Command python")
 
 
 def test_production_launcher_refreshes_installed_package_after_git_pull() -> None:

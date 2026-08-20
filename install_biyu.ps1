@@ -2,18 +2,20 @@
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location -LiteralPath $repo
-
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    throw '未找到 Git。请先安装 Git for Windows：https://git-scm.com/download/win'
-}
-if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-    throw '未找到 Python。请先安装 Python 3.12，并勾选 Add Python to PATH。'
-}
-& python -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)"
-if ($LASTEXITCODE -ne 0) {
-    throw 'Python 版本过低。笔驭至少需要 Python 3.10，建议安装 Python 3.12，并勾选 Add Python to PATH。'
-}
 $venvPython = Join-Path $repo '.venv\Scripts\python.exe'
+
+if (-not (Test-Path -LiteralPath $venvPython)) {
+    if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+        throw '未找到 Git。请先安装 Git for Windows：https://git-scm.com/download/win'
+    }
+    if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+        throw '未找到 Python。请先安装 Python 3.12，并勾选 Add Python to PATH。'
+    }
+    & python -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)"
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Python 版本过低。笔驭至少需要 Python 3.10，建议安装 Python 3.12，并勾选 Add Python to PATH。'
+    }
+}
 $statePath = Join-Path $repo '.venv\.biyu-install-state'
 $head = (& git rev-parse HEAD 2>$null)
 $projectHash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $repo 'pyproject.toml')).Hash
