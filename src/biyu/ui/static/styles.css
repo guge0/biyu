@@ -1980,13 +1980,16 @@ hr{border:none;border-top:1px solid var(--rule);margin:26px 0 18px}
 .book-card .book-meta{gap:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .book-card .book-genre{margin-top:auto}
 .book-card .book-more{position:relative;margin-top:8px}
-.book-card .book-more-toggle{height:30px;padding:0;color:var(--ink-soft);font-size:13px;font-weight:400}
+.book-card .book-more-toggle{height:30px;padding:0;color:var(--ink-soft);font-size:13px;font-weight:400;text-decoration:underline;text-underline-offset:3px}
 .book-card .book-more-toggle:focus-visible{outline:1px solid var(--ink-soft);outline-offset:2px}
 .book-card .book-more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:40;width:150px;padding:6px 0;border:1px solid var(--rule);border-radius:6px;background:#fdfbf6;box-shadow:0 8px 24px rgba(55,44,25,.12)}
 .book-card .book-more-menu[hidden]{display:none}
 .book-card .book-more-menu button{display:block;width:100%;height:36px;margin:0;padding:0 14px;border:0;text-align:left;white-space:nowrap}
 .book-card .book-more-menu button:hover{background:rgba(55,44,25,.04)}
-.continue-book-btn,.continue-book-btn:visited{color:var(--paper)}
+.continue-book-btn{display:inline-flex;align-items:center;justify-content:center;text-align:center;color:var(--paper)}
+.continue-book-btn:hover{color:var(--paper)}
+.continue-book-btn:visited{color:var(--paper)}
+.continue-book-btn:focus{color:var(--paper)}
 
 /* 读稿页收敛 B11:顶部书名 select 纯文字呈现(保留切书,去浅底) */
 .workbench .toolbar select#book{background-color:transparent;border-color:transparent}

@@ -50,7 +50,7 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
     .entry-grid-main .entry-card:not(:first-child) .entry-label { font-size: 17px; }
-    .entry-card-primary { display:inline-flex; align-items:center; justify-content:center; min-height:34px; margin-top:auto; padding:7px 12px; border:1px solid var(--ink); border-radius:4px; background:var(--ink); color:var(--paper); font-size:13px; text-decoration:none; }
+    .entry-card-primary { display:inline-flex; width:100%; box-sizing:border-box; align-items:center; justify-content:center; min-height:34px; margin-top:auto; padding:7px 12px; border:1px solid var(--ink); border-radius:4px; background:var(--ink); color:var(--paper); font-size:13px; text-align:center; text-decoration:none; }
     .entry-grid-sub {
       grid-template-columns: repeat(4, 1fr);
     }
@@ -218,21 +218,19 @@
         '<h2 style="font-size:18px;margin:28px 0 12px;">入口</h2>' +
         '<div class="entry-grid entry-grid-main">' +
         '  <a href="/workbench.html?book=' + encodeURIComponent(bookIdOrName) + backSuffix + '" class="entry-card">' +
-        '    <div class="entry-icon">✍</div>' +
         '    <div class="entry-label">章节工作台</div>' +
         '    <div class="entry-desc">细纲、方案、生成、读稿、采用 —— 一条路走完一章</div>' +
         '    <span class="entry-card-primary" onclick="event.preventDefault();window.location.href=\'' + primaryHref + '\'">' + primaryLabel + '</span>' +
         '  </a>' +
         '  <a id="settings-entry" href="/settings.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card" hidden>' +
-        '    <div class="entry-icon">📖</div>' +
         '    <div class="entry-label">设定集</div>' +
         '    <div class="entry-desc">北极星、大纲、世界观七格、人物卡 —— 写手和导演每章都读这里</div>' +
         '    <span id="settings-entry-state" class="entry-state">9 格 · 一格没填</span>' +
         '  </a>' +
         '  <button class="entry-card" id="zebian-entry" style="cursor:pointer;text-align:left;font-family:inherit;font-size:inherit;">' +
-        '    <div class="entry-icon">编</div><div class="entry-label">责编</div>' +
+        '    <div class="entry-label">责编</div>' +
         '    <div class="entry-desc">在 Claude Code 里跟责编聊。每次都是新对话，它会读你已存进设定集的内容。</div>' +
-        '    <span id="zebian-entry-status" class="entry-state"></span><span id="zebian-copy" class="entry-back-btn b2 bs" hidden>一键复制开场白</span>' +
+        '    <span id="zebian-entry-status" class="entry-state"></span><span id="zebian-copy" class="entry-back-btn b2 bs" hidden>复制开场白</span>' +
         '  </button>' +
         '</div>' +
         '<div class="entry-grid entry-grid-sub">' +

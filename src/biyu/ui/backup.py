@@ -27,7 +27,11 @@ def _actor(actor: str) -> None:
 
 @router.get("/api/backup/status")
 def backup_status(scope: str = Query("production")):
-    return get_backup_status(_backup_root(), scope=scope)
+    status = get_backup_status(_backup_root(), scope=scope)
+    if os.environ.get("BIYU_AUTO_BACKUP") != "1":
+        status.state = "disabled"
+        status.message = "备份没有开。等你开始写真书的时候再打开它。"
+    return status
 
 @router.post("/api/backup/run")
 def backup_run(payload: BackupRun):

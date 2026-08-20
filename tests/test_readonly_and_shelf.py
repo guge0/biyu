@@ -253,7 +253,8 @@ def test_shelf_backend_exposes_settings_readiness_without_writing(
 
 
 def test_backup_status_copy_does_not_point_to_a_missing_switch() -> None:
-    source = Path("src/biyu/backup_service.py").read_text(encoding="utf-8")
+    source = Path("src/biyu/ui/backup.py").read_text(encoding="utf-8")
 
     assert "打开开关后" not in source
-    assert "备份完成后会在这里显示时间和路径" in source
+    assert 'os.environ.get("BIYU_AUTO_BACKUP") != "1"' in source
+    assert "备份没有开。等你开始写真书的时候再打开它。" in source

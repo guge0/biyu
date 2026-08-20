@@ -6,17 +6,19 @@
  *   // → '<span class="genre-chip genre-chip-xuanhuan">玄幻</span>'
  *
  *   var label = window.genreLabel("dushi");  // "都市"
- *   var label2 = window.genreLabel("未知代号");  // "未知代号"(原样返回)
+ *   var label2 = window.genreLabel("未知代号");  // "未知题材"
  */
 (function () {
   "use strict";
 
   var GENRE_MAP = {
     xuanhuan: "玄幻",
+    qihuan: "奇幻",
     dushi: "都市",
     xianxia: "仙侠",
     kehuan: "科幻",
     lishi: "历史",
+    xuanyi: "悬疑",
     qingxiaoshuo: "轻小说",
     // 兼容其他可能出现的代号
     yanqing: "言情",
@@ -36,7 +38,7 @@
   function genreLabel(code) {
     if (!code) return "";
     var key = String(code).toLowerCase().trim();
-    return GENRE_MAP[key] || String(code);
+    return GENRE_MAP[key] || "未知题材";
   }
 
   function genreChipHtml(code) {

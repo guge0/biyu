@@ -132,7 +132,9 @@ def test_zebian_entry_contract_is_present_on_settings_and_book_pages() -> None:
     assert "它会读你已存进设定集的内容" in book_html
     for text in (settings_html, book_html):
         assert "每次都是新对话" in text
-        assert "一键复制开场白" in text
+    assert "一键复制开场白" in settings_html
+    assert "复制开场白" in book_html
+    assert "一键复制开场白" not in book_html
     assert "/api/workbench/books/${encoded}/zebian" in settings_js
     assert 'fetch("/api/workbench/books/"' in book_html
     assert "action==='talk'" not in settings_js

@@ -4,7 +4,7 @@
  * 1. init:并行拉 /api/env / /api/peak-hours / /api/session / /api/books
  * 2. 渲染 env / peak 徽标
  * 3. 渲染书架(书卡):name / last_chapter
- * 4. 渲染"继续:<最近的书>"快捷(用书的 last_chapter)
+ * 4. 渲染"继续：<最近的书>"快捷(用书的 last_chapter)
  * 5. 空书架:显 empty-shelf 邀请文案
  *
  * 不依赖 propose.js(独立子屏的脚本)。
@@ -327,7 +327,7 @@
     chEl.textContent = num;
     // 继续入口只描述现役工作台的写作进度。
     link.innerHTML =
-      '继续:<span id="continue-book">' + escapeHtml(book.title || book.name) +
+      '继续：<span id="continue-book">' + escapeHtml(book.title || book.name) +
       '</span> · 上次写到第 <span id="continue-chapter">' + num + '</span> 章';
     link.href = "/workbench.html?book=" + encodeURIComponent(book.id || book.name);
     wrap.hidden = false;
