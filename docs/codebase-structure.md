@@ -292,7 +292,7 @@ pytest --manual                         # 含手动 LLM 测试(烧钱,默认 ski
 | `全景图.md`(仓库根) | 含真书决策数据 |
 | `eval_set_v0/` | **例外**:公开测试集(EV1 回声巷的脱敏版),允许进镜像 |
 
-**镜像同步机制**(`scripts/mirror_sync.sh`):白名单制,只搬 `src/` `prompts/` `tools/` `scripts/` `eval_set_v0/` `tests/` `pyproject.toml` + 配置模板。FORBIDDEN_PATTERNS 含 `data/` `outputs/` `.env` `models.yaml` `secrets`,推前硬闸。
+**发布机制**：`E:\webnovel\biyu-dev` 是唯一开发 checkout；验证后 push 到 `guge0/biyu`，生产 checkout `E:\webnovel\biyu` 只从 GitHub pull。书稿数据、`config/models.yaml`、`.venv/` 与本机协作元数据不进入源码仓。
 
 ### 🔧 易碎生产代码(改前看全景图 + 写 spec)
 
