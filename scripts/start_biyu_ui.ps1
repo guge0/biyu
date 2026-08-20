@@ -38,6 +38,11 @@ if (-not (Test-Path -LiteralPath '.venv\Scripts\python.exe')) {
 }
 
 if ($Mode -eq 'Production') {
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'install_biyu.ps1') -SkipPull -OnlyIfNeeded
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host '[X] Production package refresh failed; Biyu was not started.' -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
     $env:BIYU_ENV = 'prod'
     $env:BIYU_RUNTIME_ROLE = 'production'
     $productionDataRoot = 'D:\BiyuProductionData'

@@ -40,6 +40,15 @@ def test_installer_rejects_unsupported_python_with_human_message() -> None:
     assert "sys.version_info" in text
 
 
+def test_production_launcher_refreshes_installed_package_after_git_pull() -> None:
+    launcher = (ROOT / "scripts" / "start_biyu_ui.ps1").read_text(encoding="utf-8")
+
+    refresh = "install_biyu.ps1') -SkipPull -OnlyIfNeeded"
+    assert refresh in launcher
+    assert launcher.count(refresh) == 1
+    assert launcher.index(refresh) < launcher.index("$env:BIYU_ENV = 'prod'")
+
+
 def test_settings_write_requires_runtime_endpoint_and_uses_author_data_default() -> None:
     bridge = (ROOT / "src" / "biyu" / "cli" / "settings_bridge.py").read_text(encoding="utf-8")
     config = (ROOT / "src" / "biyu" / "config.py").read_text(encoding="utf-8")
