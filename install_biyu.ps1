@@ -18,7 +18,15 @@ if (-not (Test-Path -LiteralPath $venvPython)) {
 }
 $statePath = Join-Path $repo '.venv\.biyu-install-state'
 $head = (& git rev-parse HEAD 2>$null)
-$projectHash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $repo 'pyproject.toml')).Hash
+$projectFile = Join-Path $repo 'pyproject.toml'
+$sha256 = [System.Security.Cryptography.SHA256]::Create()
+$stream = [System.IO.File]::OpenRead($projectFile)
+try {
+    $projectHash = ([System.BitConverter]::ToString($sha256.ComputeHash($stream))).Replace('-', '')
+} finally {
+    $stream.Dispose()
+    $sha256.Dispose()
+}
 $wantedState = "$head|$projectHash"
 if ($OnlyIfNeeded -and (Test-Path -LiteralPath $venvPython) -and (Test-Path -LiteralPath $statePath)) {
     if ((Get-Content -Raw -LiteralPath $statePath).Trim() -eq $wantedState) {
