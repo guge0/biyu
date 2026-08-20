@@ -242,7 +242,7 @@ truth_inject 的"过滤效果实测 / 边界扩展"属于 **P6-A2 真值审计**
 | `test_postproc/grammar_check` 系列 | 后处理 + 语法检查 |
 | `test_bugfix_tP3D33.py` / `test_p6_13a_debt_fixes.py` | 历史 bug 回归测试 |
 | `test_llm_manual.py` | **手动** LLM 测试(默认 skip,需 `--manual` 触发,会烧钱) |
-| `baseline_raw.json` / `pipeline_lab.py` / `model_eval*.py` | 评估夹具 + 实验脚本 |
+| `pipeline_lab.py` | 退役实验脚本；现役 `v3_opening.py` 仍引用其提示词来源，迁移来源说明前暂留 |
 
 ### 跑测试
 

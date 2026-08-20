@@ -1,4 +1,4 @@
-"""Y-1 contracts written before implementation."""
+"""责编启动环境与写手上下文投影合同。"""
 
 from __future__ import annotations
 

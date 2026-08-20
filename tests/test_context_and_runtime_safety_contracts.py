@@ -1,4 +1,4 @@
-"""X-1 contracts written before implementation."""
+"""上下文注入、运行目录隔离与成本落账合同。"""
 
 from __future__ import annotations
 

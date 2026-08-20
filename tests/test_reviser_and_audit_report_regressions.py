@@ -1,4 +1,4 @@
-"""T-P3-D-3.3 必修 bug 修复单测 — 覆盖 BUG-1 / BUG-2 / DESIGN-1。"""
+"""返修定位、审读报告渲染与同步的回归测试。"""
 import json
 import pytest
 from pathlib import Path
