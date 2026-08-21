@@ -56,6 +56,20 @@ def test_installer_parses_in_windows_powershell_5() -> None:
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_author_launcher_script_is_ascii_for_windows_powershell_5() -> None:
+    script = ROOT / "scripts" / "start_biyu_ui.ps1"
+    script.read_bytes().decode("ascii")
+    result = subprocess.run(
+        ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script), "-Port", "9999"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert "Biyu uses port 8080" in result.stdout
+
+
 def test_installer_checks_unchanged_state_before_network_pull() -> None:
     text = (ROOT / "install_biyu.ps1").read_text(encoding="utf-8-sig")
     assert text.index("if ($OnlyIfNeeded") < text.index("git pull --ff-only")
