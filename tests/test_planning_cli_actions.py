@@ -149,5 +149,5 @@ def test_total_director_start_failure_is_not_reported_as_success(monkeypatch, tm
 def test_bookroom_launcher_keeps_an_interactive_session_after_the_greeting() -> None:
     text = Path("书房.bat").read_text(encoding="utf-8")
 
-    assert "--dangerously-skip-permissions" in text
-    assert "call \"%CLAUDE_CMD%\" --dangerously-skip-permissions %*" in text
+    assert "--dangerously-skip-permissions" not in text
+    assert "call \"%CLAUDE_CMD%\" %*" in text

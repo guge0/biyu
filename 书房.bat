@@ -12,7 +12,7 @@ if errorlevel 1 goto missing
 set "CLAUDE_CMD=claude.cmd"
 
 :launch
-call "%CLAUDE_CMD%" --dangerously-skip-permissions %*
+call "%CLAUDE_CMD%" %*
 set "EXIT_CODE=%ERRORLEVEL%"
 if not "%EXIT_CODE%"=="0" pause
 exit /b %EXIT_CODE%
