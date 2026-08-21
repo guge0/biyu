@@ -59,8 +59,21 @@
      renderKeyState();
    };
 
+   const renderAdvanced = () => {
+     const fields = $('setup-advanced-fields');
+     if (!fields || !snapshot) return;
+     const options = (snapshot.models || []).map(item => `<option value="${item.alias}">${item.label}（${item.provider}）</option>`).join('');
+     fields.innerHTML = [
+       ['规划', '规划把细纲变成写作方案。', 'planner'],
+       ['写作', '写手照方案写出正文。不要用推理模型。', 'writer'],
+       ['检查', '编辑读一遍，挑出问题和偏离。跟写作用同一个模型。', 'editor'],
+       ['润色', '再顺一遍文字，默认关闭。', 'polisher'],
+     ].map(([name, why, stage]) => `<div class="setup-stage" data-stage="${stage}"><div class="setup-stage-head"><strong>${name}</strong><span class="setup-stage-why">${why}</span></div>${stage === 'editor' ? '<div class="setup-follow">跟写作用同一个模型</div>' : `<select aria-label="${name}模型">${options}</select>`}</div>`).join('');
+   };
+
    if (advanced) advanced.onclick = () => {
      const fields = $('setup-advanced-fields');
+     if (!fields.innerHTML) renderAdvanced();
      fields.hidden = !fields.hidden;
      advanced.setAttribute('aria-expanded', String(!fields.hidden));
    };
