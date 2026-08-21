@@ -70,3 +70,34 @@ def test_registry_builds_custom_adapter_from_user_config(tmp_path: Path, monkeyp
     adapter = registry.get_adapter("custom-main")
     assert adapter.model_name == "local"
     assert adapter.base_url == "http://localhost:11434/v1"
+
+
+def test_stage_resolution_uses_provider_recommendation_then_explicit_override(tmp_path: Path, monkeypatch) -> None:
+    import biyu.secure_config as secure
+    from biyu.llm.registry import ModelRegistry
+
+    monkeypatch.setenv("BIYU_USER_CONFIG_DIR", str(tmp_path))
+    secure.save_setup({"provider": "demo", "stage_overrides": {"planner": "demo-writer"}})
+    config = tmp_path / "models.yaml"
+    config.write_text(
+        "providers:\n  demo: {api_key: key, base_url: http://localhost/v1}\n"
+        "models:\n  demo-reasoner: {provider: demo, model_id: reasoner}\n  demo-writer: {provider: demo, model_id: writer}\n"
+        "pipeline: {planner: demo-reasoner, writer: demo-writer}\n"
+        "provider_recommendations: {demo: {planner: demo-reasoner, writer: demo-writer}}\n",
+        encoding="utf-8",
+    )
+    registry = ModelRegistry(config)
+    assert registry._configured_stage_alias("planner") == "demo-writer"
+    secure.save_setup({"provider": "demo", "stage_overrides": {}})
+    registry = ModelRegistry(config)
+    assert registry._configured_stage_alias("planner") == "demo-reasoner"
+
+
+def test_provider_catalog_always_has_complete_landing_for_each_provider(monkeypatch, tmp_path: Path) -> None:
+    import biyu.ui.setup as setup
+    config = tmp_path / "models.yaml"
+    config.write_text("providers:\n  kimi: {api_key: key}\nmodels:\n  kimi-main: {provider: kimi, model_id: kimi-k2.5}\npipeline: {}\n", encoding="utf-8")
+    monkeypatch.setattr(setup, "get_config_path", lambda: config)
+    monkeypatch.setattr(setup, "load_setup", lambda: {})
+    rows = setup._provider_catalog()
+    assert set(rows[0]["models"]) == {"planner", "writer", "polisher"}

@@ -67,6 +67,11 @@ def test_regular_setup_update_reuses_secret_store_and_keeps_selected_book(monkey
             assert alias == "model-b"
             return Adapter()
 
+        def get_adapter_for_key(self, alias, key):
+            assert alias == "model-b"
+            assert key == "replacement-secret"
+            return Adapter()
+
     monkeypatch.setattr(setup, "_catalog", lambda: [
         {"alias": "model-a", "provider": "one", "label": "Model A"},
         {"alias": "model-b", "provider": "two", "label": "Model B"},
@@ -83,7 +88,7 @@ def test_regular_setup_update_reuses_secret_store_and_keeps_selected_book(monkey
 
     assert response.status_code == 200
     assert stored == [("two", "replacement-secret")]
-    assert saved == [{"selected_model": "model-b", "selected_book": "book-1", "complete": True}]
+    assert saved == [{"provider": "two", "stage_overrides": {"writer": "model-b"}, "selected_book": "book-1", "complete": True}]
     assert "replacement-secret" not in response.text
 
 
@@ -97,6 +102,29 @@ def test_regular_setup_update_rejects_typed_unknown_model(monkeypatch) -> None:
     response = TestClient(app).post("/api/setup/update", json={"model": "typed-by-user", "api_key": "secret"})
     assert response.status_code == 400
     assert response.json()["detail"] == "请选择列表中的模型"
+
+
+def test_first_run_saves_provider_and_stage_overrides_without_legacy_global_model(monkeypatch, tmp_path: Path) -> None:
+    import biyu.ui.setup as setup
+    from biyu.ui.app import app
+
+    saved = []
+    class Adapter:
+        async def generate(self, *_args, **_kwargs):
+            return None
+    class Registry:
+        def __init__(self, _path): pass
+        def get_adapter_for_key(self, alias, key):
+            assert alias == "model-a" and key == "secret"
+            return Adapter()
+    monkeypatch.setattr(setup, "_catalog", lambda: [{"alias": "model-a", "provider": "demo", "label": "Demo"}])
+    monkeypatch.setattr(setup, "ModelRegistry", Registry)
+    monkeypatch.setattr(setup, "store_provider_secret", lambda *_args: "系统钥匙串")
+    monkeypatch.setattr(setup, "save_setup", lambda value: saved.append(value))
+    monkeypatch.setattr(setup, "_books", lambda: [{"id": "book-1", "title": "测试"}])
+    response = TestClient(app).post("/api/setup/complete", json={"provider": "demo", "model": "model-a", "api_key": "secret", "book": "book-1", "stage_overrides": {"planner": "model-a"}})
+    assert response.status_code == 200
+    assert saved == [{"provider": "demo", "stage_overrides": {"planner": "model-a"}, "selected_book": "book-1", "complete": True}]
 
 
 def test_first_run_ui_masks_key_and_redirects_direct_workbench() -> None:

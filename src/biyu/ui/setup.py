@@ -59,7 +59,10 @@ def _provider_catalog() -> list[dict[str, Any]]:
                 writer = next((a for a in ids if "chat" in str(provider_models[a].get("model_id", "")).lower()), ids[0])
                 assigned = {"planner": provider_models[planner].get("model_id", planner), "writer": provider_models[writer].get("model_id", writer), "polisher": provider_models[writer].get("model_id", writer)}
         if assigned:
-            result.append({"provider": provider, "models": assigned})
+            fallback = assigned.get("writer") or next(iter(assigned.values()))
+            for stage in ("planner", "writer", "polisher"):
+                assigned.setdefault(stage, fallback)
+            result.append({"provider": provider, "label": {"deepseek": "DeepSeek", "glm": "智谱", "kimi": "Kimi", "doubao": "豆包"}.get(provider, provider), "models": assigned})
     custom = load_setup().get("custom_provider")
     if isinstance(custom, dict) and custom.get("model_id"):
         result.append({"provider": "custom", "models": {stage: custom["model_id"] for stage in ("planner", "writer", "polisher")}})
@@ -103,7 +106,7 @@ def setup_status() -> dict[str, Any]:
     configured_providers = {provider: bool(load_provider_secret(provider)) for provider in sorted(providers)}
     provider = next((item["provider"] for item in catalog if item["alias"] == selected), "")
     active_provider = str(settings.get("provider", "")) or provider
-    ready = bool(settings.get("complete") and selected and load_provider_secret(provider)) or _configured_without_wizard()
+    ready = bool(settings.get("complete") and (settings.get("provider") or selected) and (load_provider_secret(provider) or settings.get("provider") == "custom")) or _configured_without_wizard()
     return {
         "ready": ready,
         "selected_model": selected,
@@ -133,9 +136,9 @@ async def complete_setup(payload: dict[str, Any]) -> dict[str, str]:
     if not key:
         raise HTTPException(status_code=400, detail="请填写 API Key")
     storage = store_provider_secret(selected["provider"], key)
-    save_setup({"selected_model": model, "complete": False})
     try:
-        adapter = ModelRegistry(get_config_path()).get_adapter(model)
+        registry = ModelRegistry(get_config_path())
+        adapter = registry.get_adapter_for_key(model, key) if hasattr(registry, "get_adapter_for_key") else registry.get_adapter(model)
         await adapter.generate([{"role": "user", "content": "连通性检查：只回复 OK"}], max_tokens=4)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"模型没有连通：{exc}") from exc
@@ -147,8 +150,9 @@ async def complete_setup(payload: dict[str, Any]) -> dict[str, str]:
         book = _create_book(title, str(payload.get("genre", "xuanhuan")))
     elif not any(item["id"] == book for item in _books()):
         raise HTTPException(status_code=400, detail="请选择一本已有的书，或新建一本")
-    save_setup({"selected_model": model, "selected_book": book, "complete": True})
-    return {"message": "设置完成，模型已连通", "model": model, "book": book, "secret_storage": storage}
+    provider_name = str(payload.get("provider") or selected["provider"])
+    save_setup({"provider": provider_name, "stage_overrides": payload.get("stage_overrides") or {}, "selected_book": book, "complete": True})
+    return {"message": "设置完成，模型已连通", "provider": provider_name, "model": model, "book": book, "secret_storage": storage}
 
 
 @router.post("/update")
@@ -174,7 +178,7 @@ async def update_setup(payload: dict[str, Any]) -> dict[str, Any]:
         if key:
             store_provider_secret("custom", key)
         old = load_setup()
-        save_setup({**old, "custom_provider": {"base_url": base_url.rstrip("/"), "model_id": model_id}, "provider": "custom", "complete": True})
+        save_setup({**old, "custom_provider": {"base_url": base_url.rstrip("/"), "model_id": model_id}, "provider": "custom", "stage_overrides": payload.get("stage_overrides", {}), "complete": True})
         return {"message": "连接设置已更新", "provider": "custom", "model": model_id, "key_configured": True}
 
     model = str(payload.get("model", ""))
@@ -183,28 +187,43 @@ async def update_setup(payload: dict[str, Any]) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="请选择列表中的模型")
 
     key = str(payload.get("api_key", "")).strip()
-    if key:
-        storage = store_provider_secret(selected["provider"], key)
+    existing_key = load_provider_secret(selected["provider"])
+    if key or existing_key:
+        storage = "新 Key（测试后保存）" if key else "现有安全存储"
+        test_key = key or existing_key
     elif load_provider_secret(selected["provider"]):
         storage = "现有安全存储"
     else:
         raise HTTPException(status_code=400, detail="这个模型的服务商还没有配置 API Key")
 
     try:
-        adapter = ModelRegistry(get_config_path()).get_adapter(model)
+        registry = ModelRegistry(get_config_path())
+        adapter = registry.get_adapter_for_key(model, test_key) if hasattr(registry, "get_adapter_for_key") else registry.get_adapter(model)
         await adapter.generate([{"role": "user", "content": "连通性检查：只回复 OK"}], max_tokens=4)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"模型没有连通：{exc}") from exc
 
+    if key:
+        store_provider_secret(selected["provider"], key)
     settings = load_setup()
+    provider_name = selected["provider"]
     save_setup({
-        "selected_model": model,
+        "provider": provider_name,
+        "stage_overrides": payload.get("stage_overrides") or ({"writer": model} if model != _provider_default_alias(provider_name, "writer") else {}),
         "selected_book": str(settings.get("selected_book", "")),
         "complete": True,
     })
     return {
         "message": "连接设置已更新",
-        "model": model,
+        "provider": provider_name,
         "key_configured": True,
         "secret_storage": storage,
     }
+
+
+def _provider_default_alias(provider: str, stage: str) -> str:
+    try:
+        raw = yaml.safe_load(get_config_path().read_text(encoding="utf-8")) or {}
+        return str((raw.get("provider_recommendations", {}).get(provider, {}) or {}).get(stage, ""))
+    except (OSError, yaml.YAMLError):
+        return ""

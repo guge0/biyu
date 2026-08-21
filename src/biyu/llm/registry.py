@@ -132,6 +132,17 @@ class ModelRegistry:
         self._adapters[model_name] = adapter
         return adapter
 
+    def get_adapter_for_key(self, model_name: str, api_key: str) -> LLMAdapter:
+        """Build an uncached adapter for setup connection checks."""
+        cfg = self._resolve_model_config(model_name)
+        provider = cfg.pop("provider", None)
+        adapter_cls = _ADAPTER_MAP.get(provider)
+        if adapter_cls is None:
+            raise ValueError(f"Unknown provider: {provider}")
+        cfg["api_key"] = api_key
+        cfg.setdefault("model_name", model_name)
+        return adapter_cls(**cfg)
+
     def get_pipeline_config(self) -> dict:
         """Return the pipeline stage → alias mapping."""
         return dict(self._pipeline)
@@ -151,10 +162,33 @@ class ModelRegistry:
             override: Optional model alias to override the configured one.
                       Only affects this call, does not modify yaml.
         """
-        alias = override or self._selected_model_override() or self._pipeline.get(stage)
+        alias = override or self._configured_stage_alias(stage)
         if alias is None:
             raise KeyError(f"No pipeline config for stage: {stage}")
         return self.get_adapter(alias)
+
+    def _configured_stage_alias(self, stage: str) -> str | None:
+        """Resolve new provider/recommendation settings before legacy selected_model."""
+        settings = load_setup()
+        provider = str(settings.get("provider", ""))
+        recommendations = self._raw_recommendations()
+        overrides = settings.get("stage_overrides", {})
+        if isinstance(overrides, dict) and overrides.get(stage) in self._models:
+            return str(overrides[stage])
+        if provider == "custom" and settings.get("custom_provider", {}).get("model_id"):
+            return "custom-main"
+        recommended = recommendations.get(provider, {}) if isinstance(recommendations, dict) else {}
+        alias = recommended.get(stage)
+        if alias in self._models:
+            return alias
+        return self._selected_model_override() or self._pipeline.get(stage)
+
+    def _raw_recommendations(self) -> dict:
+        try:
+            raw = yaml.safe_load(self._config_path.read_text(encoding="utf-8")) or {}
+        except (OSError, yaml.YAMLError):
+            return {}
+        return raw.get("provider_recommendations", {}) or {}
 
     def get_for_task(self, task: str) -> LLMAdapter:
         """Get adapter by routing task name (legacy compat)."""

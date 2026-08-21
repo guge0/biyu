@@ -41,7 +41,7 @@
    const fillModels = () => {
      if (provider) {
        const choices = snapshot.providers || [];
-       provider.replaceChildren(...choices.map(item => new Option(item.provider === 'custom' ? '其他（自己填）' : item.provider, item.provider)));
+       provider.replaceChildren(...choices.map(item => new Option(item.provider === 'custom' ? '其他（自己填）' : (item.label || item.provider), item.provider)));
        provider.value = snapshot.provider || (choices[0] || {}).provider || '';
        provider.onchange = renderProvider;
        renderProvider();
@@ -50,6 +50,8 @@
      if (snapshot.selected_model) model.value = snapshot.selected_model;
      renderKeyState();
    };
+
+   const stageOverrides = () => Object.fromEntries([...document.querySelectorAll('#setup-advanced-fields [data-stage] select')].map(select => [select.closest('[data-stage]').dataset.stage, select.value]));
 
    const renderProvider = () => {
      const isCustom = provider?.value === 'custom';
@@ -129,10 +131,12 @@
      status.className = '';
      try {
        const payload = regularMode
-         ? (provider?.value === 'custom' ? { provider: 'custom', base_url: $('setup-base-url').value, model_id: $('setup-model-id').value, api_key: $('setup-key').value } : { api_key: $('setup-key').value, model: model.value })
+         ? (provider?.value === 'custom' ? { provider: 'custom', base_url: $('setup-base-url').value, model_id: $('setup-model-id').value, api_key: $('setup-key').value, stage_overrides: stageOverrides() } : { provider: provider.value, model: model.value, api_key: $('setup-key').value, stage_overrides: stageOverrides() })
          : {
              api_key: $('setup-key').value,
              model: model.value,
+             provider: provider?.value,
+             stage_overrides: stageOverrides(),
              book: book.value,
              create_book: create.checked,
              book_title: $('setup-title').value,
