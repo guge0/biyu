@@ -65,9 +65,10 @@ def test_runtime_binding_accepts_explicit_matching_roots(tmp_path: Path, monkeyp
     assert validate_runtime_binding(role="production", data_root=production, project_root=tmp_path) == production.resolve()
 
 
-def test_production_launcher_refuses_implicit_default_root():
+def test_author_launcher_uses_configured_or_home_data_root():
     script = Path("scripts/start_biyu_ui.ps1").read_text(encoding="utf-8")
-    assert "Production requires an explicit BIYU_DATA_ROOT" in script
+    assert "$env:BIYU_DATA_ROOT" in script
+    assert "Join-Path $HOME 'BiyuData'" in script
 
 
 def test_secondary_book_trash_is_blocked_by_server_gate(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

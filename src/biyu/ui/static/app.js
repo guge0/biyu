@@ -63,7 +63,7 @@
   function renderVersion(info) {
     const label = $("version-label");
     if (!label) return;
-    label.textContent = `${info.role} · ${info.checkout} · ${info.repo} · ${info.sha} · ${info.data_root}`;
+    label.textContent = `笔驭 ${info.version} · ${info.sha}`;
     label.title = `笔驭 ${info.version}`;
   }
 

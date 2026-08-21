@@ -15,7 +15,7 @@ def test_runtime_version_exposes_checkout_identity(monkeypatch, tmp_path: Path) 
     monkeypatch.setattr(app_module.subprocess, "check_output", lambda *args, **kwargs: "00a7b752\n")
 
     payload = TestClient(app_module.app).get("/api/version").json()
-    assert payload["role"] == "测试版"
+    assert payload["role"] == "笔驭"
     assert payload["checkout"] == "biyu-dev"
     assert payload["repo"] == "guge0/biyu"
     assert payload["build"] == "20260819 · 00a7b752"
@@ -24,8 +24,12 @@ def test_runtime_version_exposes_checkout_identity(monkeypatch, tmp_path: Path) 
 
 def test_settings_page_contains_runtime_identity_hook() -> None:
     html = Path("src/biyu/ui/static/settings.html").read_text(encoding="utf-8")
+    script = Path("src/biyu/ui/static/runtime-identity.js").read_text(encoding="utf-8")
     assert 'id="runtime-identity"' in html
     assert "/runtime-identity.js?v=" in html
+    assert "info.version" in script
+    assert "info.checkout" not in script
+    assert "info.data_root" not in script
 
 
 def test_dynamic_html_versions_match_current_asset_hashes() -> None:

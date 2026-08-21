@@ -1,18 +1,11 @@
-﻿param(
-    [Parameter(Mandatory = $true)]
-    [ValidateSet('Production', 'Test')]
-    [string]$Mode,
-    [Parameter(Mandatory = $true)]
-    [int]$Port
-)
+param([int]$Port = 8080)
 
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location -LiteralPath $projectRoot
 
-$expectedPort = if ($Mode -eq 'Production') { 8080 } else { 8090 }
-if ($Port -ne $expectedPort) {
-    Write-Host "[X] $Mode mode must use port $expectedPort." -ForegroundColor Red
+if ($Port -ne 8080) {
+    Write-Host '[X] 笔驭固定使用 8080 端口。' -ForegroundColor Red
     exit 2
 }
 
@@ -20,66 +13,56 @@ $listener = Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort $Port -State
     Select-Object -First 1
 if ($listener) {
     $owner = Get-CimInstance Win32_Process -Filter "ProcessId=$($listener.OwningProcess)" -ErrorAction SilentlyContinue
-    Write-Host "[X] Port $Port is already occupied. This launcher will not switch ports or reuse an old service." -ForegroundColor Red
+    Write-Host "[X] 端口 $Port 已被占用；启动器不会换端口或复用旧服务。" -ForegroundColor Red
     Write-Host "    PID: $($listener.OwningProcess)"
     if ($owner) { Write-Host "    Process: $($owner.CommandLine)" }
-    Write-Host '    Close that old startup window/process, then double-click this launcher again.'
+    Write-Host '    请关闭旧启动窗口或进程，再重新双击 start_biyu_ui.bat。'
     exit 2
 }
 
 if (-not (Test-Path -LiteralPath '.venv\Scripts\python.exe')) {
-    if ($Mode -eq 'Test') {
-        Write-Host '[X] Test environment is not installed. Run install_biyu.ps1 first.' -ForegroundColor Red
-        exit 2
-    }
-    Write-Host 'First run: installing Biyu...'
+    Write-Host '首次启动，正在安装笔驭...'
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'install_biyu.ps1') -SkipPull
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 
-if ($Mode -eq 'Production') {
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'install_biyu.ps1') -SkipPull -OnlyIfNeeded
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host '[X] Production package refresh failed; Biyu was not started.' -ForegroundColor Red
-        exit $LASTEXITCODE
-    }
-    $env:BIYU_ENV = 'prod'
-    $env:BIYU_RUNTIME_ROLE = 'production'
-    $productionDataRoot = 'D:\BiyuProductionData'
-    $env:BIYU_DATA_ROOT = $productionDataRoot
-    $env:BIYU_PRODUCTION_DATA_ROOT = $productionDataRoot
-    if (-not (Test-Path -LiteralPath $productionDataRoot -PathType Container)) {
-        Write-Host "[X] Production requires an explicit BIYU_DATA_ROOT; configured root is missing: $productionDataRoot" -ForegroundColor Red
-        exit 2
-    }
-    Remove-Item Env:BIYU_DATA_ROOT_2 -ErrorAction SilentlyContinue
-    $title = 'BIYU PRODUCTION / daily writing'
-} else {
-    $env:BIYU_ENV = 'test'
-    $env:BIYU_RUNTIME_ROLE = 'test'
-    $env:BIYU_DATA_ROOT = 'E:\webnovel\BiyuTestData'
-    $env:BIYU_TEST_DATA_ROOT = 'E:\webnovel\BiyuTestData'
-    Remove-Item Env:BIYU_PRODUCTION_DATA_ROOT -ErrorAction SilentlyContinue
-    Remove-Item Env:BIYU_DATA_ROOT_2 -ErrorAction SilentlyContinue
-    $title = 'BIYU TEST / engineering only'
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'install_biyu.ps1') -SkipPull -OnlyIfNeeded
+if ($LASTEXITCODE -ne 0) {
+    Write-Host '[X] 笔驭运行包刷新失败，未启动服务。' -ForegroundColor Red
+    exit $LASTEXITCODE
 }
 
+$dataRoot = $env:BIYU_DATA_ROOT
+if ([string]::IsNullOrWhiteSpace($dataRoot)) {
+    $dataRoot = Join-Path $HOME 'BiyuData'
+}
+$dataRoot = [System.IO.Path]::GetFullPath($dataRoot)
+if (-not (Test-Path -LiteralPath $dataRoot)) {
+    New-Item -ItemType Directory -Path $dataRoot -Force | Out-Null
+}
+
+# Runtime roles remain internal safety metadata; users run one product entry.
+$env:BIYU_ENV = 'prod'
+$env:BIYU_RUNTIME_ROLE = 'production'
+$env:BIYU_DATA_ROOT = $dataRoot
+$env:BIYU_PRODUCTION_DATA_ROOT = $dataRoot
+Remove-Item Env:BIYU_DATA_ROOT_2 -ErrorAction SilentlyContinue
 $env:BIYU_PROJECT_ROOT = $projectRoot
 $env:BIYU_CHECKOUT_NAME = Split-Path -Leaf $projectRoot
+
 $shortSha = (& git -C $projectRoot rev-parse --short=8 HEAD 2>$null)
 if ([string]::IsNullOrWhiteSpace($shortSha)) { $shortSha = 'uncommitted' }
 $remoteUrl = (& git -C $projectRoot remote get-url origin 2>$null)
 $remoteSlug = if ($remoteUrl -match 'github\.com[:/]([^/]+/[^/]+?)(?:\.git)?$') { $Matches[1] } else { 'remote-unset' }
 $env:BIYU_SHORT_SHA = $shortSha
 $env:BIYU_REMOTE_SLUG = $remoteSlug
-$roleLabel = if ($Mode -eq 'Production') { '生产版' } else { '测试版' }
-$identity = "$roleLabel · $env:BIYU_CHECKOUT_NAME · $remoteSlug · $shortSha · $env:BIYU_DATA_ROOT"
+$identity = "笔驭 · $env:BIYU_CHECKOUT_NAME · $remoteSlug · $shortSha · $env:BIYU_DATA_ROOT"
 
-$host.UI.RawUI.WindowTitle = $title
+$host.UI.RawUI.WindowTitle = '笔驭'
 $url = "http://127.0.0.1:$Port"
 Write-Host ''
 Write-Host '=========================================='
-Write-Host " $title"
+Write-Host ' 笔驭'
 Write-Host " $url"
 Write-Host " code: $projectRoot"
 Write-Host " data: $env:BIYU_DATA_ROOT"

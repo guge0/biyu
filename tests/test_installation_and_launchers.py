@@ -14,8 +14,9 @@ def test_new_user_readme_has_complete_install_and_start_path() -> None:
         "start_biyu_ui.bat",
         "GitHub",
         "Python 3.12",
-        "D:\\BiyuProductionData",
-        "E:\\webnovel\\BiyuTestData",
+        "Claude Code",
+        "docs/images/",
+        "BiyuData",
         "API Key",
         "本地加密文件",
     ):
@@ -25,12 +26,30 @@ def test_new_user_readme_has_complete_install_and_start_path() -> None:
 def test_author_launcher_uses_fixed_port_and_no_development_second_root() -> None:
     text = (ROOT / "start_biyu_ui.bat").read_text(encoding="utf-8")
 
-    assert "-Mode Production -Port 8080" in text
+    assert "-Port 8080" in text
+    assert "-Mode" not in text
     assert "BIYU_DATA_ROOT_2" not in text
     assert "8080,1,8089" not in text
     for line in text.splitlines():
         if line.lstrip().upper().startswith("REM "):
             line.encode("ascii")
+
+
+def test_public_entry_does_not_expose_local_deployment_topology() -> None:
+    public_text = "\n".join(
+        (ROOT / path).read_text(encoding="utf-8")
+        for path in ("README.md", "start_biyu_ui.bat", "scripts/start_biyu_ui.ps1")
+    )
+
+    for forbidden in (
+        r"D:\BiyuProductionData",
+        r"E:\webnovel\BiyuTestData",
+        "-Mode Production",
+        "-Mode Test",
+        "生产版与测试版",
+    ):
+        assert forbidden not in public_text
+    assert not (ROOT / "start_biyu_ui_dev.bat").exists()
 
 
 def test_installer_rejects_unsupported_python_with_human_message() -> None:
@@ -46,7 +65,7 @@ def test_installer_rejects_unsupported_python_with_human_message() -> None:
     assert text.index(existing_venv_gate) < text.index("Get-Command python")
 
 
-def test_production_launcher_refreshes_installed_package_after_git_pull() -> None:
+def test_launcher_refreshes_installed_package_after_git_pull() -> None:
     launcher = (ROOT / "scripts" / "start_biyu_ui.ps1").read_text(encoding="utf-8")
 
     refresh = "install_biyu.ps1') -SkipPull -OnlyIfNeeded"
@@ -64,5 +83,8 @@ def test_settings_write_requires_runtime_endpoint_and_uses_author_data_default()
     assert "BIYU_SETTINGS_EDITOR_URL" in bridge
     assert "BIYU_SETTINGS_DATA_ROOT" in bridge
     assert 'Path.home() / "BiyuData"' in config
+    assert "Join-Path $HOME 'BiyuData'" in launcher
+    assert "$env:BIYU_DATA_ROOT" in launcher
     assert "$env:BIYU_ENV = 'prod'" in launcher
-    assert "$expectedPort = if ($Mode -eq 'Production') { 8080 } else { 8090 }" in launcher
+    assert "D:\\BiyuProductionData" not in launcher
+    assert "E:\\webnovel\\BiyuTestData" not in launcher

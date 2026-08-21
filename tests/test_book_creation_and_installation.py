@@ -163,7 +163,8 @@ def test_production_package_and_launcher_contracts(tmp_path: Path) -> None:
     for page in ("editor.html", "propose.html", "prompts.html", "preferences.html", "reviews.html"):
         assert page in project
     assert "scripts\\start_biyu_ui.ps1" in launcher
-    assert "-Mode Production -Port 8080" in launcher
+    assert "-Port 8080" in launcher
+    assert "-Mode" not in launcher
     assert "Test-Path -LiteralPath '.venv\\Scripts\\python.exe'" in (
         root / "scripts" / "start_biyu_ui.ps1"
     ).read_text(encoding="utf-8")

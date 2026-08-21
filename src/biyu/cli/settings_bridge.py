@@ -13,7 +13,7 @@ import httpx
 import typer
 
 
-settings_write_app = typer.Typer(help="责编通过生产版设定集接口写创作件。")
+settings_write_app = typer.Typer(help="责编通过笔驭设定集接口写创作件。")
 
 
 def _runtime_settings() -> tuple[str, Path]:
@@ -150,7 +150,7 @@ def cell_command(
         typer.echo(str(exc))
         raise typer.Exit(code=2)
     except (httpx.ConnectError, httpx.TimeoutException):
-        typer.echo("生产版网页服务没开。请先双击“笔驭（生产）”。")
+        typer.echo("笔驭网页服务没开。请先双击 start_biyu_ui.bat。")
         raise typer.Exit(code=2)
     except httpx.HTTPStatusError as exc:
         typer.echo(f"读取设定失败：HTTP {exc.response.status_code}。")
@@ -175,7 +175,7 @@ def character_command(
         typer.echo(str(exc))
         raise typer.Exit(code=2)
     except (httpx.ConnectError, httpx.TimeoutException):
-        typer.echo("生产版网页服务没开。请先双击“笔驭（生产）”。")
+        typer.echo("笔驭网页服务没开。请先双击 start_biyu_ui.bat。")
         raise typer.Exit(code=2)
     _echo(result)
 
@@ -193,6 +193,6 @@ def archive_character_command(
         typer.echo(str(exc))
         raise typer.Exit(code=2)
     except (httpx.ConnectError, httpx.TimeoutException):
-        typer.echo("生产版网页服务没开。请先双击“笔驭（生产）”。")
+        typer.echo("笔驭网页服务没开。请先双击 start_biyu_ui.bat。")
         raise typer.Exit(code=2)
     _echo(result)

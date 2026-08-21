@@ -7,14 +7,14 @@ from fastapi.testclient import TestClient
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_windows_launchers_have_fixed_distinct_modes_and_ports() -> None:
-    production = (ROOT / "start_biyu_ui.bat").read_text(encoding="utf-8")
-    test = (ROOT / "start_biyu_ui_dev.bat").read_text(encoding="utf-8")
+def test_windows_has_one_author_launcher() -> None:
+    launcher = (ROOT / "start_biyu_ui.bat").read_text(encoding="utf-8")
 
-    assert '-Mode Production -Port 8080' in production
-    assert '-Mode Test -Port 8090' in test
-    assert "8080,1,8089" not in production
-    assert "BIYU_DATA_ROOT_2" not in production
+    assert '-Port 8080' in launcher
+    assert '-Mode' not in launcher
+    assert not (ROOT / "start_biyu_ui_dev.bat").exists()
+    assert "8080,1,8089" not in launcher
+    assert "BIYU_DATA_ROOT_2" not in launcher
 
 
 def test_shared_launcher_refuses_occupied_port_and_sets_environment() -> None:
@@ -24,18 +24,19 @@ def test_shared_launcher_refuses_occupied_port_and_sets_environment() -> None:
     assert "Get-NetTCPConnection" in text
     assert "exit 2" in text
     assert "$env:BIYU_ENV = 'prod'" in text
-    assert "$env:BIYU_ENV = 'test'" in text
     assert "BIYU_RUNTIME_ROLE" in text
+    assert "Production" not in text
+    assert "Test mode" not in text
     assert "-File (Join-Path $projectRoot 'install_biyu.ps1') -SkipPull" in text
 
 
-def test_version_endpoint_uses_explicit_runtime_role(monkeypatch) -> None:
+def test_version_endpoint_does_not_expose_internal_runtime_role(monkeypatch) -> None:
     import biyu.ui.app as app_module
 
     monkeypatch.setenv("BIYU_RUNTIME_ROLE", "production")
-    assert TestClient(app_module.app).get("/api/version").json()["runtime"] == "生产版"
+    assert TestClient(app_module.app).get("/api/version").json()["runtime"] == "笔驭"
     monkeypatch.setenv("BIYU_RUNTIME_ROLE", "test")
-    assert TestClient(app_module.app).get("/api/version").json()["runtime"] == "测试版"
+    assert TestClient(app_module.app).get("/api/version").json()["runtime"] == "笔驭"
 
 
 def test_installer_parses_in_windows_powershell_5() -> None:

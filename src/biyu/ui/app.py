@@ -20,7 +20,6 @@ import asyncio
 import subprocess
 import hashlib
 import re
-from importlib import metadata
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -44,18 +43,8 @@ BUILD_DATE = "20260819"
 
 
 def _runtime_label() -> str:
-    """Return the explicit launcher role, with install type as legacy fallback."""
-    role = (os.environ.get("BIYU_RUNTIME_ROLE") or "").strip().lower()
-    if role == "production":
-        return "生产版"
-    if role == "test":
-        return "测试版"
-    try:
-        direct_url = metadata.distribution("biyu").read_text("direct_url.json")
-        install = json.loads(direct_url) if direct_url else {}
-    except (metadata.PackageNotFoundError, json.JSONDecodeError, OSError):
-        return "测试版"
-    return "测试版" if install.get("dir_info", {}).get("editable") else "生产版"
+    """Return the product name; deployment details stay in diagnostics."""
+    return "笔驭"
 
 
 def _runtime_identity() -> dict[str, str]:

@@ -83,13 +83,13 @@ def test_cli_executor_never_imports_pipeline_editor_or_writer() -> None:
     assert '"from biyu.cli.main import app; app()"' in source
 
 
-def test_launchers_use_fixed_environment_specific_ports() -> None:
+def test_product_has_one_fixed_author_launcher() -> None:
     assert not Path("工作台.bat").exists()
-    launchers = {"start_biyu_ui.bat": "-Mode Production -Port 8080", "start_biyu_ui_dev.bat": "-Mode Test -Port 8090"}
-    for filename, expected in launchers.items():
-        text = Path(filename).read_text(encoding="ascii")
-        assert expected in text
-        assert "8080,1,8089" not in text
+    assert not Path("start_biyu_ui_dev.bat").exists()
+    text = Path("start_biyu_ui.bat").read_text(encoding="ascii")
+    assert "-Port 8080" in text
+    assert "-Mode" not in text
+    assert "8080,1,8089" not in text
 
 
 def test_normal_pages_link_to_the_generic_workbench() -> None:

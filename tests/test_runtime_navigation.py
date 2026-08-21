@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 
@@ -68,20 +67,14 @@ def test_shelf_create_book_is_two_fields_and_empty_state_is_local() -> None:
 def test_runtime_version_endpoint_and_visible_shelf_badge(monkeypatch) -> None:
     import biyu.ui.app as app_module
 
-    class EditableDistribution:
-        def read_text(self, name: str) -> str | None:
-            assert name == "direct_url.json"
-            return json.dumps({"dir_info": {"editable": True}})
-
-    monkeypatch.setattr(app_module.metadata, "distribution", lambda _: EditableDistribution())
     monkeypatch.setattr(app_module.subprocess, "check_output", lambda *args, **kwargs: "00a7b752\n")
     response = TestClient(app_module.app).get("/api/version")
     assert response.status_code == 200
     payload = response.json()
     assert payload["version"] == "0.1.0"
     assert payload["build"] == "20260819 · 00a7b752"
-    assert payload["runtime"] == "测试版"
-    assert payload["role"] == "测试版"
+    assert payload["runtime"] == "笔驭"
+    assert payload["role"] == "笔驭"
     assert payload["checkout"] == "biyu-dev"
     assert payload["repo"] == "guge0/biyu"
     assert payload["sha"] == "00a7b752"
@@ -90,17 +83,7 @@ def test_runtime_version_endpoint_and_visible_shelf_badge(monkeypatch) -> None:
     script = (STATIC / "app.js").read_text(encoding="utf-8")
     assert 'id="version-label"' in html
     assert 'fetch("/api/version")' in script
+    assert "info.version" in script
+    assert "info.checkout" not in script
+    assert "info.data_root" not in script
     assert "版本无法确认" in script
-
-
-def test_non_editable_distribution_reports_production_wheel(monkeypatch) -> None:
-    import biyu.ui.app as app_module
-
-    class WheelDistribution:
-        def read_text(self, name: str) -> str | None:
-            assert name == "direct_url.json"
-            return json.dumps({"archive_info": {"hash": "sha256=fixture"}})
-
-    monkeypatch.setattr(app_module.metadata, "distribution", lambda _: WheelDistribution())
-    response = TestClient(app_module.app).get("/api/version")
-    assert response.json()["runtime"] == "生产版"
