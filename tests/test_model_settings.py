@@ -105,7 +105,7 @@ def test_first_run_ui_masks_key_and_redirects_direct_workbench() -> None:
     workbench_js = Path("src/biyu/ui/static/workbench.js").read_text(encoding="utf-8")
     gitignore = Path(".gitignore").read_text(encoding="utf-8")
     assert 'type="password"' in index
-    assert "保存并校验连接" in index
+    assert "保存并试一下连接" in index
     assert "document.getElementById('setup-key').value=''" in setup_js
     assert "location.href='/?setup=1'" in workbench_js
     assert "**/secrets.enc" in gitignore

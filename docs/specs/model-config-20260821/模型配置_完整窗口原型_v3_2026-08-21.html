@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>模型配置 · 完整窗口原型 v2</title>
+<style>
+:root{
+  --paper:#F8F5EE; --surface:#FDFBF6; --ink:#262119; --ink-solid:#2A251C;
+  --ink-soft:#5C5443; --ink-mute:#8C8471; --ink-faint:#B0A897;
+  --rule:#E0DACC; --rule-soft:#EDE8DC; --btn-border:#CFC7B4;
+  /* 赭红只给「等你处理」。本屏合法用法＝出错行、以及「你现在是混着用的」那条提醒。 */
+  --mark:#A65340; --mark-bg:#E8CFC6;
+  --serif:"Noto Serif SC","Source Han Serif SC",serif;
+  --sans:"Noto Sans SC","Source Han Sans SC",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans)}
+.proto{position:fixed;right:14px;bottom:14px;z-index:20;background:var(--surface);
+  border:1px solid var(--rule);border-radius:2px;padding:10px 12px;font-size:12px;color:var(--ink-mute);max-width:230px}
+.proto b{display:block;font-weight:500;color:var(--ink-soft);margin-bottom:6px}
+.proto button{font-family:var(--sans);font-size:12px;color:var(--ink-soft);background:transparent;
+  border:1px solid var(--btn-border);border-radius:2px;padding:4px 8px;margin:2px 2px 0 0;cursor:pointer}
+.proto button[aria-pressed="true"]{background:var(--ink-solid);color:var(--surface);border-color:var(--ink-solid)}
+
+.topbar{display:flex;align-items:center;gap:24px;padding:18px 28px;border-bottom:1px solid var(--rule-soft)}
+.brand{font-family:var(--serif);font-size:19px;letter-spacing:.08em}
+.topnav{display:flex;gap:22px;margin:0 auto;font-size:14px}
+.topnav a{color:var(--ink-mute);text-decoration:none}
+.sets{display:flex;gap:16px;align-items:center;font-size:13px}
+.sets a{color:var(--ink-mute);text-decoration:none}
+.sets a.on{color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px}
+.env{font-size:12px;color:var(--ink-mute);border:1px solid var(--rule);border-radius:999px;padding:3px 10px}
+
+.veil{position:fixed;inset:0;top:59px;background:rgba(38,33,25,.28);display:flex;
+  align-items:flex-start;justify-content:center;padding:36px 16px;overflow:auto}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:2px;width:600px;padding:28px 30px 24px}
+.panel h3{font-family:var(--serif);font-weight:400;font-size:24px;margin:0 0 10px}
+.note{font-size:13px;line-height:1.9;color:var(--ink-mute);margin:0 0 20px}
+.warn{color:var(--mark);font-size:13px;line-height:1.9;margin:0 0 18px}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:13px;color:var(--ink-soft);margin-bottom:7px}
+.field .hint{font-size:12px;color:var(--ink-faint);margin-top:7px;line-height:1.8}
+.input,select{width:100%;font-family:var(--sans);font-size:13.5px;color:var(--ink);background:var(--paper);
+  border:1px solid var(--btn-border);border-radius:2px;padding:10px 12px}
+.keystate{font-size:13px;color:var(--ink-mute);margin:-6px 0 18px}
+.landing{background:var(--paper);border:1px solid var(--rule-soft);border-radius:2px;
+  padding:13px 15px;font-size:13px;line-height:2.1;color:var(--ink-soft);margin-bottom:20px}
+.landing b{font-weight:500;color:var(--ink)}
+
+/* ── 高级：逐环节 ── */
+.adv{border-top:1px solid var(--rule-soft);margin-top:4px;padding-top:16px}
+.advhead{font-size:13px;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;
+  background:none;border:0;padding:0;cursor:pointer;font-family:var(--sans)}
+.stages{margin-top:18px}
+.stage{border-top:1px solid var(--rule-soft);padding:15px 0}
+.stage:first-child{border-top:0;padding-top:4px}
+.stage .top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.stage .nm{font-size:14.5px;color:var(--ink)}
+.stage .why{font-size:12.5px;color:var(--ink-mute);margin:5px 0 10px;line-height:1.8}
+.stage .ctl{display:flex;gap:10px;align-items:center}
+.stage select{flex:1}
+.badge{font-size:12px;color:var(--ink-mute);white-space:nowrap}
+.reset{font-size:12px;color:var(--ink-soft);background:none;border:0;padding:0;cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px;font-family:var(--sans);white-space:nowrap}
+.follow{flex:1;font-size:13px;color:var(--ink-mute);background:var(--paper);
+  border:1px dashed var(--btn-border);border-radius:2px;padding:10px 12px}
+.switch{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;color:var(--ink-soft)}
+.track{width:36px;height:19px;border-radius:999px;background:var(--rule);border:1px solid var(--btn-border);position:relative}
+.knob{position:absolute;top:1px;left:1px;width:15px;height:15px;border-radius:50%;background:var(--surface);
+  border:1px solid var(--btn-border);transition:transform .15s}
+.switch[aria-checked="true"] .track{background:var(--ink-solid);border-color:var(--ink-solid)}
+.switch[aria-checked="true"] .knob{transform:translateX(17px)}
+.stage.off .ctl{opacity:.4;pointer-events:none}
+
+.foot{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;
+  border-top:1px solid var(--rule-soft);padding-top:18px}
+.btn-solid{display:inline-flex;align-items:center;justify-content:center;font-family:var(--sans);
+  font-size:14px;font-weight:500;background:var(--ink-solid);color:var(--paper);
+  border:1px solid var(--ink-solid);border-radius:2px;padding:11px 24px;cursor:pointer}
+.btn-line{display:inline-flex;align-items:center;justify-content:center;font-family:var(--sans);
+  font-size:13px;color:var(--ink-soft);background:transparent;border:1px solid var(--btn-border);
+  border-radius:2px;padding:10px 18px;cursor:pointer}
+button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(--ink-soft);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">笔驭</div>
+  <nav class="topnav"><a href="#">书架</a><a href="#">工作台</a></nav>
+  <div class="sets"><a href="#" class="on">模型</a><a href="#">备份</a>
+    <span class="env">笔驭 · 9de61318</span></div>
+</div>
+
+<div class="veil">
+  <div class="panel">
+    <h3>模型</h3>
+    <p class="note">选一家你有 Key 的服务商就行。笔驭会给每个环节挑合适的模型。</p>
+
+    <p class="warn" id="warn" hidden></p>
+
+    <div class="field">
+      <label for="pv">服务商</label>
+      <select id="pv">
+        <option>DeepSeek</option><option>智谱</option><option>Kimi</option><option>豆包</option>
+        <option>其他（自己填）</option>
+      </select>
+    </div>
+
+    <div id="custom" hidden>
+      <div class="field">
+        <label for="url">接口地址</label>
+        <input class="input" id="url" value="https://api.deepseek.com/v1" spellcheck="false">
+        <div class="hint">要能按 OpenAI 那套接口对话。本地跑的模型也可以，比如 http://127.0.0.1:11434/v1</div>
+      </div>
+      <div class="field">
+        <label for="mid">模型 ID</label>
+        <input class="input" id="mid" value="deepseek-chat" spellcheck="false">
+        <div class="hint">照服务商文档上写的填。填错了会在下面报出来。</div>
+      </div>
+      <p class="warn">你的 Key 会发给上面这个地址。确认它是你信任的地方。</p>
+    </div>
+
+    <div class="landing" id="landing"></div>
+
+    <div class="keystate" id="ks">API Key：已配置</div>
+    <div class="field">
+      <label for="key">API Key</label>
+      <input class="input" id="key" type="password" placeholder="留空表示继续用现在这把 Key">
+      <div class="hint">已经保存过的 Key 不会显示出来。</div>
+    </div>
+
+    <div class="adv">
+      <button class="advhead" id="advbtn" aria-expanded="false">分别指定每个环节用什么模型</button>
+
+      <div class="stages" id="stages" hidden>
+
+        <div class="stage" id="s-plan">
+          <div class="top"><span class="nm">规划</span>
+            <span class="badge" id="b-plan" hidden>已手动指定　<button class="reset">恢复默认</button></span></div>
+          <div class="why">导演把你的细纲变成这一章的写作方案。这一步适合用会推理的模型。</div>
+          <div class="ctl"><select id="m-plan">
+            <option>deepseek-reasoner</option><option>deepseek-chat</option></select></div>
+        </div>
+
+        <div class="stage" id="s-write">
+          <div class="top"><span class="nm">写作</span>
+            <span class="badge" id="b-write" hidden>已手动指定　<button class="reset">恢复默认</button></span></div>
+          <div class="why">写手照方案写出正文。这一步要一口气写长文，<b>不要用推理模型</b>。</div>
+          <div class="ctl"><select id="m-write">
+            <option>deepseek-chat</option><option>deepseek-reasoner</option></select></div>
+        </div>
+
+        <div class="stage" id="s-edit">
+          <div class="top"><span class="nm">检查</span>
+            <span class="switch" id="sw-edit" role="switch" aria-checked="true" tabindex="0">
+              <span class="track"><span class="knob"></span></span><span>开着</span></span></div>
+          <div class="why">编辑读一遍，挑出问题和偏离。</div>
+          <div class="ctl"><div class="follow">跟写作用同一个模型。这一步目前不能单独换。</div></div>
+        </div>
+
+        <div class="stage off" id="s-polish">
+          <div class="top"><span class="nm">润色</span>
+            <span class="switch" id="sw-polish" role="switch" aria-checked="false" tabindex="0">
+              <span class="track"><span class="knob"></span></span><span>关着</span></span></div>
+          <div class="why">再顺一遍文字。可以不用。</div>
+          <div class="ctl"><select id="m-polish">
+            <option>deepseek-chat</option><option>kimi</option></select></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="foot">
+      <button class="btn-line">取消</button>
+      <button class="btn-solid">保存并试一下连接</button>
+    </div>
+  </div>
+</div>
+
+<div class="proto">
+  <b>原型状态切换器（实现时删除）</b>
+  <button type="button" data-s="one" aria-pressed="true">普通 · 一家</button>
+  <button type="button" data-s="mixed" aria-pressed="false">普通 · 现在混着用</button>
+  <button type="button" data-s="adv" aria-pressed="false">高级 · 展开</button>
+  <button type="button" data-s="over" aria-pressed="false">高级 · 改过一项</button>
+  <button type="button" data-s="polish" aria-pressed="false">高级 · 开了润色</button>
+  <button type="button" data-s="noedit" aria-pressed="false">高级 · 关了检查</button>
+  <button type="button" data-s="other" aria-pressed="false">其他 · 手填</button>
+  <button type="button" data-s="badurl" aria-pressed="false">其他 · 地址不对</button>
+  <button type="button" data-s="badmid" aria-pressed="false">其他 · 模型 ID 不对</button>
+</div>
+
+<script>
+var LAND_ONE =
+  '<b>规划</b>用 deepseek-reasoner<br>' +
+  '<b>写作</b>用 deepseek-chat<br>' +
+  '<b>检查</b>跟写作一样，用 deepseek-chat<br>' +
+  '<b>润色</b>没开';
+
+var LAND_OVER =
+  '<b>规划</b>用 deepseek-chat<span class="badge">　（你手动改过）</span><br>' +
+  '<b>写作</b>用 deepseek-chat<br>' +
+  '<b>检查</b>跟写作一样，用 deepseek-chat<br>' +
+  '<b>润色</b>没开';
+
+var LAND_POLISH =
+  '<b>规划</b>用 deepseek-reasoner<br>' +
+  '<b>写作</b>用 deepseek-chat<br>' +
+  '<b>检查</b>跟写作一样，用 deepseek-chat<br>' +
+  '<b>润色</b>用 kimi<span class="badge">　（你手动改过）</span>';
+
+var LAND_NOEDIT =
+  '<b>规划</b>用 deepseek-reasoner<br>' +
+  '<b>写作</b>用 deepseek-chat<br>' +
+  '<b>检查</b>关着<br>' +
+  '<b>润色</b>没开';
+
+var LAND_OTHER =
+  '<b>规划</b>用 deepseek-chat<br>' +
+  '<b>写作</b>用 deepseek-chat<br>' +
+  '<b>检查</b>跟写作一样，用 deepseek-chat<br>' +
+  '<b>润色</b>没开<br>' +
+  '<span class="badge">自己填的模型，我们不知道它擅长什么，所以每个环节都用它。' +
+  '想分开用，就在下面分别指定。</span>';
+
+var S = {
+  one:    { land:LAND_ONE, adv:false, warn:'',
+            over:false, edit:true, polish:false },
+  other:  { land:LAND_OTHER, adv:false, warn:'', over:false, edit:true, polish:false,
+            pv:4, custom:true,
+            note:'连上了不代表它写得动一整章。第一次生成如果失败，回来换一个模型。' },
+  badurl: { land:LAND_OTHER, adv:false, over:false, edit:true, polish:false,
+            pv:4, custom:true,
+            warn:'连不上 https://api.deepsekk.com/v1：域名找不到。配置没有改动。' },
+  badmid: { land:LAND_OTHER, adv:false, over:false, edit:true, polish:false,
+            pv:4, custom:true,
+            warn:'地址通了，但对面说：Model Not Exist。把模型 ID 对着文档再看一眼。配置没有改动。' },
+  mixed:  { land:LAND_ONE, adv:false, over:false, edit:true, polish:false,
+            warn:'你现在是混着用的：规划 r1、写作 v4_pro、润色 kimi。选定一家会把它们都换成那一家的模型。' },
+  adv:    { land:LAND_ONE, adv:true, warn:'', over:false, edit:true, polish:false },
+  over:   { land:LAND_OVER, adv:true, warn:'', over:true, edit:true, polish:false },
+  polish: { land:LAND_POLISH, adv:true, warn:'', over:false, edit:true, polish:true },
+  noedit: { land:LAND_NOEDIT, adv:true, warn:'', over:false, edit:false, polish:false }
+};
+
+function setSwitch(el, on, onText, offText) {
+  el.setAttribute('aria-checked', String(on));
+  el.lastElementChild.textContent = on ? onText : offText;
+}
+
+function apply(key) {
+  var s = S[key];
+  if (!s) { return; }
+
+  document.getElementById('pv').selectedIndex = s.pv || 0;
+  document.getElementById('custom').hidden = !s.custom;
+
+  document.getElementById('landing').innerHTML =
+    s.land + (s.note ? '<br><span class="badge">' + s.note + '</span>' : '');
+
+  var w = document.getElementById('warn');
+  w.textContent = s.warn;
+  w.hidden = !s.warn;
+
+  document.getElementById('stages').hidden = !s.adv;
+  document.getElementById('advbtn').setAttribute('aria-expanded', String(s.adv));
+
+  document.getElementById('b-plan').hidden = !s.over;
+  document.getElementById('m-plan').selectedIndex = s.over ? 1 : 0;
+
+  setSwitch(document.getElementById('sw-edit'), s.edit, '开着', '关着');
+  document.getElementById('s-edit').className = 'stage' + (s.edit ? '' : ' off');
+
+  setSwitch(document.getElementById('sw-polish'), s.polish, '开着', '关着');
+  document.getElementById('s-polish').className = 'stage' + (s.polish ? '' : ' off');
+  document.getElementById('m-polish').selectedIndex = s.polish ? 1 : 0;
+
+  var btns = document.querySelectorAll('.proto button');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].setAttribute('aria-pressed', String(btns[i].getAttribute('data-s') === key));
+  }
+}
+
+document.querySelector('.proto').addEventListener('click', function (ev) {
+  var t = ev.target;
+  if (t && t.tagName === 'BUTTON' && t.getAttribute('data-s')) { apply(t.getAttribute('data-s')); }
+});
+
+document.getElementById('advbtn').addEventListener('click', function () {
+  var st = document.getElementById('stages');
+  st.hidden = !st.hidden;
+  this.setAttribute('aria-expanded', String(!st.hidden));
+});
+
+apply('one');
+</script>
+</body>
+</html>

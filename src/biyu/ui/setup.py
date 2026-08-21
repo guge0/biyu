@@ -31,6 +31,41 @@ def _catalog() -> list[dict[str, str]]:
     return result
 
 
+def _provider_catalog() -> list[dict[str, Any]]:
+    """Expose provider choices and their effective stage assignments."""
+    try:
+        raw = yaml.safe_load(get_config_path().read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        return []
+    models = raw.get("models", {})
+    pipeline = raw.get("pipeline", {})
+    recommendations = raw.get("provider_recommendations", {})
+    providers = raw.get("providers", {})
+    result = []
+    for provider, cfg in providers.items():
+        if not isinstance(cfg, dict):
+            continue
+        configured = recommendations.get(provider, {}) if isinstance(recommendations, dict) else {}
+        assigned = {}
+        for stage in ("planner", "writer", "polisher"):
+            alias = configured.get(stage) or pipeline.get(stage)
+            if alias and isinstance(models.get(alias), dict) and models.get(alias, {}).get("provider") == provider:
+                assigned[stage] = models[alias].get("model_id", alias)
+        if not assigned:
+            provider_models = {a: m for a, m in models.items() if isinstance(m, dict) and m.get("provider") == provider and m.get("type") != "embedding"}
+            ids = list(provider_models)
+            if ids:
+                planner = next((a for a in ids if "reason" in str(provider_models[a].get("model_id", "")).lower()), ids[0])
+                writer = next((a for a in ids if "chat" in str(provider_models[a].get("model_id", "")).lower()), ids[0])
+                assigned = {"planner": provider_models[planner].get("model_id", planner), "writer": provider_models[writer].get("model_id", writer), "polisher": provider_models[writer].get("model_id", writer)}
+        if assigned:
+            result.append({"provider": provider, "models": assigned})
+    custom = load_setup().get("custom_provider")
+    if isinstance(custom, dict) and custom.get("model_id"):
+        result.append({"provider": "custom", "models": {stage: custom["model_id"] for stage in ("planner", "writer", "polisher")}})
+    return result
+
+
 def _books() -> list[dict[str, str]]:
     result = []
     root = get_data_root()
@@ -67,14 +102,18 @@ def setup_status() -> dict[str, Any]:
     providers = {item["provider"] for item in catalog}
     configured_providers = {provider: bool(load_provider_secret(provider)) for provider in sorted(providers)}
     provider = next((item["provider"] for item in catalog if item["alias"] == selected), "")
+    active_provider = str(settings.get("provider", "")) or provider
     ready = bool(settings.get("complete") and selected and load_provider_secret(provider)) or _configured_without_wizard()
     return {
         "ready": ready,
         "selected_model": selected,
+        "provider": active_provider,
         "selected_book": str(settings.get("selected_book", "")),
         "models": catalog,
         "books": _books(),
         "configured_providers": configured_providers,
+        "providers": _provider_catalog(),
+        "custom_provider": load_setup().get("custom_provider", {}),
     }
 
 
@@ -115,6 +154,29 @@ async def complete_setup(payload: dict[str, Any]) -> dict[str, str]:
 @router.post("/update")
 async def update_setup(payload: dict[str, Any]) -> dict[str, Any]:
     """Update the active model and optionally replace its provider secret."""
+    if str(payload.get("provider", "")) == "custom":
+        base_url = str(payload.get("base_url", "")).strip()
+        model_id = str(payload.get("model_id", "")).strip()
+        key = str(payload.get("api_key", "")).strip()
+        if not base_url or not model_id:
+            raise HTTPException(status_code=400, detail="请填写接口地址和模型 ID")
+        if not key and not load_provider_secret("custom"):
+            raise HTTPException(status_code=400, detail="还没有填 API Key，先填一个再选模型。")
+        try:
+            from biyu.llm.openai_compatible import OpenAICompatibleAdapter
+            adapter = OpenAICompatibleAdapter(model_name=model_id, api_key=key or load_provider_secret("custom"), base_url=base_url)
+            await adapter.generate([
+                {"role": "system", "content": "你是连接测试。"},
+                {"role": "user", "content": "只回复 OK"},
+            ], max_tokens=16)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"连不上 {base_url}：{exc}。配置没有改动。") from exc
+        if key:
+            store_provider_secret("custom", key)
+        old = load_setup()
+        save_setup({**old, "custom_provider": {"base_url": base_url.rstrip("/"), "model_id": model_id}, "provider": "custom", "complete": True})
+        return {"message": "连接设置已更新", "provider": "custom", "model": model_id, "key_configured": True}
+
     model = str(payload.get("model", ""))
     selected = next((item for item in _catalog() if item["alias"] == model), None)
     if selected is None:

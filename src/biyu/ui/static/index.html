@@ -112,8 +112,18 @@
       <h2 id="setup-heading">第一次使用，先完成连接</h2>
       <p id="setup-description">API Key 只存进系统钥匙串；系统会用一次极短请求校验连通性。</p>
       <p id="setup-key-state" class="status-text">API Key：未配置</p>
-      <label>API Key<input id="setup-key" type="password" autocomplete="off" required placeholder="输入后不会再次显示"></label>
-      <label>模型<select id="setup-model" required></select></label>
+      <label>服务商<select id="setup-provider" required></select></label>
+      <div id="setup-custom-fields" hidden>
+        <label>接口地址<input id="setup-base-url" autocomplete="off" placeholder="https://example.com/v1"></label>
+        <label>模型 ID<input id="setup-model-id" autocomplete="off" placeholder="按服务商文档填写"></label>
+        <p class="setup-hint">要能按 OpenAI 那套接口对话。本地模型也可以，例如 http://127.0.0.1:11434/v1</p>
+        <p class="setup-warning">你的 Key 会发给上面这个地址。确认它是你信任的地方。</p>
+      </div>
+      <p id="setup-landing" class="setup-hint"></p>
+      <label>API Key<input id="setup-key" type="password" autocomplete="off" required placeholder="留空表示继续用现在这把 Key"></label>
+      <label id="setup-model-legacy" hidden>模型<select id="setup-model"></select></label>
+      <button id="setup-advanced" class="setup-link" type="button" aria-expanded="false">分别指定每个环节用什么模型</button>
+      <div id="setup-advanced-fields" hidden></div>
       <div id="setup-book-fields">
         <label>书籍<select id="setup-book"></select></label>
         <label><input id="setup-create" type="checkbox"> 新建一本书</label>
@@ -126,7 +136,7 @@
       </div>
       <div class="modal-actions">
         <button id="setup-cancel" class="btn-secondary" type="button" hidden>取消</button>
-        <button id="setup-submit" class="btn-primary" type="submit">保存并校验连接</button>
+        <button id="setup-submit" class="btn-primary" type="submit">保存并试一下连接</button>
       </div>
       <p id="setup-status" role="status"></p>
     </form>

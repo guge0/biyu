@@ -5,6 +5,9 @@
 
    const form = $('setup-form');
    const model = $('setup-model');
+   const provider = $('setup-provider');
+   const customFields = $('setup-custom-fields');
+   const landing = $('setup-landing');
    const book = $('setup-book');
    const create = $('setup-create');
    const titleRow = $('setup-title-row');
@@ -13,6 +16,7 @@
    const submit = $('setup-submit');
    const cancel = $('setup-cancel');
    const settingsButton = $('connection-settings-button');
+   const advanced = $('setup-advanced');
    let snapshot = null;
    let regularMode = false;
 
@@ -22,6 +26,7 @@
    };
 
    const selectedProvider = () => {
+     if (provider && provider.value) return provider.value;
      const item = (snapshot?.models || []).find(entry => entry.alias === model.value);
      return item?.provider || '';
    };
@@ -34,9 +39,30 @@
    };
 
    const fillModels = () => {
+     if (provider) {
+       const choices = snapshot.providers || [];
+       provider.replaceChildren(...choices.map(item => new Option(item.provider === 'custom' ? '其他（自己填）' : item.provider, item.provider)));
+       provider.value = snapshot.provider || (choices[0] || {}).provider || '';
+       provider.onchange = renderProvider;
+       renderProvider();
+     }
      model.replaceChildren(...snapshot.models.map(item => new Option(`${item.label}（${item.provider}）`, item.alias)));
      if (snapshot.selected_model) model.value = snapshot.selected_model;
      renderKeyState();
+   };
+
+   const renderProvider = () => {
+     const isCustom = provider?.value === 'custom';
+     if (customFields) customFields.hidden = !isCustom;
+     const item = (snapshot.providers || []).find(entry => entry.provider === provider?.value);
+     if (landing) landing.innerHTML = item ? Object.entries(item.models || {}).map(([stage, name]) => `${stage === 'planner' ? '规划' : stage === 'writer' ? '写作' : '润色'}用 ${name}`).join(' · ') : '';
+     renderKeyState();
+   };
+
+   if (advanced) advanced.onclick = () => {
+     const fields = $('setup-advanced-fields');
+     fields.hidden = !fields.hidden;
+     advanced.setAttribute('aria-expanded', String(!fields.hidden));
    };
 
    const openRegularSettings = () => {
@@ -47,9 +73,10 @@
      $('setup-key').required = false;
       document.getElementById('setup-key').value='';
      cancel.hidden = false;
-     submit.textContent = '保存并校验连接';
+     submit.textContent = '保存并试一下连接';
      status.textContent = '';
      fillModels();
+     if ($('setup-model-legacy')) $('setup-model-legacy').hidden = true;
      overlay.hidden = false;
      renderKeyState();
    };
@@ -62,6 +89,7 @@
      $('setup-key').required = true;
      cancel.hidden = true;
      fillModels();
+     if ($('setup-model-legacy')) $('setup-model-legacy').hidden = true;
      book.replaceChildren(...snapshot.books.map(item => new Option(item.title, item.id)));
      if (!snapshot.books.length) {
        create.checked = true;
@@ -88,7 +116,7 @@
      status.className = '';
      try {
        const payload = regularMode
-         ? { api_key: $('setup-key').value, model: model.value }
+         ? (provider?.value === 'custom' ? { provider: 'custom', base_url: $('setup-base-url').value, model_id: $('setup-model-id').value, api_key: $('setup-key').value } : { api_key: $('setup-key').value, model: model.value })
          : {
              api_key: $('setup-key').value,
              model: model.value,
@@ -106,16 +134,17 @@
        if (!response.ok) throw new Error(typeof body.detail === 'string' ? body.detail : '设置没有完成');
        $('setup-key').value = '';
        status.textContent = `${body.message}；密钥保存在${body.secret_storage}`;
-       const provider = selectedProvider();
+       const savedProvider = selectedProvider();
        snapshot.selected_model = model.value;
-       snapshot.configured_providers[provider] = true;
+       snapshot.provider = savedProvider;
+       snapshot.configured_providers[savedProvider] = true;
        renderKeyState();
        if (!regularMode) setTimeout(() => location.reload(), 500);
      } catch (error) {
        showError(error.message);
      } finally {
        submit.disabled = false;
-       submit.textContent = '保存并校验连接';
+       submit.textContent = '保存并试一下连接';
      }
    };
 

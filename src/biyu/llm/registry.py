@@ -12,6 +12,7 @@ from .deepseek import DeepSeekAdapter
 from .doubao import DoubaoAdapter
 from .glm import GLMAdapter
 from .kimi import KimiAdapter
+from .openai_compatible import OpenAICompatibleAdapter
 
 _ADAPTER_MAP: dict[str, type[LLMAdapter]] = {
     "glm": GLMAdapter,
@@ -19,6 +20,7 @@ _ADAPTER_MAP: dict[str, type[LLMAdapter]] = {
     "kimi": KimiAdapter,
     "moonshot": KimiAdapter,  # moonshot provider uses KimiAdapter
     "doubao": DoubaoAdapter,
+    "openai_compatible": OpenAICompatibleAdapter,
 }
 
 
@@ -52,6 +54,14 @@ class ModelRegistry:
         self._pipeline = raw.get("pipeline", {})
         self._routing = raw.get("routing", {})
         self._features = raw.get("features", {})
+        setup = load_setup()
+        custom = setup.get("custom_provider") if isinstance(setup, dict) else None
+        if isinstance(custom, dict) and custom.get("base_url") and custom.get("model_id"):
+            self._providers["custom"] = {"base_url": str(custom["base_url"]), "api_key": load_provider_secret("custom")}
+            self._models["custom-main"] = {"provider": "custom", "model_id": str(custom["model_id"]), "max_tokens": 8000}
+            self._pipeline.setdefault("custom", "custom-main")
+        if "custom" in self._providers:
+            self._providers["custom"]["provider"] = "openai_compatible"
 
     def get_feature(self, name: str) -> bool:
         """特性开关(H-1):未配置一律视为关(默认关)。"""
@@ -76,6 +86,7 @@ class ModelRegistry:
 
         # New format: provider references providers section
         provider_name = model_cfg.get("provider")
+        adapter_provider = "openai_compatible" if provider_name == "custom" else provider_name
         if provider_name and provider_name in self._providers:
             provider_cfg = self._providers[provider_name]
 
@@ -96,6 +107,9 @@ class ModelRegistry:
             # model_id → model_name for adapter constructor
             if "model_id" in model_cfg:
                 model_cfg.setdefault("model_name", model_cfg.pop("model_id"))
+
+        if provider_name == "custom":
+            model_cfg["provider"] = adapter_provider
 
         # model_id → model_name fallback (legacy compat)
         if "model_id" in model_cfg and "model_name" not in model_cfg:
