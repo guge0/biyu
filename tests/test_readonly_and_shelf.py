@@ -252,9 +252,10 @@ def test_shelf_backend_exposes_settings_readiness_without_writing(
     assert _disk_snapshot(snapshot_root) == before
 
 
-def test_backup_status_copy_does_not_point_to_a_missing_switch() -> None:
-    source = Path("src/biyu/ui/backup.py").read_text(encoding="utf-8")
+def test_backup_status_has_real_settings_switch() -> None:
+    source = Path("src/biyu/ui/static/backup-panel.js").read_text(encoding="utf-8")
 
-    assert "打开开关后" not in source
-    assert 'os.environ.get("BIYU_AUTO_BACKUP") != "1"' in source
-    assert "备份没有开。等你开始写真书的时候再打开它。" in source
+    assert "/api/backup/settings" in source
+    assert "backup-auto" in source
+    assert "备份没有开 · 打开" in source
+    assert "上次备份失败" in source

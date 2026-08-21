@@ -17,11 +17,16 @@ def test_windows_has_one_author_launcher() -> None:
     assert "BIYU_DATA_ROOT_2" not in launcher
 
 
-def test_shared_launcher_refuses_occupied_port_and_sets_environment() -> None:
+def test_shared_launcher_restarts_biyu_but_refuses_other_occupant_and_sets_environment() -> None:
     text = (ROOT / "scripts" / "start_biyu_ui.ps1").read_text(encoding="utf-8")
 
     assert "Test-NetConnection" not in text
     assert "Get-NetTCPConnection" in text
+    assert "Existing Biyu service found" in text
+    assert "Stop-Process -Id $listener.OwningProcess" in text
+    assert "did not release port" in text
+    assert "uvicorn\\s+biyu\\.ui\\.app:app" in text
+    assert "Port $Port is occupied by another program" in text
     assert "exit 2" in text
     assert "$env:BIYU_ENV = 'prod'" in text
     assert "BIYU_RUNTIME_ROLE" in text

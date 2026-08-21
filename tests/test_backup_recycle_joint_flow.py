@@ -32,13 +32,13 @@ def test_backup_and_recycle_joint_flow(tmp_path: Path) -> None:
     assert (Path(first.root_path) / "recycle-test-book" / "chapters" / "ch1.md").read_text(encoding="utf-8") == "正文一"
 
     # F2/F3: book disappears from the shelf root, then returns intact.
-    first_trash = move_book_to_trash(data_root, backup_root, "recycle-test-book", actor="author", backup_ok=True)
+    first_trash = move_book_to_trash(data_root, backup_root, "recycle-test-book", actor="author")
     assert not book.exists()
     assert restore_book_from_trash(data_root, backup_root, first_trash.trash_id, actor="author").state == "ok"
     assert (book / "chapters" / "ch1.md").read_text(encoding="utf-8") == "正文一"
 
     # F4: second delete, then restore from the backup into a staging directory.
-    second_trash = move_book_to_trash(data_root, backup_root, "recycle-test-book", actor="author", backup_ok=True)
+    second_trash = move_book_to_trash(data_root, backup_root, "recycle-test-book", actor="author")
     assert not book.exists()
     staging = tmp_path / "staging"
     restored = restore_book(first.backup_id, "recycle-test-book", staging, backup_root=backup_root / "test")

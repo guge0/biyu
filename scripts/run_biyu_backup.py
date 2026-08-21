@@ -1,18 +1,20 @@
 """Run one scheduled Biyu backup without exposing credentials."""
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
-from biyu.backup_service import run_backup
+from biyu.backup_service import load_backup_settings, run_backup
 from biyu.config import get_data_root
+from biyu.secure_config import user_config_dir
 
 
 def main() -> int:
-    scope = "test" if os.environ.get("BIYU_RUNTIME_ROLE") == "test" else "production"
-    source = Path(os.environ.get("BIYU_DATA_ROOT", str(get_data_root())))
-    destination = Path(os.environ.get("BIYU_BACKUP_ROOT", r"D:\BiyuBackup"))
-    run_backup(source, destination, scope=scope, reason="scheduled")
+    settings = load_backup_settings()
+    if not settings.enabled:
+        return 0
+    source = Path(settings.source_path) if settings.source_path else get_data_root()
+    destination = Path(settings.destination)
+    run_backup(source, destination, scope="production", reason="scheduled", status_dir=user_config_dir())
     return 0
 
 

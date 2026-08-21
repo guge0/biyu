@@ -86,9 +86,11 @@ def test_disabled_backup_status_is_explicit_even_when_an_old_status_file_exists(
 ) -> None:
     import biyu.ui.backup as backup
 
+    monkeypatch.setenv("BIYU_USER_CONFIG_DIR", str(tmp_path / "config"))
+    monkeypatch.setenv("BIYU_BACKUP_ROOT", str(tmp_path / "backup"))
     monkeypatch.delenv("BIYU_AUTO_BACKUP", raising=False)
-    monkeypatch.setattr(backup, "_backup_root", lambda: tmp_path)
-    status = backup.backup_status("production")
+    status = backup.backup_status()
 
-    assert status.state == "disabled"
-    assert status.message == "备份没有开。等你开始写真书的时候再打开它。"
+    assert status["state"] == "disabled"
+    assert status["message"] == "备份没有开"
+    assert status["enabled"] is False

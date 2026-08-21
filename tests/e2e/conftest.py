@@ -77,7 +77,10 @@ def _live_server():
     # mock 注入(同进程 → thread 共享)
     _install_mock_llm()
 
-    keys = ("BIYU_RUNTIME_ROLE", "BIYU_ENV", "BIYU_DATA_ROOT", "BIYU_TEST_DATA_ROOT", "BIYU_DATA_ROOT_2")
+    keys = (
+        "BIYU_RUNTIME_ROLE", "BIYU_ENV", "BIYU_DATA_ROOT", "BIYU_TEST_DATA_ROOT", "BIYU_DATA_ROOT_2",
+        "BIYU_BACKUP_ROOT", "BIYU_AUTO_BACKUP", "BIYU_USER_CONFIG_DIR", "BIYU_TRASH_ROOT",
+    )
     previous = {key: os.environ.get(key) for key in keys}
     with tempfile.TemporaryDirectory(prefix="biyu-e2e-data-") as data_root:
         os.environ["BIYU_RUNTIME_ROLE"] = "test"
@@ -85,6 +88,10 @@ def _live_server():
         os.environ["BIYU_DATA_ROOT"] = data_root
         os.environ["BIYU_TEST_DATA_ROOT"] = data_root
         os.environ.pop("BIYU_DATA_ROOT_2", None)
+        os.environ["BIYU_AUTO_BACKUP"] = "0"
+        os.environ["BIYU_BACKUP_ROOT"] = str(Path(data_root) / "backup")
+        os.environ["BIYU_USER_CONFIG_DIR"] = str(Path(data_root) / "user-config")
+        os.environ["BIYU_TRASH_ROOT"] = str(Path(data_root) / "trash")
 
         port = _find_unused_port()
         config = uvicorn.Config(

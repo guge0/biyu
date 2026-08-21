@@ -68,18 +68,23 @@ async def enforce_runtime_binding() -> None:
 @app.on_event("startup")
 async def z1_startup_backup() -> None:
     """Start the configured backup without making a failed backup block the UI."""
-    if os.environ.get("BIYU_AUTO_BACKUP") != "1":
-        return
-    from biyu.backup_service import run_backup
+    from biyu.backup_service import load_backup_settings, run_backup
     from biyu.config import get_data_root
+    from biyu.secure_config import user_config_dir
+
+    settings = load_backup_settings()
+    if not settings.enabled:
+        return
 
     scope = "test" if os.environ.get("BIYU_RUNTIME_ROLE") == "test" else "production"
-    source = get_data_root()
-    destination = Path(os.environ.get("BIYU_BACKUP_ROOT", r"D:\BiyuBackup"))
+    source = Path(settings.source_path) if settings.source_path else get_data_root()
+    destination = Path(settings.destination)
 
     async def _run() -> None:
         try:
-            await asyncio.to_thread(run_backup, source, destination, scope=scope, reason="startup")
+            await asyncio.to_thread(
+                run_backup, source, destination, scope=scope, reason="startup", status_dir=user_config_dir()
+            )
         except Exception:
             # run_backup persists the failed state; the author UI reads it on load.
             return

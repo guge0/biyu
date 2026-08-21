@@ -40,10 +40,6 @@
         const label = $("version-label");
         if (label) label.textContent = "版本无法确认";
       });
-    fetch("/api/backup/status?scope=production").then(r => r.json()).then(s => {
-      const el = $("backup-status");
-      if (el) el.textContent = s.message || (s.last_backup_path ? `上次备份：${s.last_backup_at}，${s.last_backup_path}` : "从没备份过");
-    }).catch(() => { const el = $("backup-status"); if (el) el.textContent = "备份状态暂时不可用"; });
     try {
       const [sessResp, booksResp] = await Promise.all([
         fetch("/api/session"),
@@ -261,9 +257,9 @@
       if (trashBtn.disabled) return;
       const chapters = book.finalized_count || 0;
       const settings = book.settings_filled_count || 0;
-      if (!window.confirm(`整本书会移到回收站，保留 30 天。里面有 ${chapters} 章正式稿、${settings} 格设定。`)) return;
+      if (!await window.BiyuBackupPanel.confirmTrash(book)) return;
       trashBtn.disabled = true;
-      trashBtn.textContent = "备份并移入中…";
+      trashBtn.textContent = "移到回收站…";
       try {
         const response = await fetch(`/api/books/${encodeURIComponent(book.id || book.name)}/trash`, {
           method: "POST",

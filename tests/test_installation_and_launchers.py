@@ -59,6 +59,9 @@ def test_installer_rejects_unsupported_python_with_human_message() -> None:
     assert "sys.version_info" in text
     assert "Get-FileHash" not in text
     assert "System.Security.Cryptography.SHA256" in text
+    assert "function Get-SourceFingerprint" in text
+    assert "Join-Path $repo 'src'" in text
+    assert '$wantedState = "$head|$sourceHash"' in text
     venv_assignment = "$venvPython = Join-Path $repo '.venv\\Scripts\\python.exe'"
     existing_venv_gate = "if (-not (Test-Path -LiteralPath $venvPython)) {"
     assert text.index(venv_assignment) < text.index("Get-Command python")

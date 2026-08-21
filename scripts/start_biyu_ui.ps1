@@ -13,11 +13,26 @@ $listener = Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort $Port -State
     Select-Object -First 1
 if ($listener) {
     $owner = Get-CimInstance Win32_Process -Filter "ProcessId=$($listener.OwningProcess)" -ErrorAction SilentlyContinue
-    Write-Host "[X] Port $Port is occupied; Biyu will not switch ports or reuse an old service." -ForegroundColor Red
-    Write-Host "    PID: $($listener.OwningProcess)"
-    if ($owner) { Write-Host "    Process: $($owner.CommandLine)" }
-    Write-Host '    Close the old process, then run start_biyu_ui.bat again.'
-    exit 2
+    $commandLine = if ($owner) { [string]$owner.CommandLine } else { '' }
+    $isBiyu = $commandLine -match 'uvicorn\s+biyu\.ui\.app:app' -or $commandLine -match 'python(?:\.exe)?\s+.*biyu\.ui\.app:app'
+    if ($isBiyu) {
+        Write-Host "Existing Biyu service found (PID $($listener.OwningProcess)); restarting it with the current code." -ForegroundColor Yellow
+        Stop-Process -Id $listener.OwningProcess -Force -ErrorAction SilentlyContinue
+        for ($i = 0; $i -lt 20; $i++) {
+            if (-not (Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort $Port -State Listen -ErrorAction SilentlyContinue)) { break }
+            Start-Sleep -Milliseconds 250
+        }
+        if (Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort $Port -State Listen -ErrorAction SilentlyContinue) {
+            Write-Host "[X] The old Biyu service did not release port $Port." -ForegroundColor Red
+            exit 2
+        }
+    } else {
+        Write-Host "[X] Port $Port is occupied by another program; Biyu will not switch ports." -ForegroundColor Red
+        Write-Host "    PID: $($listener.OwningProcess)"
+        if ($owner) { Write-Host "    Process: $($owner.CommandLine)" }
+        Write-Host '    Close that program, then double-click start_biyu_ui.bat again.'
+        exit 2
+    }
 }
 
 if (-not (Test-Path -LiteralPath '.venv\Scripts\python.exe')) {

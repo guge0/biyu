@@ -18,16 +18,34 @@ if (-not (Test-Path -LiteralPath $venvPython)) {
 }
 $statePath = Join-Path $repo '.venv\.biyu-install-state'
 $head = (& git rev-parse HEAD 2>$null)
-$projectFile = Join-Path $repo 'pyproject.toml'
-$sha256 = [System.Security.Cryptography.SHA256]::Create()
-$stream = [System.IO.File]::OpenRead($projectFile)
-try {
-    $projectHash = ([System.BitConverter]::ToString($sha256.ComputeHash($stream))).Replace('-', '')
-} finally {
-    $stream.Dispose()
-    $sha256.Dispose()
+function Get-SourceFingerprint {
+    $files = @((Get-Item -LiteralPath (Join-Path $repo 'pyproject.toml'))) + @(
+        Get-ChildItem -LiteralPath (Join-Path $repo 'src') -File -Recurse |
+            Where-Object { $_.Extension -notin @('.pyc', '.pyo') } |
+            Sort-Object FullName
+    )
+    $lines = foreach ($file in $files) {
+        $sha256 = [System.Security.Cryptography.SHA256]::Create()
+        $stream = [System.IO.File]::OpenRead($file.FullName)
+        try {
+            $fileHash = ([System.BitConverter]::ToString($sha256.ComputeHash($stream))).Replace('-', '')
+        } finally {
+            $stream.Dispose()
+            $sha256.Dispose()
+        }
+        $relative = $file.FullName.Substring($repo.Length).TrimStart('\').Replace('\', '/')
+        "$relative=$fileHash"
+    }
+    $manifest = [System.Text.Encoding]::UTF8.GetBytes(($lines -join "`n"))
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return ([System.BitConverter]::ToString($sha256.ComputeHash($manifest))).Replace('-', '')
+    } finally {
+        $sha256.Dispose()
+    }
 }
-$wantedState = "$head|$projectHash"
+$sourceHash = Get-SourceFingerprint
+$wantedState = "$head|$sourceHash"
 if ($OnlyIfNeeded -and (Test-Path -LiteralPath $venvPython) -and (Test-Path -LiteralPath $statePath)) {
     if ((Get-Content -Raw -LiteralPath $statePath).Trim() -eq $wantedState) {
         Write-Host '代码和依赖没有变化，直接启动。'
@@ -38,7 +56,8 @@ if (-not $SkipPull -and (Test-Path -LiteralPath (Join-Path $repo '.git'))) {
     & git pull --ff-only
     if ($LASTEXITCODE -ne 0) { throw '更新失败。为保护本地文件，笔驭没有继续安装；请处理上方 Git 提示后重试。' }
     $head = (& git rev-parse HEAD 2>$null)
-    $wantedState = "$head|$projectHash"
+    $sourceHash = Get-SourceFingerprint
+    $wantedState = "$head|$sourceHash"
 }
 if (-not (Test-Path -LiteralPath $venvPython)) {
     & python -m venv (Join-Path $repo '.venv')

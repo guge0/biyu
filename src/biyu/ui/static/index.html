@@ -16,6 +16,7 @@
     </div>
     <div class="nav-badges">
       <button id="connection-settings-button" class="nav-command" type="button">换 Key / 换模型</button>
+      <button id="backup-settings-button" class="nav-command" type="button">备份</button>
       <div id="version-badge" class="env-badge env-test" title="当前运行版本">
         <span class="env-dot"></span>
         <span id="version-label">版本检测中…</span>
@@ -53,7 +54,7 @@
 
         <!-- 会话成本（W-1：纯文字说明，不套盒子）-->
         <p id="session-cost-card" class="status-text" hidden><span class="cost-label">本次会话累计：</span> <span class="money" id="cumulative-cost">¥0.00</span><span class="peak-hint" id="peak-hint"></span></p>
-        <p id="backup-status" class="status-text">备份状态读取中…</p>
+        <button id="backup-status" class="backup-status-trigger" type="button">备份状态读取中…</button>
         <p class="status-text"><a href="/trash.html">打开回收站</a></p>
 
         <!-- 书架 -->
@@ -131,10 +132,47 @@
     </form>
   </div>
 
+  <div id="backup-overlay" class="modal-overlay" hidden>
+    <section id="backup-panel" class="setup-card backup-panel" role="dialog" aria-modal="true" aria-labelledby="backup-heading" tabindex="-1">
+      <h2 id="backup-heading">备份</h2>
+      <p class="backup-note">把你写的书复制一份到另一个位置。防的是误删和软件出错，防不了硬盘坏或者机器丢。</p>
+      <label class="backup-switch-row">
+        <input id="backup-auto" type="checkbox" role="switch">
+        <span class="backup-switch-track" aria-hidden="true"><span></span></span>
+        <span>自动备份</span>
+      </label>
+      <p class="backup-hint">打开之后，每次启动笔驭备一次，另外每天凌晨 3:15 备一次；电脑当时不可用会在之后补备。</p>
+      <label class="backup-directory-label" for="backup-directory">备份到</label>
+      <div class="backup-directory-row">
+        <input id="backup-directory" type="text" readonly>
+        <button id="backup-choose-directory" class="btn-secondary" type="button">选个位置</button>
+      </div>
+      <p class="backup-hint">留最近 7 天，另外每周留一份，共 4 周。</p>
+      <div id="backup-detail" class="backup-detail" role="status" aria-live="polite">备份状态读取中…</div>
+      <div class="modal-actions">
+        <button id="backup-run" class="btn-secondary" type="button">现在备份一次</button>
+        <button id="backup-close" class="btn-secondary" type="button">关掉</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="trash-book-overlay" class="modal-overlay" hidden>
+    <section class="setup-card" role="dialog" aria-modal="true" aria-labelledby="trash-book-heading" tabindex="-1">
+      <h2 id="trash-book-heading">移到回收站</h2>
+      <p id="trash-book-message"></p>
+      <p id="trash-book-counts" class="status-text"></p>
+      <div class="modal-actions">
+        <button id="trash-book-cancel" class="btn-secondary" type="button">算了</button>
+        <button id="trash-book-confirm" class="btn-primary" type="button">移到回收站</button>
+      </div>
+    </section>
+  </div>
+
   <script src="/icons.js"></script>
   <script src="/genre.js?v=shelf-close-1"></script>
   <script src="/cn-num.js"></script>
   <script src="/setup.js?v=u1-1"></script>
+  <script src="/backup-panel.js?v=z1-1"></script>
   <script src="/app.js?v=shelf-close-1"></script>
 </body>
 </html>

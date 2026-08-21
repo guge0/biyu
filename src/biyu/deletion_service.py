@@ -27,18 +27,31 @@ def _author(actor: str) -> None:
 
 def _trash(root: Path) -> Path: return Path(root) / ".trash" / "books"
 
-def move_book_to_trash(data_root: Path, trash_root: Path, book_id: str, *, actor: str, backup_ok: bool = False) -> TrashEntry:
+def move_book_to_trash(data_root: Path, trash_root: Path, book_id: str, *, actor: str) -> TrashEntry:
     _author(actor)
-    if not backup_ok: raise RuntimeError("删书前必须先完成备份")
     source = Path(data_root) / book_id
     if not source.is_dir(): raise FileNotFoundError(book_id)
+    try:
+        metadata = json.loads((source / "book.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        metadata = {}
+    title = str(metadata.get("title") or metadata.get("display_name") or book_id)
     tid = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-%f")
     target = _trash(trash_root) / tid
-    target.parent.mkdir(parents=True, exist_ok=True); shutil.move(str(source), str(target))
-    chapters = list((target / "chapters").glob("ch*.md")) if (target / "chapters").exists() else []
-    entry = TrashEntry(tid, book_id, book_id, datetime.now(timezone.utc).isoformat(), (datetime.now(timezone.utc)+timedelta(days=30)).isoformat(), len(chapters), 0, str(target))
-    (target.parent / f"{tid}.json").write_text(json.dumps(asdict(entry), ensure_ascii=False), encoding="utf-8")
-    return entry
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(source), str(target))
+    try:
+        chapters = list((target / "chapters").glob("ch*.md")) if (target / "chapters").exists() else []
+        entry = TrashEntry(tid, book_id, title, datetime.now(timezone.utc).isoformat(), (datetime.now(timezone.utc)+timedelta(days=30)).isoformat(), len(chapters), 0, str(target))
+        meta = target.parent / f"{tid}.json"
+        temporary = meta.with_suffix(".json.tmp")
+        temporary.write_text(json.dumps(asdict(entry), ensure_ascii=False), encoding="utf-8")
+        temporary.replace(meta)
+        return entry
+    except Exception:
+        if target.exists() and not source.exists():
+            shutil.move(str(target), str(source))
+        raise
 
 def restore_book_from_trash(data_root: Path, trash_root: Path, trash_id: str, *, actor: str) -> dict:
     _author(actor); meta = _trash(trash_root) / f"{trash_id}.json"
@@ -80,7 +93,7 @@ def clear_chapter(data_root: Path, book_id: str, chapter_num: int, *, actor: str
     return ChapterResult(book_id, chapter_num, "clear", str(paths[1]), str(paths[0]), "not_required", 0.0, 0.0, True, "ok")
 
 def confirmation_copy(kind: str, **kwargs) -> str:
-    if kind == "delete_book": return f"整本书会移到回收站，保留 30 天。里面有 {kwargs['chapter_count']} 章正式稿、{kwargs['settings_count']} 格设定。"
+    if kind == "delete_book": return f"《{kwargs.get('book_title', '这本书')}》会移到回收站，随时能取回来。\n里面有 {kwargs['chapter_count']} 章正式稿、{kwargs['settings_count']} 格设定。"
     if kind == "retract": return f"第 {kwargs['chapter']} 章会退回候选稿。这一章发生的事已进记忆，需要重算，约 ¥{kwargs['estimated_cost']:.2f}。"
     if kind == "clear": return f"第 {kwargs['chapter']} 章会变成空位，第 {kwargs['chapter']+1} 章还是第 {kwargs['chapter']+1} 章。细纲、方案、正文都会清掉。"
     raise ValueError(kind)

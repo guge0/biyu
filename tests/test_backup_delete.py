@@ -48,13 +48,13 @@ def test_backup_failure_is_visible_and_does_not_report_success(tmp_path: Path) -
         run_backup(source, tmp_path / "D-BiyuBackup", scope="test", reason="startup")
 
 
-def test_book_trash_roundtrip_requires_author_and_preserves_content(tmp_path: Path) -> None:
+def test_book_trash_roundtrip_needs_no_backup_and_preserves_content(tmp_path: Path) -> None:
     from biyu.deletion_service import move_book_to_trash, restore_book_from_trash
 
     data_root = tmp_path / "data"
     book = _book(data_root)
     backup = tmp_path / "backup"
-    entry = move_book_to_trash(data_root, backup, "book-1", actor="author", backup_ok=True)
+    entry = move_book_to_trash(data_root, backup, "book-1", actor="author")
     assert not book.exists()
     assert entry.book_id == "book-1"
 
@@ -86,11 +86,11 @@ def test_chapter_actions_keep_number_and_separate_retract_from_clear(tmp_path: P
 def test_confirmation_copy_contains_consequences_and_cost() -> None:
     from biyu.deletion_service import confirmation_copy
 
-    assert confirmation_copy("delete_book", chapter_count=3, settings_count=5) == "整本书会移到回收站，保留 30 天。里面有 3 章正式稿、5 格设定。"
+    assert confirmation_copy("delete_book", book_title="测试书", chapter_count=3, settings_count=5) == "《测试书》会移到回收站，随时能取回来。\n里面有 3 章正式稿、5 格设定。"
     assert "需要重算" in confirmation_copy("retract", chapter=5, estimated_cost=0.12)
     assert "约 ¥0.12" in confirmation_copy("retract", chapter=5, estimated_cost=0.12)
     assert "第 6 章还是第 6 章" in confirmation_copy("clear", chapter=5)
-    assert "确定要删除吗" not in confirmation_copy("delete_book", chapter_count=1, settings_count=1)
+    assert "30 天" not in confirmation_copy("delete_book", chapter_count=1, settings_count=1)
 
 
 def test_backup_retention_keeps_seven_daily_and_four_weekly_points(tmp_path: Path) -> None:
