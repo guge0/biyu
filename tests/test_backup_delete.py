@@ -63,6 +63,25 @@ def test_book_trash_roundtrip_needs_no_backup_and_preserves_content(tmp_path: Pa
     assert (book / "chapters" / "ch1.md").read_text(encoding="utf-8") == "正式稿"
 
 
+def test_book_trash_resolves_stable_id_to_legacy_directory_name(tmp_path: Path) -> None:
+    from biyu.deletion_service import move_book_to_trash, restore_book_from_trash
+
+    data_root = tmp_path / "data"
+    trash_root = tmp_path / "trash"
+    book = data_root / "J1_stage1_20260811"
+    (book / "chapters").mkdir(parents=True)
+    (book / "book.json").write_text('{"id": "j1", "title": "测试书"}', encoding="utf-8")
+    (book / "chapters" / "ch1.md").write_text("正文", encoding="utf-8")
+
+    entry = move_book_to_trash(data_root, trash_root, "j1", actor="author")
+
+    assert not book.exists()
+    assert (Path(entry.source_path) / "book.json").exists()
+    restored = restore_book_from_trash(data_root, trash_root, entry.trash_id, actor="author")
+    assert restored.state == "ok"
+    assert (book / "chapters" / "ch1.md").read_text(encoding="utf-8") == "正文"
+
+
 def test_chapter_actions_keep_number_and_separate_retract_from_clear(tmp_path: Path) -> None:
     from biyu.deletion_service import clear_chapter, retract_official_chapter
 

@@ -8,7 +8,7 @@ from pathlib import Path
 @dataclass
 class TrashEntry:
     trash_id: str; book_id: str; book_title: str; deleted_at: str; expires_at: str
-    chapter_count: int; settings_filled_count: int; source_path: str; state: str = "trashed"
+    chapter_count: int; settings_filled_count: int; source_path: str; state: str = "trashed"; original_dir_name: str = ""
 
 @dataclass
 class ChapterResult:
@@ -27,9 +27,25 @@ def _author(actor: str) -> None:
 
 def _trash(root: Path) -> Path: return Path(root) / ".trash" / "books"
 
+def _resolve_source(data_root: Path, book_id: str) -> Path:
+    root = Path(data_root)
+    direct = root / book_id
+    if direct.is_dir():
+        return direct
+    for candidate in root.iterdir() if root.exists() else ():
+        if not candidate.is_dir():
+            continue
+        try:
+            metadata = json.loads((candidate / "book.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError, TypeError):
+            continue
+        if str(metadata.get("id", "")) == book_id:
+            return candidate
+    return direct
+
 def move_book_to_trash(data_root: Path, trash_root: Path, book_id: str, *, actor: str) -> TrashEntry:
     _author(actor)
-    source = Path(data_root) / book_id
+    source = _resolve_source(data_root, book_id)
     if not source.is_dir(): raise FileNotFoundError(book_id)
     try:
         metadata = json.loads((source / "book.json").read_text(encoding="utf-8"))
@@ -42,7 +58,7 @@ def move_book_to_trash(data_root: Path, trash_root: Path, book_id: str, *, actor
     shutil.move(str(source), str(target))
     try:
         chapters = list((target / "chapters").glob("ch*.md")) if (target / "chapters").exists() else []
-        entry = TrashEntry(tid, book_id, title, datetime.now(timezone.utc).isoformat(), (datetime.now(timezone.utc)+timedelta(days=30)).isoformat(), len(chapters), 0, str(target))
+        entry = TrashEntry(tid, book_id, title, datetime.now(timezone.utc).isoformat(), (datetime.now(timezone.utc)+timedelta(days=30)).isoformat(), len(chapters), 0, str(target), original_dir_name=source.name)
         meta = target.parent / f"{tid}.json"
         temporary = meta.with_suffix(".json.tmp")
         temporary.write_text(json.dumps(asdict(entry), ensure_ascii=False), encoding="utf-8")
@@ -56,7 +72,7 @@ def move_book_to_trash(data_root: Path, trash_root: Path, book_id: str, *, actor
 def restore_book_from_trash(data_root: Path, trash_root: Path, trash_id: str, *, actor: str) -> dict:
     _author(actor); meta = _trash(trash_root) / f"{trash_id}.json"
     if not meta.exists(): raise FileNotFoundError(trash_id)
-    entry = json.loads(meta.read_text(encoding="utf-8")); source = Path(entry["source_path"]); target = Path(data_root) / entry["book_id"]
+    entry = json.loads(meta.read_text(encoding="utf-8")); source = Path(entry["source_path"]); target = Path(data_root) / str(entry.get("original_dir_name") or entry["book_id"])
     if target.exists(): raise FileExistsError(f"现役目标已存在：{target}")
     shutil.move(str(source), str(target)); meta.unlink()
     return RestoreResult("ok", entry["book_id"], str(target), sum(1 for p in target.rglob("*") if p.is_file()))
