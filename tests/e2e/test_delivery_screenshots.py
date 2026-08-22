@@ -178,3 +178,29 @@ def test_data_root_backup_delete_and_landing_delivery_screenshots(page) -> None:
     page.locator(".hero .rise.in").first.wait_for(state="visible", timeout=5_000)
     page.wait_for_timeout(800)
     page.screenshot(path=str(output_dir / "07_仓内宣传页_1600x1000.png"), full_page=False)
+
+
+def test_about_entry_keeps_shelf_home_and_responsive_product_navigation(page, base_url) -> None:
+    base_url = os.environ.get("BIYU_QA_BASE_URL", base_url)
+    output_dir = Path(os.environ["BIYU_QA_SCREENSHOT_DIR"])
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    page.set_viewport_size({"width": 1600, "height": 1000})
+    page.goto(base_url + "/")
+    page.wait_for_load_state("networkidle", timeout=10_000)
+    assert page.locator("h1").inner_text() == "书架"
+    page.screenshot(path=str(output_dir / "08_启动后仍是书架_1600x1000.png"), full_page=True)
+
+    page.get_by_role("link", name="介绍").click()
+    page.wait_for_url(base_url + "/about.html")
+    assert page.locator('[aria-current="page"]').inner_text() == "介绍"
+    frame = page.frame_locator('iframe[title="笔驭介绍"]')
+    frame.locator("h1").wait_for(state="visible", timeout=5_000)
+    frame.locator(".hero .rise.in").first.wait_for(state="visible", timeout=5_000)
+    page.wait_for_timeout(900)
+    page.screenshot(path=str(output_dir / "09_产品内介绍页_1600x1000.png"), full_page=True)
+
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.wait_for_timeout(200)
+    assert page.evaluate("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
+    assert frame.locator("body").evaluate("el => el.scrollWidth <= el.clientWidth")

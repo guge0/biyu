@@ -35,6 +35,8 @@ def test_production_top_navigation_keeps_shelf_and_workbench_contract() -> None:
         links = _top_nav_links(page)
         labels = [text for text, _ in links]
         expected = ["书架", "工作台"]
+        if page == "index.html":
+            expected.append("介绍")
         if page in {"memory.html", "voiceprint.html"}:
             expected.append("声纹" if page == "memory.html" else "本书记忆")
         assert labels == expected, (page, links)

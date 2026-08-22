@@ -159,6 +159,7 @@ def runtime_version() -> dict[str, object]:
 
 
 _ASSET_REF = re.compile(r'(?P<prefix>(?:src|href)="/(?P<name>[^"?]+))\?v=[^"]+(?P<suffix>")')
+_landing_page = Path(__file__).resolve().parents[3] / "docs" / "index.html"
 
 
 def render_static_html(path: Path) -> str:
@@ -172,6 +173,23 @@ def render_static_html(path: Path) -> str:
         return f'{match.group("prefix")}?v={digest}{match.group("suffix")}'
 
     return _ASSET_REF.sub(replace, html)
+
+
+@app.get("/about.html", response_class=HTMLResponse)
+def about_page() -> str:
+    """Serve the repository landing page directly; keep one canonical file."""
+    if not _landing_page.is_file():
+        return "<!doctype html><html lang=\"zh-CN\"><meta charset=\"utf-8\"><title>笔驭</title><p>介绍页不在。</p>"
+    return '''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>介绍 · 笔驭</title>
+<style>*{box-sizing:border-box}html,body{height:100%;margin:0}nav{height:58px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;background:#f8f5ee;border-bottom:1px solid #e0dacc;font-family:system-ui,sans-serif}nav a{color:#262119;text-decoration:none}.links{display:flex;gap:28px}.active{font-weight:700;border-bottom:2px solid #262119}iframe{display:block;width:100%;height:calc(100% - 58px);border:0}@media(max-width:600px){nav{padding:0 16px}.links{gap:18px}}</style>
+<nav><a href="/" class="brand">笔驭</a><div class="links"><a href="/">书架</a><a class="active" aria-current="page">介绍</a></div></nav><iframe src="/about-content.html" title="笔驭介绍"></iframe></html>'''
+
+
+@app.get("/about-content.html", response_class=HTMLResponse)
+def about_content() -> str:
+    if not _landing_page.is_file():
+        return "<!doctype html><html lang=\"zh-CN\"><meta charset=\"utf-8\"><p>介绍页不在。</p>"
+    return _landing_page.read_text(encoding="utf-8")
 
 
 @app.get("/{page}.html", response_class=HTMLResponse)
