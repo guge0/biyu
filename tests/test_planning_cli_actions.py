@@ -151,3 +151,11 @@ def test_bookroom_launcher_keeps_an_interactive_session_after_the_greeting() -> 
 
     assert "--dangerously-skip-permissions" not in text
     assert "call \"%CLAUDE_CMD%\" %*" in text
+
+
+def test_bookroom_launcher_detects_claude_exe_and_plain_claude_commands() -> None:
+    text = Path("scripts/书房.bat").read_text(encoding="utf-8")
+
+    assert "%APPDATA%\\npm\\claude.exe" in text
+    assert "where claude >nul" in text
+    assert "where claude.exe >nul" in text

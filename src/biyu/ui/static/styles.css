@@ -1845,6 +1845,10 @@ label{min-height:0}
 
 /* Model configuration follows the v3 window prototype rather than the generic modal skin. */
 #setup-overlay .setup-card{width:min(600px,calc(100vw - 32px));max-width:600px;padding:28px 30px 24px;border-radius:2px!important;background:#FDFBF6;border:1px solid #E0DACC;box-shadow:none}
+#setup-overlay .setup-card{position:relative}
+#setup-overlay .setup-close{position:absolute;right:14px;top:10px;border:0;background:transparent;color:#8C8471;font-size:24px;line-height:1;cursor:pointer;padding:4px 8px}
+#setup-overlay .setup-multi-provider-fields{border-top:1px solid #EDE8DC;margin:0 0 10px;padding-top:8px}
+#setup-overlay .setup-multi-provider-fields label{margin:10px 0}
 #setup-overlay [hidden]{display:none!important}
 #setup-overlay .setup-card h2{font-family:var(--serif);font-size:24px;font-weight:400;margin:0 0 10px}
 #setup-overlay .setup-card label{display:grid;gap:7px;margin:0 0 18px;color:#5C5443;font-size:13px}

@@ -17,6 +17,9 @@
    const cancel = $('setup-cancel');
    const settingsButton = $('connection-settings-button');
    const advanced = $('setup-advanced');
+   const close = $('setup-close');
+   const multiToggle = $('setup-multi-toggle');
+   const multiFields = $('setup-multi-provider-fields');
    let snapshot = null;
    let regularMode = false;
 
@@ -38,6 +41,30 @@
      if (regularMode) $('setup-key').required = !configured;
    };
 
+   const renderMultiProviderFields = () => {
+     if (!multiFields || !snapshot) return;
+     const previous = Object.fromEntries([...multiFields.querySelectorAll('[data-provider-key]')].map(input => [input.dataset.providerKey, input.value]));
+     const selected = provider?.value || '';
+     multiFields.replaceChildren(...(snapshot.providers || []).filter(item => item.provider !== selected).map(item => {
+       const label = document.createElement('label');
+       label.textContent = `${item.label || item.provider} API Key`;
+       const input = document.createElement('input');
+       input.type = 'password'; input.autocomplete = 'off'; input.dataset.providerKey = item.provider;
+       input.placeholder = snapshot.configured_providers?.[item.provider] ? '已配置，留空不变' : '输入后一起保存';
+       input.value = previous[item.provider] || '';
+       label.append(input); return label;
+     }));
+   };
+
+   const renderModelChoices = () => {
+     if (!model || !snapshot) return;
+     const selected = provider?.value || '';
+     const choices = (snapshot.models || []).filter(item => !selected || selected === 'custom' || item.provider === selected);
+     model.replaceChildren(...choices.map(item => new Option(`${item.label}（${item.provider}）`, item.alias)));
+     if (choices.some(item => item.alias === snapshot.selected_model)) model.value = snapshot.selected_model;
+     else if (choices[0]) model.value = choices[0].alias;
+   };
+
    const fillModels = () => {
      if (provider) {
        const choices = snapshot.providers || [];
@@ -46,9 +73,9 @@
        provider.onchange = renderProvider;
        renderProvider();
      }
-     model.replaceChildren(...snapshot.models.map(item => new Option(`${item.label}（${item.provider}）`, item.alias)));
-     if (snapshot.selected_model) model.value = snapshot.selected_model;
+     renderModelChoices();
      renderKeyState();
+     renderMultiProviderFields();
    };
 
    const stageOverrides = () => Object.fromEntries([...document.querySelectorAll('#setup-advanced-fields [data-stage] select')].map(select => [select.closest('[data-stage]').dataset.stage, select.value]));
@@ -59,6 +86,9 @@
      const item = (snapshot.providers || []).find(entry => entry.provider === provider?.value);
      if (landing) landing.innerHTML = item ? Object.entries(item.models || {}).map(([stage, name]) => `${stage === 'planner' ? '规划' : stage === 'writer' ? '写作' : '润色'}用 ${name}`).join(' · ') : '';
      renderKeyState();
+     renderModelChoices();
+     renderKeyState();
+     renderMultiProviderFields();
    };
 
    const renderAdvanced = () => {
@@ -125,6 +155,14 @@
    };
    model.onchange = renderKeyState;
    cancel.onclick = () => { overlay.hidden = true; };
+   if (close) close.onclick = () => { overlay.hidden = true; };
+   if (multiToggle) multiToggle.onclick = () => {
+     if (!multiFields.innerHTML) renderMultiProviderFields();
+     multiFields.hidden = !multiFields.hidden;
+     multiToggle.setAttribute('aria-expanded', String(!multiFields.hidden));
+   };
+   overlay.addEventListener('click', event => { if (event.target === overlay && regularMode) overlay.hidden = true; });
+   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !overlay.hidden && regularMode) overlay.hidden = true; });
    if (settingsButton) settingsButton.onclick = openRegularSettings;
 
    form.onsubmit = async event => {
@@ -135,8 +173,9 @@
      status.textContent = '正在校验模型连接…';
      status.className = '';
      try {
+       const providerKeys = Object.fromEntries([...document.querySelectorAll('[data-provider-key]')].map(input => [input.dataset.providerKey, input.value]).filter(([, value]) => value));
        const payload = regularMode
-         ? (provider?.value === 'custom' ? { provider: 'custom', base_url: $('setup-base-url').value, model_id: $('setup-model-id').value, api_key: $('setup-key').value, stage_overrides: stageOverrides() } : { provider: provider.value, model: model.value, api_key: $('setup-key').value, stage_overrides: stageOverrides() })
+         ? (provider?.value === 'custom' ? { provider: 'custom', base_url: $('setup-base-url').value, model_id: $('setup-model-id').value, api_key: $('setup-key').value, provider_keys: providerKeys, stage_overrides: stageOverrides() } : { provider: provider.value, model: model.value, api_key: $('setup-key').value, provider_keys: providerKeys, stage_overrides: stageOverrides() })
          : {
              api_key: $('setup-key').value,
              model: model.value,
@@ -146,6 +185,7 @@
              create_book: create.checked,
              book_title: $('setup-title').value,
              genre: $('setup-genre').value,
+             provider_keys: providerKeys,
            };
        const response = await fetch(regularMode ? '/api/setup/update' : '/api/setup/complete', {
          method: 'POST',

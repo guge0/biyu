@@ -4,12 +4,25 @@ cd /d "%~dp0.."
 
 set "BIYU_TRACK=creative"
 set "CLAUDE_CMD=%APPDATA%\npm\claude.cmd"
-
+if exist "%CLAUDE_CMD%" goto launch
+set "CLAUDE_CMD=%APPDATA%\npm\claude.exe"
 if exist "%CLAUDE_CMD%" goto launch
 
+where claude >nul 2>nul
+if not errorlevel 1 (
+  set "CLAUDE_CMD=claude"
+  goto launch
+)
 where claude.cmd >nul 2>nul
-if errorlevel 1 goto missing
-set "CLAUDE_CMD=claude.cmd"
+if not errorlevel 1 (
+  set "CLAUDE_CMD=claude.cmd"
+  goto launch
+)
+where claude.exe >nul 2>nul
+if not errorlevel 1 (
+  set "CLAUDE_CMD=claude.exe"
+  goto launch
+)
 
 :launch
 call "%CLAUDE_CMD%" %*

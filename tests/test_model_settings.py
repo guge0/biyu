@@ -84,10 +84,10 @@ def test_regular_setup_update_reuses_secret_store_and_keeps_selected_book(monkey
     monkeypatch.setattr(setup, "save_setup", lambda value: saved.append(value))
     monkeypatch.setattr(setup, "store_provider_secret", lambda provider, secret: stored.append((provider, secret)) or "系统钥匙串")
 
-    response = TestClient(app).post("/api/setup/update", json={"model": "model-b", "api_key": "replacement-secret"})
+    response = TestClient(app).post("/api/setup/update", json={"model": "model-b", "api_key": "replacement-secret", "provider_keys": {"one": "other-secret"}})
 
     assert response.status_code == 200
-    assert stored == [("two", "replacement-secret")]
+    assert stored == [("two", "replacement-secret"), ("one", "other-secret")]
     assert saved == [{"provider": "two", "stage_overrides": {"writer": "model-b"}, "selected_book": "book-1", "complete": True}]
     assert "replacement-secret" not in response.text
 
@@ -150,6 +150,24 @@ def test_shelf_has_regular_model_settings_without_rendering_saved_key() -> None:
     assert "/api/setup/update" in setup_js
     assert "configured_providers" in setup_js
     assert "换 Key / 换模型" in index
+
+
+def test_setup_dialog_supports_multiple_provider_keys_and_can_close() -> None:
+    index = Path("src/biyu/ui/static/index.html").read_text(encoding="utf-8")
+    setup_js = Path("src/biyu/ui/static/setup.js").read_text(encoding="utf-8")
+
+    assert 'id="setup-close"' in index
+    assert 'id="setup-multi-provider-fields"' in index
+    assert "provider_keys" in setup_js
+    assert "event.key === 'Escape'" in setup_js
+
+
+def test_settings_reader_uses_markdown_renderer_for_book_level_cells() -> None:
+    html = Path("src/biyu/ui/static/settings.html").read_text(encoding="utf-8")
+    js = Path("src/biyu/ui/static/settings.js").read_text(encoding="utf-8")
+
+    assert "/mini-md.js" in html
+    assert "MiniMd.render(current.data.content)" in js
 
 
 def test_model_settings_button_handles_status_race_before_snapshot_load() -> None:

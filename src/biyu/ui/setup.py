@@ -151,8 +151,9 @@ async def complete_setup(payload: dict[str, Any]) -> dict[str, str]:
     elif not any(item["id"] == book for item in _books()):
         raise HTTPException(status_code=400, detail="请选择一本已有的书，或新建一本")
     provider_name = str(payload.get("provider") or selected["provider"])
+    extra_providers = _store_extra_provider_keys(payload, provider_name)
     save_setup({"provider": provider_name, "stage_overrides": payload.get("stage_overrides") or {}, "selected_book": book, "complete": True})
-    return {"message": "设置完成，模型已连通", "provider": provider_name, "model": model, "book": book, "secret_storage": storage}
+    return {"message": "设置完成，模型已连通", "provider": provider_name, "model": model, "book": book, "secret_storage": storage, "extra_providers": ",".join(extra_providers)}
 
 
 @router.post("/update")
@@ -205,6 +206,7 @@ async def update_setup(payload: dict[str, Any]) -> dict[str, Any]:
 
     if key:
         store_provider_secret(selected["provider"], key)
+    extra_providers = _store_extra_provider_keys(payload, selected["provider"])
     settings = load_setup()
     provider_name = selected["provider"]
     save_setup({
@@ -218,6 +220,7 @@ async def update_setup(payload: dict[str, Any]) -> dict[str, Any]:
         "provider": provider_name,
         "key_configured": True,
         "secret_storage": storage,
+        "extra_providers": ",".join(extra_providers),
     }
 
 
@@ -227,3 +230,23 @@ def _provider_default_alias(provider: str, stage: str) -> str:
         return str((raw.get("provider_recommendations", {}).get(provider, {}) or {}).get(stage, ""))
     except (OSError, yaml.YAMLError):
         return ""
+
+
+def _store_extra_provider_keys(payload: dict[str, Any], selected_provider: str) -> list[str]:
+    """Save additional provider keys entered in the same setup dialog.
+
+    The selected model remains the one that receives the connectivity check;
+    extra keys are stored for later model selection and never returned.
+    """
+    raw = payload.get("provider_keys")
+    if not isinstance(raw, dict):
+        return []
+    allowed = {str(item.get("provider", "")) for item in _provider_catalog()}
+    allowed.update(str(item.get("provider", "")) for item in _catalog())
+    stored: list[str] = []
+    for provider, value in raw.items():
+        provider_name, secret = str(provider).strip(), str(value).strip()
+        if provider_name in allowed and secret and provider_name != selected_provider:
+            store_provider_secret(provider_name, secret)
+            stored.append(provider_name)
+    return stored

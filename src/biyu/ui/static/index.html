@@ -111,6 +111,7 @@
 
   <div id="setup-overlay" class="modal-overlay" hidden>
     <form id="setup-form" class="setup-card">
+      <button id="setup-close" class="setup-close" type="button" aria-label="关闭">×</button>
       <h2 id="setup-heading">第一次使用，先完成连接</h2>
       <p id="setup-description">API Key 只存进系统钥匙串；系统会用一次极短请求校验连通性。</p>
       <p id="setup-key-state" class="status-text">API Key：未配置</p>
@@ -123,6 +124,8 @@
       </div>
       <p id="setup-landing" class="setup-hint"></p>
       <label>API Key<input id="setup-key" type="password" autocomplete="off" required placeholder="留空表示继续用现在这把 Key"></label>
+      <button id="setup-multi-toggle" class="setup-link" type="button" aria-expanded="false">同时配置其他服务商</button>
+      <div id="setup-multi-provider-fields" class="setup-multi-provider-fields" hidden></div>
       <label id="setup-model-legacy" hidden>模型<select id="setup-model"></select></label>
       <button id="setup-advanced" class="setup-link" type="button" aria-expanded="false">分别指定每个环节用什么模型</button>
       <div id="setup-advanced-fields" hidden></div>
