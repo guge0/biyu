@@ -31,7 +31,7 @@ def test_shared_launcher_refuses_conflicts_without_stopping_existing_service() -
     assert "BIYU_DATA_ROOT_SOURCE" in text
     assert "Production" not in text
     assert "Test mode" not in text
-    assert "-File (Join-Path $projectRoot 'install_biyu.ps1') -SkipPull" in text
+    assert "-File (Join-Path $projectRoot 'scripts\\install_biyu.ps1') -SkipPull" in text
 
 
 def test_version_endpoint_does_not_expose_internal_runtime_role(monkeypatch) -> None:
@@ -47,7 +47,7 @@ def test_installer_parses_in_windows_powershell_5() -> None:
     command = (
         "$tokens=$null;$errors=$null;"
         "[System.Management.Automation.Language.Parser]::ParseFile("
-        f"'{ROOT / 'install_biyu.ps1'}',[ref]$tokens,[ref]$errors)|Out-Null;"
+        f"'{ROOT / 'scripts' / 'install_biyu.ps1'}',[ref]$tokens,[ref]$errors)|Out-Null;"
         "if($errors.Count){$errors|% Message;exit 1}"
     )
     result = subprocess.run(
@@ -75,5 +75,5 @@ def test_author_launcher_script_is_ascii_for_windows_powershell_5() -> None:
 
 
 def test_installer_checks_unchanged_state_before_network_pull() -> None:
-    text = (ROOT / "install_biyu.ps1").read_text(encoding="utf-8-sig")
+    text = (ROOT / "scripts" / "install_biyu.ps1").read_text(encoding="utf-8-sig")
     assert text.index("if ($OnlyIfNeeded") < text.index("git pull --ff-only")

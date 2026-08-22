@@ -157,7 +157,7 @@ def test_production_package_and_launcher_contracts(tmp_path: Path) -> None:
     project = (root / "pyproject.toml").read_text(encoding="utf-8")
     launcher = (root / "start_biyu_ui.bat").read_text(encoding="utf-8")
     installer = (root / "安装笔驭.bat").read_text(encoding="utf-8")
-    install_script = (root / "install_biyu.ps1").read_text(encoding="utf-8")
+    install_script = (root / "scripts" / "install_biyu.ps1").read_text(encoding="utf-8")
 
     assert "ui/static/*" in project
     for page in ("editor.html", "propose.html", "prompts.html", "preferences.html", "reviews.html"):
@@ -170,7 +170,7 @@ def test_production_package_and_launcher_contracts(tmp_path: Path) -> None:
     ).read_text(encoding="utf-8")
     assert "pull --ff-only" in install_script
     assert "install_biyu.ps1" in (root / "scripts" / "start_biyu_ui.ps1").read_text(encoding="utf-8")
-    assert "install_biyu.ps1" in installer
+    assert "scripts\\install_biyu.ps1" in installer
 
     subprocess.run(
         [str(root / ".venv/Scripts/python.exe"), "-m", "pip", "wheel", ".", "--no-deps", "--no-build-isolation", "-w", str(tmp_path)],

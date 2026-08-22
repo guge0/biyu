@@ -219,7 +219,7 @@ def test_a4_author_launcher_never_kills_an_existing_process() -> None:
 
 
 def test_a6_normal_startup_refresh_does_not_recreate_missing_config() -> None:
-    installer = (ROOT / "install_biyu.ps1").read_text(encoding="utf-8")
+    installer = (ROOT / "scripts" / "install_biyu.ps1").read_text(encoding="utf-8")
 
     guard = "if (-not $OnlyIfNeeded) {"
     initialize = "Initialize-AuthorRuntimeConfig"

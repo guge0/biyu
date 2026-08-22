@@ -161,7 +161,8 @@ def test_bookroom_launcher_uses_explicit_checkout_when_venv_is_elsewhere(
 
     checkout = tmp_path / "checkout"
     checkout.mkdir()
-    launcher = checkout / "书房.bat"
+    (checkout / "scripts").mkdir()
+    launcher = checkout / "scripts" / "书房.bat"
     launcher.write_text("@echo off\n", encoding="utf-8")
     monkeypatch.setenv("BIYU_PROJECT_ROOT", str(checkout))
     monkeypatch.setattr(talk_cmd, "get_project_root", lambda: tmp_path / "external-venv" / "Lib")

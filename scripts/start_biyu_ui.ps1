@@ -11,10 +11,10 @@ if ($Port -ne 8080) {
 
 if (-not (Test-Path -LiteralPath '.venv\Scripts\python.exe')) {
     Write-Host 'First run: installing Biyu...'
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'install_biyu.ps1') -SkipPull
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'scripts\install_biyu.ps1') -SkipPull
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'install_biyu.ps1') -SkipPull -OnlyIfNeeded
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'scripts\install_biyu.ps1') -SkipPull -OnlyIfNeeded
 if ($LASTEXITCODE -ne 0) {
     Write-Host '[X] Biyu package refresh failed; the service was not started.' -ForegroundColor Red
     exit $LASTEXITCODE

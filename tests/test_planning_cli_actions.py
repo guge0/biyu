@@ -92,7 +92,7 @@ def test_talk_starts_interactive_creative_session_without_print_flag(monkeypatch
 
     calls: list[tuple[list[str], dict]] = []
     registry = Path.cwd() / "tests" / ".tmp-director-sessions.json"
-    monkeypatch.setattr(talk_cmd, "_bookroom_bat", lambda: Path("书房.bat"))
+    monkeypatch.setattr(talk_cmd, "_bookroom_bat", lambda: Path("scripts/书房.bat"))
     monkeypatch.setattr(talk_cmd, "_registry_path", lambda _book: registry)
     monkeypatch.setattr(talk_cmd, "resolve_book_dir", lambda _book: Path(r"C:\\BiyuData\\测试书"))
     monkeypatch.setattr(talk_cmd.subprocess, "Popen", lambda args, **kwargs: calls.append((args, kwargs)))
@@ -117,7 +117,7 @@ def test_total_director_uses_one_book_level_session_and_selective_craft(monkeypa
 
     calls: list[tuple[list[str], dict]] = []
     registry = tmp_path / "total-director.json"
-    monkeypatch.setattr(talk_cmd, "_bookroom_bat", lambda: Path("书房.bat"))
+    monkeypatch.setattr(talk_cmd, "_bookroom_bat", lambda: Path("scripts/书房.bat"))
     monkeypatch.setattr(talk_cmd, "_registry_path", lambda _book, role="章节导演": registry)
     monkeypatch.setattr(talk_cmd, "resolve_book_dir", lambda _book: tmp_path / "测试书")
     monkeypatch.setattr(talk_cmd.subprocess, "Popen", lambda args, **kwargs: calls.append((args, kwargs)))
@@ -136,7 +136,7 @@ def test_total_director_uses_one_book_level_session_and_selective_craft(monkeypa
 def test_total_director_start_failure_is_not_reported_as_success(monkeypatch, tmp_path: Path) -> None:
     from biyu.cli import talk_cmd
 
-    monkeypatch.setattr(talk_cmd, "_bookroom_bat", lambda: Path("书房.bat"))
+    monkeypatch.setattr(talk_cmd, "_bookroom_bat", lambda: Path("scripts/书房.bat"))
     monkeypatch.setattr(talk_cmd, "_registry_path", lambda _book, role="章节导演": tmp_path / "director.json")
     monkeypatch.setattr(talk_cmd, "resolve_book_dir", lambda _book: tmp_path / "测试书")
     monkeypatch.setattr(talk_cmd.subprocess, "Popen", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("无法创建窗口")))
@@ -147,7 +147,7 @@ def test_total_director_start_failure_is_not_reported_as_success(monkeypatch, tm
 
 
 def test_bookroom_launcher_keeps_an_interactive_session_after_the_greeting() -> None:
-    text = Path("书房.bat").read_text(encoding="utf-8")
+    text = Path("scripts/书房.bat").read_text(encoding="utf-8")
 
     assert "--dangerously-skip-permissions" not in text
     assert "call \"%CLAUDE_CMD%\" %*" in text

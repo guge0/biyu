@@ -1,6 +1,6 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 set "BIYU_TRACK=creative"
 set "CLAUDE_CMD=%APPDATA%\npm\claude.cmd"

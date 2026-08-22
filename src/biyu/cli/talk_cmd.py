@@ -26,10 +26,11 @@ def _bookroom_bat() -> Path:
     candidates.append(Path.cwd())
     candidates.append(get_project_root())
     for root in candidates:
-        launcher = root / "书房.bat"
-        if launcher.is_file():
-            return launcher
-    return candidates[0] / "书房.bat"
+        for relative in (Path("scripts") / "书房.bat", Path("书房.bat")):
+            launcher = root / relative
+            if launcher.is_file():
+                return launcher
+    return candidates[0] / "scripts" / "书房.bat"
 
 
 def _registry_path(book: str, role: str = "章节导演") -> Path:

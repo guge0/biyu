@@ -53,7 +53,7 @@ def test_public_entry_does_not_expose_local_deployment_topology() -> None:
 
 
 def test_installer_rejects_unsupported_python_with_human_message() -> None:
-    text = (ROOT / "install_biyu.ps1").read_text(encoding="utf-8")
+    text = (ROOT / "scripts" / "install_biyu.ps1").read_text(encoding="utf-8")
 
     assert "Python 3.10" in text
     assert "sys.version_info" in text
@@ -88,7 +88,7 @@ def test_settings_write_requires_runtime_endpoint_and_persistent_author_data_roo
     assert 'Path.home() / "BiyuData"' in config
     assert "Join-Path $HOME 'BiyuData'" not in launcher
     assert "biyu.runtime_config resolve --role production" in launcher
-    assert "runtime-production.json" in (ROOT / "install_biyu.ps1").read_text(encoding="utf-8")
+    assert "runtime-production.json" in (ROOT / "scripts" / "install_biyu.ps1").read_text(encoding="utf-8")
     assert "$env:BIYU_DATA_ROOT" in launcher
     assert "$env:BIYU_ENV = 'prod'" in launcher
     assert "D:\\BiyuProductionData" not in launcher

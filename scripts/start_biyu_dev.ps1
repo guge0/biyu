@@ -7,7 +7,7 @@ if ($Port -eq 8080) {
     Write-Host '[X] Development Biyu must not use port 8080.' -ForegroundColor Red
     exit 2
 }
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'install_biyu.ps1') -SkipPull -OnlyIfNeeded
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'scripts\install_biyu.ps1') -SkipPull -OnlyIfNeeded
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $resolutionOutput = @(& '.venv\Scripts\python.exe' -m biyu.runtime_config resolve --role development)
 if ($LASTEXITCODE -ne 0) {
