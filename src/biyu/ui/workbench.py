@@ -7,6 +7,7 @@ import json
 import os
 import re
 import shutil
+import sys
 import subprocess
 import time
 from dataclasses import dataclass
@@ -1752,7 +1753,10 @@ def open_zebian(book: str, request: Request) -> dict[str, str]:
     env["BIYU_SETTINGS_DATA_ROOT"] = str(data_root)
     env["BIYU_RUNTIME_ROLE"] = "test" if port == 8090 else "production"
     project_root = get_project_root()
-    venv_scripts = project_root / ".venv" / "Scripts"
+    # A launcher-provided checkout root is authoritative. When the service is
+    # started directly from an installed environment, use that interpreter's
+    # virtual environment instead of guessing from site-packages parents.
+    venv_scripts = project_root / ".venv" / "Scripts" if os.environ.get("BIYU_PROJECT_ROOT") else Path(sys.executable).resolve().parent
     biyu_executable = venv_scripts / "biyu.exe"
     if not biyu_executable.is_file():
         raise HTTPException(

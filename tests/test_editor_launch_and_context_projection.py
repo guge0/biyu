@@ -56,6 +56,7 @@ def test_zebian_launch_prepends_venv_scripts_and_normalizes_localhost(
     monkeypatch.setattr(workbench, "_book_dir", lambda _book: book)
     monkeypatch.setattr(workbench, "_bookroom_bat", lambda: launcher)
     monkeypatch.setattr(workbench, "get_project_root", lambda: tmp_path)
+    monkeypatch.setenv("BIYU_PROJECT_ROOT", str(tmp_path))
     monkeypatch.setattr(workbench, "get_data_root", lambda: book.parent)
     monkeypatch.setattr(workbench.shutil, "which", lambda _name: None)
     monkeypatch.setattr(
@@ -83,6 +84,7 @@ def test_zebian_launch_refuses_when_venv_biyu_is_missing(
     monkeypatch.setattr(workbench, "_book_dir", lambda _book: book)
     monkeypatch.setattr(workbench, "_bookroom_bat", lambda: launcher)
     monkeypatch.setattr(workbench, "get_project_root", lambda: tmp_path)
+    monkeypatch.setenv("BIYU_PROJECT_ROOT", str(tmp_path))
     monkeypatch.setattr(workbench, "get_data_root", lambda: book.parent)
     monkeypatch.setattr(
         workbench.subprocess,

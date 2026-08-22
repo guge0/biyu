@@ -1013,7 +1013,6 @@ async function requestView(target) {
   if(target==='chapter-official'){await requestOfficialReadingView();return;}
   if(readingView==='official'&&target.startsWith('chapter-')){restoreCandidateReadingView(target==='chapter-edit'?'edit':'read');return;}
   const stage = shownStage;
-  if (!await resolveDirty()) return;
   setStage(stage);
   toggleView(target);
 }
