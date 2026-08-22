@@ -1756,7 +1756,14 @@ def open_zebian(book: str, request: Request) -> dict[str, str]:
     # A launcher-provided checkout root is authoritative. When the service is
     # started directly from an installed environment, use that interpreter's
     # virtual environment instead of guessing from site-packages parents.
-    venv_scripts = project_root / ".venv" / "Scripts" if os.environ.get("BIYU_PROJECT_ROOT") else Path(sys.executable).resolve().parent
+    # The installed package may resolve ``project_root`` inside venv\Lib;
+    # the running interpreter is the authoritative environment in that case.
+    interpreter_scripts = Path(sys.executable).resolve().parent
+    checkout_scripts = project_root / ".venv" / "Scripts"
+    # A launcher-provided checkout is an explicit contract, including its
+    # failure state. Without it, fall back to the interpreter's environment
+    # so installed wheels do not guess a checkout from site-packages parents.
+    venv_scripts = checkout_scripts if os.environ.get("BIYU_PROJECT_ROOT") else interpreter_scripts
     biyu_executable = venv_scripts / "biyu.exe"
     if not biyu_executable.is_file():
         raise HTTPException(

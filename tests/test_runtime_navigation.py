@@ -91,3 +91,11 @@ def test_runtime_version_endpoint_and_visible_shelf_badge(monkeypatch) -> None:
     assert "你的书存在：" in script
     assert 'id="data-root-location"' in html
     assert "版本无法确认" in script
+
+
+def test_temporary_data_root_notice_keeps_prototype_regular_weight() -> None:
+    css = (STATIC / "styles.css").read_text(encoding="utf-8")
+    match = re.search(r"\.data-root-location\.temporary\s*\{(?P<body>[^}]*)\}", css)
+    assert match is not None
+    assert "font-weight: 400" in match.group("body")
+    assert "font-weight: 600" not in match.group("body")

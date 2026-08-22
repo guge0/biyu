@@ -645,7 +645,7 @@ button{font-family:inherit;cursor:default}
 }
 .data-root-location.temporary {
   color: var(--seal);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 /* 顶部快捷:继续 + 立项 */

@@ -125,6 +125,9 @@ def test_a5_development_runtime_never_accepts_8080() -> None:
     launcher = (ROOT / "scripts/start_biyu_dev.ps1").read_text(encoding="utf-8")
     assert "if ($Port -eq 8080)" in launcher
     assert "if ($Port -ne 8090)" not in launcher
+    assert "runtime-development.json" in launcher
+    assert "BiyuTestData" in launcher
+    assert "BIYU_TEST_DATA_ROOT" in launcher
 
 
 @pytest.mark.parametrize("content", ["{broken", json.dumps({}), json.dumps({"data_root": 42})])

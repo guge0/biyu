@@ -9,6 +9,18 @@ if ($Port -eq 8080) {
 }
 & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $projectRoot 'scripts\install_biyu.ps1') -SkipPull -OnlyIfNeeded
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+# Development has its own explicit first-run initializer. It never falls back
+# to the author's production data root.
+$configRoot = if ([string]::IsNullOrWhiteSpace($env:BIYU_USER_CONFIG_DIR)) { Join-Path $HOME '.biyu' } else { [System.IO.Path]::GetFullPath($env:BIYU_USER_CONFIG_DIR) }
+$developmentConfig = Join-Path $configRoot 'runtime-development.json'
+if (-not (Test-Path -LiteralPath $developmentConfig)) {
+    $developmentRoot = if ([string]::IsNullOrWhiteSpace($env:BIYU_TEST_DATA_ROOT)) { Join-Path (Split-Path -Parent $projectRoot) 'BiyuTestData' } else { [System.IO.Path]::GetFullPath($env:BIYU_TEST_DATA_ROOT) }
+    New-Item -ItemType Directory -Path $developmentRoot -Force | Out-Null
+    New-Item -ItemType Directory -Path $configRoot -Force | Out-Null
+    @{ schema_version = 1; data_root = $developmentRoot; role = 'development' } | ConvertTo-Json | Set-Content -LiteralPath $developmentConfig -Encoding UTF8
+    Write-Host "Created persistent development data location: $developmentConfig"
+}
 $resolutionOutput = @(& '.venv\Scripts\python.exe' -m biyu.runtime_config resolve --role development)
 if ($LASTEXITCODE -ne 0) {
     $resolutionOutput | ForEach-Object { Write-Host $_ -ForegroundColor Red }

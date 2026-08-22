@@ -99,6 +99,35 @@ def test_zebian_launch_refuses_when_venv_biyu_is_missing(
     assert "opening_prompt" in caught.value.detail
 
 
+def test_zebian_launch_uses_interpreter_environment_when_no_checkout_is_declared(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import sys
+    import biyu.ui.workbench as workbench
+
+    book = _book(tmp_path)
+    launcher = tmp_path / "书房.bat"
+    launcher.write_text("@echo off\n", encoding="utf-8")
+    scripts = tmp_path / "Scripts"
+    scripts.mkdir()
+    (scripts / "python.exe").write_bytes(b"")
+    (scripts / "biyu.exe").write_bytes(b"")
+    calls: list[dict[str, object]] = []
+
+    monkeypatch.setattr(workbench, "_book_dir", lambda _book: book)
+    monkeypatch.setattr(workbench, "_bookroom_bat", lambda: launcher)
+    monkeypatch.setattr(workbench, "get_project_root", lambda: tmp_path / "package")
+    monkeypatch.delenv("BIYU_PROJECT_ROOT", raising=False)
+    monkeypatch.setattr(workbench, "get_data_root", lambda: book.parent)
+    monkeypatch.setattr(workbench.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(workbench, "sys", type("Runtime", (), {"executable": str(scripts / "python.exe")})())
+    monkeypatch.setattr(workbench.subprocess, "Popen", lambda _argv, **kwargs: calls.append(kwargs))
+
+    workbench.open_zebian("book-id", _request())
+
+    assert calls[0]["env"]["PATH"].split(os.pathsep)[0] == str(scripts)
+
+
 def test_long_context_middle_gap_keeps_real_chapter_numbers(tmp_path: Path) -> None:
     chapters = tmp_path / "chapters"
     outlines = tmp_path / "outlines"
