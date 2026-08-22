@@ -81,6 +81,11 @@
    };
 
    const openRegularSettings = () => {
+     if (!snapshot) {
+       overlay.hidden = false;
+       showError('正在读取连接设置，请稍候再试。');
+       return;
+     }
      regularMode = true;
      $('setup-heading').textContent = '换 Key / 换模型';
      $('setup-description').textContent = '已保存的 Key 不会显示。留空表示继续使用当前服务商的 Key。';

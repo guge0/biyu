@@ -150,3 +150,10 @@ def test_shelf_has_regular_model_settings_without_rendering_saved_key() -> None:
     assert "/api/setup/update" in setup_js
     assert "configured_providers" in setup_js
     assert "换 Key / 换模型" in index
+
+
+def test_model_settings_button_handles_status_race_before_snapshot_load() -> None:
+    setup_js = Path("src/biyu/ui/static/setup.js").read_text(encoding="utf-8")
+
+    assert "if (!snapshot)" in setup_js
+    assert "正在读取连接设置，请稍候再试。" in setup_js
