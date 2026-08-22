@@ -1,6 +1,6 @@
 ﻿param([switch]$SkipPull, [switch]$OnlyIfNeeded)
 $ErrorActionPreference = 'Stop'
-$repo = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repo = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location -LiteralPath $repo
 $venvPython = Join-Path $repo '.venv\Scripts\python.exe'
 

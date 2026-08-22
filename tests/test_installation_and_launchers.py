@@ -68,6 +68,12 @@ def test_installer_rejects_unsupported_python_with_human_message() -> None:
     assert text.index(existing_venv_gate) < text.index("Get-Command python")
 
 
+def test_installer_resolves_repository_root_from_scripts_directory() -> None:
+    text = (ROOT / "scripts" / "install_biyu.ps1").read_text(encoding="utf-8")
+
+    assert "$repo = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)" in text
+
+
 def test_launcher_refreshes_installed_package_after_git_pull() -> None:
     launcher = (ROOT / "scripts" / "start_biyu_ui.ps1").read_text(encoding="utf-8")
 
