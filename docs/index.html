@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>笔驭 — 一套管得住 AI 的长篇小说工序</title>
+<style>
+:root{
+  --paper:#F8F5EE; --surface:#FDFBF6; --ink:#262119; --ink-solid:#2A251C;
+  --ink-soft:#5C5443; --ink-mute:#8C8471; --ink-faint:#B0A897;
+  --rule:#E0DACC; --rule-soft:#EDE8DC; --numeral:#C3BCA9;
+  --mark:#A65340; --mark-bg:#E8CFC6; --btn-border:#CFC7B4;
+  --serif:"Noto Serif SC","Source Han Serif SC",Songti SC,serif;
+  --sans:"Noto Sans SC","Source Han Sans SC","PingFang SC",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-weight:400;line-height:1.9;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+section{padding:92px 0;border-top:1px solid var(--rule-soft)}
+section:first-of-type{border-top:0}
+
+/* 滚动揭示：只用 opacity 与 transform */
+.rise{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease}
+.rise.in{opacity:1;transform:none}
+.rise.d1{transition-delay:.10s}.rise.d2{transition-delay:.20s}
+.rise.d3{transition-delay:.30s}.rise.d4{transition-delay:.40s}
+@media (prefers-reduced-motion:reduce){.rise{opacity:1;transform:none;transition:none}}
+
+h1{font-family:var(--serif);font-weight:400;font-size:74px;line-height:1.1;
+  letter-spacing:.14em;margin:0 0 22px}
+h2{font-family:var(--serif);font-weight:400;font-size:29px;line-height:1.5;margin:0 0 22px}
+h3{font-family:var(--serif);font-weight:400;font-size:19px;margin:0 0 8px}
+p{margin:0 0 18px;font-size:16px;color:var(--ink-soft)}
+.lead{font-size:20px;color:var(--ink);line-height:1.85}
+.mute{color:var(--ink-mute);font-size:14.5px}
+b{font-weight:500;color:var(--ink)}
+em{font-style:normal;color:var(--mark)}
+
+/* 首屏 */
+.hero{min-height:82vh;display:flex;flex-direction:column;justify-content:center;padding-top:60px}
+.hero .sub{font-size:22px;color:var(--ink-soft);font-family:var(--serif);letter-spacing:.02em;margin:0 0 34px}
+.scroll-hint{margin-top:52px;font-size:13px;color:var(--ink-faint);letter-spacing:.1em}
+
+/* 痛点：像稿纸上的批注 */
+.gripes{border-left:2px solid var(--rule);padding-left:24px;margin:26px 0 30px}
+.gripes div{font-family:var(--serif);font-size:17px;color:var(--ink-soft);margin-bottom:12px}
+.gripes div:last-child{margin-bottom:0}
+
+/* 引用 */
+blockquote{margin:34px 0;padding:26px 28px;background:var(--surface);
+  border:1px solid var(--rule);border-radius:2px}
+blockquote p{font-family:var(--serif);font-size:20px;line-height:1.85;color:var(--ink);margin:0}
+
+/* 两层 */
+.layers{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:28px 0 8px}
+.layer{background:var(--surface);border:1px solid var(--rule);border-radius:2px;padding:22px}
+.layer .tag{font-size:12px;color:var(--ink-faint);letter-spacing:.14em;margin-bottom:10px}
+.layer p{margin:0;font-size:14.5px}
+
+/* 五步 */
+.steps{margin:30px 0 0}
+.step{display:grid;grid-template-columns:60px 1fr;gap:20px;padding:20px 0;
+  border-top:1px solid var(--rule-soft)}
+.step:first-child{border-top:0}
+.step .n{font-family:var(--serif);font-size:34px;color:var(--numeral);line-height:1}
+.step p{margin:0;font-size:15px}
+
+/* 读稿演示 */
+.demo{background:var(--surface);border:1px solid var(--rule);border-radius:2px;
+  display:grid;grid-template-columns:1fr 268px;margin:30px 0 14px;overflow:hidden}
+.demo .text{padding:26px 26px 22px;border-right:1px solid var(--rule-soft)}
+.demo .text .ln{font-family:var(--serif);font-size:15.5px;line-height:2.05;color:var(--ink);
+  padding:3px 8px;margin:0 -8px;border-radius:2px;transition:background .35s ease}
+.demo .text .ln.hit{background:var(--mark-bg)}
+.demo .side{padding:20px 18px}
+.demo .side .h{font-size:12px;color:var(--ink-faint);letter-spacing:.12em;margin-bottom:14px}
+.card{border:1px solid var(--rule);background:var(--paper);border-radius:2px;
+  padding:11px 12px;margin-bottom:10px;cursor:pointer;transition:border-color .2s,transform .2s}
+.card:hover{transform:translateX(-2px)}
+.card[aria-pressed="true"]{border-color:var(--mark)}
+.card .k{font-size:11.5px;color:var(--ink-faint);margin-bottom:4px}
+.card .t{font-size:13.5px;color:var(--ink-soft);line-height:1.7}
+.card.bad .k{color:var(--mark)}
+.adopt{margin-top:16px;border-top:1px solid var(--rule-soft);padding-top:14px}
+.adopt .cnt{font-size:12.5px;color:var(--mark);margin-bottom:9px}
+.adopt button{width:100%;font-family:var(--sans);font-size:13.5px;font-weight:500;
+  background:var(--ink-solid);color:var(--paper);border:1px solid var(--ink-solid);
+  border-radius:2px;padding:10px;cursor:pointer}
+.hintline{font-size:13px;color:var(--ink-faint);margin:0}
+
+/* 边界 */
+ul.plain{list-style:none;padding:0;margin:22px 0 0}
+ul.plain li{font-size:15px;color:var(--ink-soft);padding-left:20px;position:relative;margin-bottom:11px}
+ul.plain li::before{content:"—";position:absolute;left:0;color:var(--ink-faint)}
+
+/* 适合谁 */
+.fit{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:26px}
+.fit>div{border:1px solid var(--rule);background:var(--surface);border-radius:2px;padding:22px}
+
+/* 结尾 */
+.end{padding:110px 0 130px;text-align:center;border-top:1px solid var(--rule-soft)}
+.end p{font-family:var(--serif);font-size:25px;line-height:1.85;color:var(--ink);margin:0 auto;max-width:620px}
+footer{padding:30px 0 60px;text-align:center}
+footer p{font-size:13px;color:var(--ink-faint);margin:0}
+
+@media (max-width:720px){
+  h1{font-size:50px}
+  h2{font-size:24px}
+  .layers,.fit{grid-template-columns:1fr}
+  .demo{grid-template-columns:1fr}
+  .demo .text{border-right:0;border-bottom:1px solid var(--rule-soft)}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1 class="rise">笔驭</h1>
+    <p class="sub rise d1">一套管得住 AI 的长篇小说工序。</p>
+    <p class="lead rise d2">
+      它不替你写小说。<br>
+      它让 AI 老老实实按你说的写，并且在它没做到的时候，<em>指给你看是哪一句</em>。
+    </p>
+    <p class="scroll-hint rise d4">往下</p>
+  </section>
+
+  <section>
+    <h2 class="rise">你大概试过让 AI 写小说</h2>
+    <p class="rise d1">它确实能写。四千字一口气就出来了，读着还挺像那么回事。问题在后面。</p>
+    <div class="gripes rise d2">
+      <div>你说这一章不能死人，它写死了。</div>
+      <div>你说结尾停在门外，它写进了屋。</div>
+      <div>你说这个词别用，它照用。</div>
+      <div>你说这一章的重点是那封信，它花两千字写雨。</div>
+    </div>
+    <p class="rise d3">你回头一句句改，改到最后发现，<b>还不如自己写</b>。</p>
+    <p class="rise d3">
+      更难受的是另一种：你读完四千字，觉得哪里不对，但说不出是哪一句。
+      文笔没问题，句子也通顺，可这一章就是歪了。你把稿子放下，第二天再看，还是说不清。
+    </p>
+    <p class="lead rise d4">
+      真正的问题不是它写不出字，是<b>你管不住它</b>——而且<b>你不知道它哪里没听话</b>。
+    </p>
+  </section>
+
+  <section>
+    <h2 class="rise">笔驭做的不是「帮你写」，是「管住写的那一步」</h2>
+    <p class="rise d1">动笔之前，笔驭先把你的细纲变成一份<b>方案</b>。方案里的东西分成两层：</p>
+    <div class="layers rise d2">
+      <div class="layer">
+        <div class="tag">第 一 层</div>
+        <h3>必须发生什么</h3>
+        <p>这一章必须出现的那几件事、那几句话、结尾必须停在哪。<br><b>这一层是拿来核对的。</b></p>
+      </div>
+      <div class="layer">
+        <div class="tag">第 二 层</div>
+        <h3>怎么演</h3>
+        <p>用什么镜头、什么节奏、什么情绪落点。<br><b>这一层留给它发挥。</b></p>
+      </div>
+    </div>
+    <p class="rise d3">
+      正文写完，机器拿着第一层逐条回到正文里找：这一条做到了吗？在第几行？
+      找不到，就直接标出来。
+    </p>
+    <blockquote class="rise d4">
+      <p>改提示词能让它更愿意听话，<br>只有逐条核对，才能让你知道它<em>到底听没听</em>。</p>
+    </blockquote>
+    <p class="mute rise d4">大多数工具在做前半句。笔驭在做后半句。</p>
+  </section>
+
+  <section>
+    <h2 class="rise">一章是怎么走完的</h2>
+    <p class="rise d1">五步。<b>每一步都是你点的。</b></p>
+    <div class="steps">
+      <div class="step rise d1"><div class="n">一</div>
+        <div><h3>细纲</h3><p>你写。这一章要发生什么，三五句话就够。</p></div></div>
+      <div class="step rise d1"><div class="n">二</div>
+        <div><h3>写作方案</h3><p>导演把你这三五句话变成一份可执行的方案。
+          你会先读到它——不同意，退回重写。</p></div></div>
+      <div class="step rise d2"><div class="n">三</div>
+        <div><h3>正文</h3><p>写手照方案写。</p></div></div>
+      <div class="step rise d2"><div class="n">四</div>
+        <div><h3>读稿定夺</h3><p>编辑读一遍挑毛病，机器同时把方案里那些硬条件逐条核对一遍。</p></div></div>
+      <div class="step rise d3"><div class="n">五</div>
+        <div><h3>采用</h3><p>你说这一版行，它才成为正式稿。</p></div></div>
+    </div>
+    <p class="mute rise d4" style="margin-top:26px">从头到尾十几分钟。一章的模型费用，大约几分钱到一两毛。</p>
+  </section>
+
+  <section>
+    <h2 class="rise">读稿定夺这一屏</h2>
+    <p class="rise d1">
+      正文占主区，像一份稿子。右边一列是意见——编辑读出来的，和机器核对出来的，
+      在你眼里本来就是同一件事，所以放在同一列。
+    </p>
+    <p class="rise d1"><b>点右边任意一条，正文里对应的那一句会亮起来。</b></p>
+
+    <div class="demo rise d2">
+      <div class="text">
+        <p class="ln" data-i="1">1　巷口的灯灭了三次，第四次没有再亮。</p>
+        <p class="ln" data-i="2">2　他把信塞进门缝，指节在木头上停了一瞬，终究没有敲。</p>
+        <p class="ln" data-i="3">3　雨水顺着屋檐落下来，在青石板上敲出细密的声响。</p>
+        <p class="ln" data-i="4">4　那是他母亲留下的最后一个物件，他一直没舍得拆。</p>
+        <p class="ln" data-i="5">5　他转身走进雨里，没有回头。</p>
+      </div>
+      <div class="side">
+        <div class="h">这 一 版</div>
+
+        <div class="card bad" data-hit="2" role="button" tabindex="0" aria-pressed="false">
+          <div class="k">必须发生 · 没做到</div>
+          <div class="t">他要在门外说出那句话。第 2 行只有动作，没有台词。</div>
+        </div>
+
+        <div class="card" data-hit="4" role="button" tabindex="0" aria-pressed="false">
+          <div class="k">逻辑 · 第 4 行</div>
+          <div class="t">前文没交代过这封信来自母亲。</div>
+        </div>
+
+        <div class="card" data-hit="5" role="button" tabindex="0" aria-pressed="false">
+          <div class="k">必须发生 · 做到了</div>
+          <div class="t">结尾停在门外，人没有进屋。</div>
+        </div>
+
+        <div class="adopt">
+          <div class="cnt">这一版还有 1 条没做到</div>
+          <button type="button">采用这一版</button>
+        </div>
+      </div>
+    </div>
+    <p class="hintline rise d3">↑ 这是真的，点点看</p>
+
+    <p class="rise d4" style="margin-top:30px">
+      底下那个「采用」按钮，旁边永远带着一句：<b>这一版还有 N 条没做到</b>。
+    </p>
+    <p class="rise d4">
+      这一句是有来历的。我们发现过一件事：作者随手点了「采用」，一个明显更差的版本成了正式稿，
+      而系统从头到尾一声不吭。<br>
+      所以现在，<b>「采用」是一个带信息的动作</b>，不是随手一点。
+    </p>
+  </section>
+
+  <section>
+    <h2 class="rise">它记得这本书发生过什么</h2>
+    <p class="rise d1">
+      一章被采用之后，笔驭会更新这本书的事实档案——谁在哪、谁受了伤、
+      哪条线埋下了、时间走到哪一天。
+    </p>
+    <p class="rise d2">
+      下一章开始时，写手拿到的不是前面几十万字的正文，而是<b>这本书当前的事实</b>、
+      你写的设定，还有上一章的结尾。
+    </p>
+    <p class="lead rise d3">该带的带上，不该带的不带。<br>
+      写到第三十章的时候，这个区别就是能不能继续写下去的区别。</p>
+  </section>
+
+  <section>
+    <h2 class="rise">还有一个「责编」</h2>
+    <p class="rise d1">
+      它不写正文。它跟你聊：这个想法能不能立住、大纲往哪儿推、这个角色为什么让人记不住。
+    </p>
+    <p class="rise d2">
+      <b>从零开始也行。</b>你什么都没有，就跟它聊，它帮你把一句话故事、大纲、世界观、
+      人物卡整理出来，然后直接写进你的设定集。
+    </p>
+    <p class="rise d3">但有一条从第一天就定死了：<b>落盘的闸永远在你手上。</b>它给内容，你决定要不要。</p>
+  </section>
+
+  <section>
+    <h2 class="rise">你的书在你自己的电脑上</h2>
+    <p class="rise d1">不是网站，不是账号，不是云端。</p>
+    <p class="rise d2">
+      装在你自己的 Windows 上，书稿就是硬盘上的一个文件夹，Markdown 和 TXT，
+      任何时候用记事本都能打开。不上传，不训练，不需要注册。
+    </p>
+    <p class="rise d3">
+      换模型服务商就换一家，Key 是你自己的，钱是你自己按用量付的。
+      整本书随时导出成一个 TXT。
+    </p>
+  </section>
+
+  <section>
+    <h2 class="rise">说在前面的话</h2>
+    <p class="rise d1">这是一个还在改的工具，不是成品软件。诚实地讲：</p>
+    <ul class="plain rise d2">
+      <li>只在 Windows 上跑过</li>
+      <li>目前接了四家模型服务商，用别家的还接不上</li>
+      <li>「责编」需要 Claude Code 的订阅，其余功能不需要</li>
+      <li>备份功能正在重做，重要的东西请自己再复制一份</li>
+      <li>它不会替你想故事。<b>细纲还是你写。</b></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2 class="rise">它适合谁</h2>
+    <div class="fit">
+      <div class="rise d1">
+        <h3>适合</h3>
+        <p class="mute">写长篇、有大纲习惯、受得了慢一点但受不了走样的人。<br><br>
+          尤其是那种「AI 写的我总要大改，改到最后不如自己写」的人——
+          笔驭要解决的正是这件事。</p>
+      </div>
+      <div class="rise d2">
+        <h3>不适合</h3>
+        <p class="mute">想一键出书的人。<br><br>这里没有一键。</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="end">
+    <p class="rise">笔驭不让 AI 替你写小说。<br>
+      它让 AI 老老实实按你说的写，<br>并且在它没做到的时候告诉你。</p>
+  </div>
+
+  <footer><p>笔驭 · 本地运行 · 你的书在你自己的电脑上</p></footer>
+
+</div>
+
+<script>
+(function () {
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.14, rootMargin: '0px 0px -40px 0px' });
+
+  var rises = document.querySelectorAll('.rise');
+  for (var i = 0; i < rises.length; i++) { io.observe(rises[i]); }
+
+  var cards = document.querySelectorAll('.card');
+  var lines = document.querySelectorAll('.demo .ln');
+
+  function pick(card) {
+    var target = card.getAttribute('data-hit');
+    for (var j = 0; j < cards.length; j++) {
+      cards[j].setAttribute('aria-pressed', String(cards[j] === card));
+    }
+    for (var k = 0; k < lines.length; k++) {
+      lines[k].classList.toggle('hit', lines[k].getAttribute('data-i') === target);
+    }
+  }
+
+  for (var m = 0; m < cards.length; m++) {
+    (function (card) {
+      card.addEventListener('click', function () { pick(card); });
+      card.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); pick(card); }
+      });
+    })(cards[m]);
+  }
+})();
+</script>
+</body>
+</html>
+
+
