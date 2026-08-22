@@ -30,7 +30,7 @@ def test_about_route_serves_the_repository_landing_file_without_copy():
 def test_about_route_explains_missing_landing_page(monkeypatch):
     import biyu.ui.app as app_module
 
-    monkeypatch.setattr(app_module, "_landing_page", ROOT / "docs" / "missing-index.html")
+    monkeypatch.setenv("BIYU_PROJECT_ROOT", str(ROOT / "missing-project"))
     response = TestClient(app_module.app).get("/about.html")
     assert response.status_code == 200
     assert "介绍页不在" in response.text
