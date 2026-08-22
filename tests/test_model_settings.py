@@ -160,6 +160,8 @@ def test_setup_dialog_supports_multiple_provider_keys_and_can_close() -> None:
     assert 'id="setup-multi-provider-fields"' in index
     assert "provider_keys" in setup_js
     assert "event.key === 'Escape'" in setup_js
+    assert "确认并关闭" in setup_js
+    assert "还有设置没有确认，确定关闭吗？" in setup_js
 
 
 def test_settings_reader_uses_markdown_renderer_for_book_level_cells() -> None:

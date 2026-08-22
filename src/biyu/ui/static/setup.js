@@ -79,6 +79,15 @@
    };
 
    const stageOverrides = () => Object.fromEntries([...document.querySelectorAll('#setup-advanced-fields [data-stage] select')].map(select => [select.closest('[data-stage]').dataset.stage, select.value]));
+   const hasUnsavedSetup = () => Boolean(
+     $('setup-key')?.value ||
+     [...document.querySelectorAll('[data-provider-key]')].some(input => input.value) ||
+     (regularMode && (provider?.value !== snapshot?.provider || model?.value !== snapshot?.selected_model))
+   );
+   const closeSetup = () => {
+     if (hasUnsavedSetup() && !window.confirm('还有设置没有确认，确定关闭吗？')) return;
+     overlay.hidden = true;
+   };
 
    const renderProvider = () => {
      const isCustom = provider?.value === 'custom';
@@ -123,7 +132,7 @@
      $('setup-key').required = false;
       document.getElementById('setup-key').value='';
      cancel.hidden = false;
-     submit.textContent = '保存并试一下连接';
+     submit.textContent = '确认并关闭';
      status.textContent = '';
      fillModels();
      if ($('setup-model-legacy')) $('setup-model-legacy').hidden = true;
@@ -154,15 +163,15 @@
      book.disabled = create.checked;
    };
    model.onchange = renderKeyState;
-   cancel.onclick = () => { overlay.hidden = true; };
-   if (close) close.onclick = () => { overlay.hidden = true; };
+   cancel.onclick = closeSetup;
+   if (close) close.onclick = closeSetup;
    if (multiToggle) multiToggle.onclick = () => {
      if (!multiFields.innerHTML) renderMultiProviderFields();
      multiFields.hidden = !multiFields.hidden;
      multiToggle.setAttribute('aria-expanded', String(!multiFields.hidden));
    };
-   overlay.addEventListener('click', event => { if (event.target === overlay && regularMode) overlay.hidden = true; });
-   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !overlay.hidden && regularMode) overlay.hidden = true; });
+   overlay.addEventListener('click', event => { if (event.target === overlay) closeSetup(); });
+   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !overlay.hidden) closeSetup(); });
    if (settingsButton) settingsButton.onclick = openRegularSettings;
 
    form.onsubmit = async event => {
@@ -201,12 +210,13 @@
        snapshot.provider = savedProvider;
        snapshot.configured_providers[savedProvider] = true;
        renderKeyState();
-       if (!regularMode) setTimeout(() => location.reload(), 500);
+       if (regularMode) overlay.hidden = true;
+       else setTimeout(() => location.reload(), 500);
      } catch (error) {
        showError(error.message);
      } finally {
        submit.disabled = false;
-       submit.textContent = '保存并试一下连接';
+       submit.textContent = regularMode ? '确认并关闭' : '保存并试一下连接';
      }
    };
 
