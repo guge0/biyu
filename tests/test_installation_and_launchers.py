@@ -77,7 +77,7 @@ def test_launcher_refreshes_installed_package_after_git_pull() -> None:
     assert launcher.index(refresh) < launcher.index("$env:BIYU_ENV = 'prod'")
 
 
-def test_settings_write_requires_runtime_endpoint_and_uses_author_data_default() -> None:
+def test_settings_write_requires_runtime_endpoint_and_persistent_author_data_root() -> None:
     bridge = (ROOT / "src" / "biyu" / "cli" / "settings_bridge.py").read_text(encoding="utf-8")
     config = (ROOT / "src" / "biyu" / "config.py").read_text(encoding="utf-8")
     launcher = (ROOT / "scripts" / "start_biyu_ui.ps1").read_text(encoding="utf-8")
@@ -86,7 +86,9 @@ def test_settings_write_requires_runtime_endpoint_and_uses_author_data_default()
     assert "BIYU_SETTINGS_EDITOR_URL" in bridge
     assert "BIYU_SETTINGS_DATA_ROOT" in bridge
     assert 'Path.home() / "BiyuData"' in config
-    assert "Join-Path $HOME 'BiyuData'" in launcher
+    assert "Join-Path $HOME 'BiyuData'" not in launcher
+    assert "biyu.runtime_config resolve --role production" in launcher
+    assert "runtime-production.json" in (ROOT / "install_biyu.ps1").read_text(encoding="utf-8")
     assert "$env:BIYU_DATA_ROOT" in launcher
     assert "$env:BIYU_ENV = 'prod'" in launcher
     assert "D:\\BiyuProductionData" not in launcher

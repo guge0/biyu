@@ -94,6 +94,7 @@ def test_status_contract_has_disabled_never_and_next_run(tmp_path: Path, monkeyp
     data = tmp_path / "data"
     destination = tmp_path / "backup"
     data.mkdir()
+    destination.mkdir()
     monkeypatch.setenv("BIYU_USER_CONFIG_DIR", str(config))
     monkeypatch.setenv("BIYU_RUNTIME_ROLE", "test")
     monkeypatch.setenv("BIYU_DATA_ROOT", str(data))
@@ -108,7 +109,9 @@ def test_status_contract_has_disabled_never_and_next_run(tmp_path: Path, monkeyp
     assert updated["next_backup_at"]
     assert updated["retention"] == {"daily": 7, "weekly": 4}
 
-    changed = backup.backup_settings(backup.BackupSettingsBody(enabled=True, destination=str(tmp_path / "other")))
+    other = tmp_path / "other"
+    other.mkdir()
+    changed = backup.backup_settings(backup.BackupSettingsBody(enabled=True, destination=str(other)))
     assert changed["state"] == "never"
     assert changed["last_backup_at"] is None
 

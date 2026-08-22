@@ -4,6 +4,21 @@ $repo = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location -LiteralPath $repo
 $venvPython = Join-Path $repo '.venv\Scripts\python.exe'
 
+function Initialize-AuthorRuntimeConfig {
+    $configRoot = if ([string]::IsNullOrWhiteSpace($env:BIYU_USER_CONFIG_DIR)) { Join-Path $HOME '.biyu' } else { [System.IO.Path]::GetFullPath($env:BIYU_USER_CONFIG_DIR) }
+    $runtimeConfig = Join-Path $configRoot 'runtime-production.json'
+    if (Test-Path -LiteralPath $runtimeConfig) { return }
+    $initialRoot = if ([string]::IsNullOrWhiteSpace($env:BIYU_DATA_ROOT)) { Join-Path $HOME 'BiyuData' } else { [System.IO.Path]::GetFullPath($env:BIYU_DATA_ROOT) }
+    New-Item -ItemType Directory -Path $initialRoot -Force | Out-Null
+    New-Item -ItemType Directory -Path $configRoot -Force | Out-Null
+    @{ data_root = $initialRoot } | ConvertTo-Json | Set-Content -LiteralPath $runtimeConfig -Encoding UTF8
+    Write-Host "Created persistent Biyu data location: $runtimeConfig"
+}
+
+if (-not $OnlyIfNeeded) {
+    Initialize-AuthorRuntimeConfig
+}
+
 if (-not (Test-Path -LiteralPath $venvPython)) {
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
         throw '未找到 Git。请先安装 Git for Windows：https://git-scm.com/download/win'

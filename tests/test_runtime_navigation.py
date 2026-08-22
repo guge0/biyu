@@ -85,5 +85,7 @@ def test_runtime_version_endpoint_and_visible_shelf_badge(monkeypatch) -> None:
     assert 'fetch("/api/version")' in script
     assert "info.version" in script
     assert "info.checkout" not in script
-    assert "info.data_root" not in script
+    assert "info.data_root" in script
+    assert "你的书存在：" in script
+    assert 'id="data-root-location"' in html
     assert "版本无法确认" in script

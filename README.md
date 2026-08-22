@@ -1,5 +1,7 @@
 # 笔驭 BiYu
 
+[了解笔驭](docs/index.html)
+
 笔驭是面向中文网文连载的本地 AI 创作工作台。它把书籍、设定、章节、声纹、责编讨论和生成流程放在同一个浏览器界面中；书稿保存在你的电脑上，不上传到源码仓库。
 
 ![书架](docs/images/shelf.png)
@@ -50,22 +52,25 @@ Set-Location biyu
 
 - 固定打开 `http://127.0.0.1:8080`
 - 服务就绪后自动打开浏览器
-- 如果 Biyu 已经在运行，重复双击会自动重启到当前代码并打开新页面；只有端口被其他程序占用时才会显示 PID 并停止，不会悄悄换端口
+- 如果同一数据位置的笔驭已经在运行，重复双击只会打开现有页面
+- 如果 8080 上的笔驭使用另一个数据位置，启动器会显示两个位置并拒绝启动，不会终止已有进程，也不会悄悄换端口
 - 代码或依赖变化时刷新本地运行包
 
-默认书稿目录是：
+安装时会把作者版的数据位置写入用户配置：
 
 ```text
-%USERPROFILE%\BiyuData
+%USERPROFILE%\.biyu\runtime-production.json
 ```
 
-启动器会在首次使用时创建该目录。需要放到其他磁盘时，在启动前设置 `BIYU_DATA_ROOT`，例如：
+首次安装会把其中的 `data_root` 设为 `%USERPROFILE%\BiyuData` 并创建目录。以后每次启动都从这个持久文件读取；配置缺失、损坏或指向不存在的目录时会直接报错，不会猜一个默认位置。
+
+`BIYU_DATA_ROOT` 只用于临时覆盖。设置它后，书架会显眼标明“这次是临时指定的位置”；不要把它作为长期配置。例如仅在当前 PowerShell 窗口临时指定：
 
 ```powershell
-[Environment]::SetEnvironmentVariable('BIYU_DATA_ROOT', 'D:\MyBiyuBooks', 'User')
+$env:BIYU_DATA_ROOT = 'D:\MyBiyuBooks'
 ```
 
-重新打开终端或重新登录 Windows 后生效。不要把书稿目录放进源码仓库。
+关闭这个 PowerShell 窗口后覆盖即失效。不要把书稿目录放进源码仓库。
 
 首次打开书架后，通过“换 Key / 换模型”选择模型并输入服务商 API Key，再点击“保存并校验连接”。Key 优先保存在 Windows 系统钥匙串；系统钥匙串不可用时保存到用户目录中的本地加密文件，不写入 Git。
 

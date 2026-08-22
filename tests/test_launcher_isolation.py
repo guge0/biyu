@@ -17,19 +17,18 @@ def test_windows_has_one_author_launcher() -> None:
     assert "BIYU_DATA_ROOT_2" not in launcher
 
 
-def test_shared_launcher_restarts_biyu_but_refuses_other_occupant_and_sets_environment() -> None:
+def test_shared_launcher_refuses_conflicts_without_stopping_existing_service() -> None:
     text = (ROOT / "scripts" / "start_biyu_ui.ps1").read_text(encoding="utf-8")
 
     assert "Test-NetConnection" not in text
     assert "Get-NetTCPConnection" in text
-    assert "Existing Biyu service found" in text
-    assert "Stop-Process -Id $listener.OwningProcess" in text
-    assert "did not release port" in text
-    assert "uvicorn\\s+biyu\\.ui\\.app:app" in text
-    assert "Port $Port is occupied by another program" in text
+    assert "runtime_guard.py" in text
+    assert "Stop-Process" not in text
+    assert "show_runtime_conflict.ps1" in text
     assert "exit 2" in text
     assert "$env:BIYU_ENV = 'prod'" in text
     assert "BIYU_RUNTIME_ROLE" in text
+    assert "BIYU_DATA_ROOT_SOURCE" in text
     assert "Production" not in text
     assert "Test mode" not in text
     assert "-File (Join-Path $projectRoot 'install_biyu.ps1') -SkipPull" in text

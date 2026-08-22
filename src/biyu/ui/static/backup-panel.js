@@ -57,23 +57,33 @@
       line.textContent = "正在备份…";
       detail.textContent = "正在备份…";
       run.textContent = "正在备份…";
+    } else if (status.state === "needs_attention") {
+      line.textContent = "这次备份需要检查 · 去看看";
+      line.classList.add("backup-status-failed");
+      detail.textContent = "这次备份没有备到任何书，请检查数据位置。";
+      detail.classList.add("backup-detail-failed");
+      detail.setAttribute("role", "alert");
+      run.textContent = "再试一次";
     } else if (status.state === "failed") {
       const when = localTime(status.last_attempt_at);
       line.textContent = `上次备份失败${when ? `（${when}）` : ""} · 去看看`;
       line.classList.add("backup-status-failed");
-      detail.textContent = `上次备份失败：${status.last_error || "原因没有记录"}`;
+      const previous = status.last_backup_at
+        ? `。上次成功：${localTime(status.last_backup_at)} · ${status.book_count || 0} 本 · ${status.last_backup_path} · 用时 ${duration(status.duration_seconds)}`
+        : "。此前没有成功记录";
+      detail.textContent = `上次备份失败：${status.last_error || "原因没有记录"}${previous}`;
       detail.classList.add("backup-detail-failed");
       detail.setAttribute("role", "alert");
       run.textContent = "再试一次";
     } else if (!status.enabled) {
       line.textContent = "备份没有开 · 打开";
       detail.textContent = status.last_backup_at
-        ? `自动备份没有开。上次手动备份 ${localTime(status.last_backup_at)} · ${status.book_count || 0} 本 · 用时 ${duration(status.duration_seconds)}`
+        ? `自动备份没有开。上次手动备份 ${localTime(status.last_backup_at)} · ${status.book_count || 0} 本 · ${status.last_backup_path} · 用时 ${duration(status.duration_seconds)}`
         : "备份没有开。仍然可以手动备份一次。";
       run.textContent = "现在备份一次";
     } else if (status.state === "ok" && status.last_backup_at) {
       line.textContent = `上次备份 ${localTime(status.last_backup_at)} · ${status.book_count || 0} 本 · 备份设置`;
-      detail.textContent = `上次备份 ${localTime(status.last_backup_at)} · ${status.book_count || 0} 本 · 用时 ${duration(status.duration_seconds)}`;
+      detail.textContent = `上次备份 ${localTime(status.last_backup_at)} · ${status.book_count || 0} 本 · ${status.last_backup_path} · 用时 ${duration(status.duration_seconds)}`;
       run.textContent = "现在备份一次";
     } else {
       line.textContent = "备份已打开，还没备过 · 现在备一次";

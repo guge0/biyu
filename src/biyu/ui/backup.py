@@ -23,6 +23,7 @@ from biyu.backup_service import (
     restore_book,
     run_backup,
     save_backup_settings,
+    validate_backup_destination,
 )
 from biyu.config import get_data_root
 from biyu.deletion_service import (
@@ -51,7 +52,7 @@ class RestoreBody(BaseModel):
 
 
 def _scope() -> str:
-    return "test" if os.environ.get("BIYU_RUNTIME_ROLE") == "test" else "production"
+    return "test" if os.environ.get("BIYU_RUNTIME_ROLE") in {"test", "development"} else "production"
 
 
 def _backup_root() -> Path:
@@ -137,7 +138,7 @@ def _sync_daily_schedule(enabled: bool) -> tuple[str, str | None]:
 
 def _run_configured_backup(reason: str) -> None:
     settings = load_backup_settings()
-    source = Path(settings.source_path) if settings.source_path else get_data_root()
+    source = get_data_root()
     run_backup(
         source,
         Path(settings.destination),
@@ -163,6 +164,10 @@ def backup_settings(payload: BackupSettingsBody) -> dict[str, object]:
     resolved = destination.resolve()
     if resolved == source or source in resolved.parents:
         raise HTTPException(400, "备份位置不能放在书稿目录里面")
+    try:
+        validate_backup_destination(destination)
+    except RuntimeError as exc:
+        raise HTTPException(400, str(exc)) from exc
     previous = load_backup_settings()
     pending = BackupSettings(
         enabled=payload.enabled,

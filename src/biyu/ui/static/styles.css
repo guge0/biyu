@@ -637,6 +637,17 @@ button{font-family:inherit;cursor:default}
   max-width: 960px;
 }
 
+.data-root-location {
+  margin: 8px 0 0;
+  color: var(--ink-dim);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.data-root-location.temporary {
+  color: var(--seal);
+  font-weight: 600;
+}
+
 /* 顶部快捷:继续 + 立项 */
 .quick-actions {
   display: flex;

@@ -28,9 +28,10 @@ def _book(root: Path, name: str) -> Path:
     return book
 
 
-def test_runtime_binding_requires_role_and_explicit_root(tmp_path: Path):
+def test_runtime_binding_requires_role_and_explicit_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     from biyu.config import validate_runtime_binding
 
+    monkeypatch.delenv("BIYU_DATA_ROOT", raising=False)
     with pytest.raises(ValueError, match="角色"):
         validate_runtime_binding(role=None, data_root=tmp_path / "prod", project_root=tmp_path)
     with pytest.raises(ValueError, match="数据根"):
@@ -65,10 +66,12 @@ def test_runtime_binding_accepts_explicit_matching_roots(tmp_path: Path, monkeyp
     assert validate_runtime_binding(role="production", data_root=production, project_root=tmp_path) == production.resolve()
 
 
-def test_author_launcher_uses_configured_or_home_data_root():
+def test_author_launcher_requires_persistent_data_root_configuration():
     script = Path("scripts/start_biyu_ui.ps1").read_text(encoding="utf-8")
     assert "$env:BIYU_DATA_ROOT" in script
-    assert "Join-Path $HOME 'BiyuData'" in script
+    assert "biyu.runtime_config resolve --role production" in script
+    assert "Join-Path $HOME 'BiyuData'" not in script
+    assert "configuration is missing or invalid" in script
 
 
 def test_secondary_book_trash_is_blocked_by_server_gate(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

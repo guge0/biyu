@@ -47,13 +47,21 @@ def _runtime_label() -> str:
     return "笔驭"
 
 
-def _runtime_identity() -> dict[str, str]:
+def _runtime_identity() -> dict[str, object]:
     root = Path(os.environ.get("BIYU_PROJECT_ROOT") or Path.cwd()).resolve()
     try:
         short_sha = subprocess.check_output(["git", "-C", str(root), "rev-parse", "--short=8", "HEAD"], text=True, stderr=subprocess.DEVNULL).strip()
     except (OSError, subprocess.SubprocessError):
         short_sha = "unknown"
-    return {"role": _runtime_label(), "checkout": root.name, "repo": "guge0/biyu", "sha": short_sha, "data_root": str(Path(os.environ.get("BIYU_DATA_ROOT") or "").resolve())}
+    source = os.environ.get("BIYU_DATA_ROOT_SOURCE", "environment")
+    return {
+        "role": _runtime_label(),
+        "checkout": root.name,
+        "repo": "guge0/biyu",
+        "sha": short_sha,
+        "data_root": str(Path(os.environ.get("BIYU_DATA_ROOT") or "").resolve()),
+        "data_root_temporary": source == "environment",
+    }
 
 app = FastAPI(title="笔驭作者工作台", version="0.2.0")
 
@@ -77,7 +85,7 @@ async def z1_startup_backup() -> None:
         return
 
     scope = "test" if os.environ.get("BIYU_RUNTIME_ROLE") == "test" else "production"
-    source = Path(settings.source_path) if settings.source_path else get_data_root()
+    source = get_data_root()
     destination = Path(settings.destination)
 
     async def _run() -> None:
@@ -145,7 +153,7 @@ app.include_router(_web_router)
 
 
 @app.get("/api/version")
-def runtime_version() -> dict[str, str]:
+def runtime_version() -> dict[str, object]:
     identity = _runtime_identity()
     return {"version": __version__, "build": f"{BUILD_DATE} · {identity['sha']}", "runtime": _runtime_label(), **identity}
 

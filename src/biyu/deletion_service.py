@@ -1,13 +1,13 @@
 """Author-only, recoverable book and chapter deletion operations."""
 from __future__ import annotations
 import json, shutil
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta, timezone
+from dataclasses import dataclass, asdict, fields
+from datetime import datetime, timezone
 from pathlib import Path
 
 @dataclass
 class TrashEntry:
-    trash_id: str; book_id: str; book_title: str; deleted_at: str; expires_at: str
+    trash_id: str; book_id: str; book_title: str; deleted_at: str
     chapter_count: int; settings_filled_count: int; source_path: str; state: str = "trashed"; original_dir_name: str = ""
 
 @dataclass
@@ -58,7 +58,7 @@ def move_book_to_trash(data_root: Path, trash_root: Path, book_id: str, *, actor
     shutil.move(str(source), str(target))
     try:
         chapters = list((target / "chapters").glob("ch*.md")) if (target / "chapters").exists() else []
-        entry = TrashEntry(tid, book_id, title, datetime.now(timezone.utc).isoformat(), (datetime.now(timezone.utc)+timedelta(days=30)).isoformat(), len(chapters), 0, str(target), original_dir_name=source.name)
+        entry = TrashEntry(tid, book_id, title, datetime.now(timezone.utc).isoformat(), len(chapters), 0, str(target), original_dir_name=source.name)
         meta = target.parent / f"{tid}.json"
         temporary = meta.with_suffix(".json.tmp")
         temporary.write_text(json.dumps(asdict(entry), ensure_ascii=False), encoding="utf-8")
@@ -83,7 +83,9 @@ def list_book_trash(trash_root: Path) -> list[TrashEntry]:
     root = _trash(trash_root)
     for meta in sorted(root.glob("*.json")) if root.exists() else []:
         try:
-            result.append(TrashEntry(**json.loads(meta.read_text(encoding="utf-8"))))
+            raw = json.loads(meta.read_text(encoding="utf-8"))
+            known = {field.name for field in fields(TrashEntry)}
+            result.append(TrashEntry(**{key: value for key, value in raw.items() if key in known}))
         except (OSError, ValueError, TypeError):
             continue
     return result

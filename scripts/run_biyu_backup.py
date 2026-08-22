@@ -12,7 +12,7 @@ def main() -> int:
     settings = load_backup_settings()
     if not settings.enabled:
         return 0
-    source = Path(settings.source_path) if settings.source_path else get_data_root()
+    source = get_data_root()
     destination = Path(settings.destination)
     run_backup(source, destination, scope="production", reason="scheduled", status_dir=user_config_dir())
     return 0

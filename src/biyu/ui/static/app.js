@@ -61,6 +61,12 @@
     if (!label) return;
     label.textContent = `笔驭 ${info.version} · ${info.sha}`;
     label.title = `笔驭 ${info.version}`;
+    const location = $("data-root-location");
+    if (location) {
+      const temporary = info.data_root_temporary ? "（这次是临时指定的位置）" : "";
+      location.textContent = `你的书存在：${info.data_root}${temporary}`;
+      location.classList.toggle("temporary", Boolean(info.data_root_temporary));
+    }
   }
 
 

@@ -44,8 +44,8 @@ def validate_runtime_binding(
 ) -> Path:
     """Require an explicit, existing data root whose location matches its role."""
     selected_role = (role if role is not None else os.environ.get("BIYU_RUNTIME_ROLE", "")).strip().lower()
-    if selected_role not in {"production", "test"}:
-        raise ValueError("运行角色缺失或非法，必须是 production 或 test")
+    if selected_role not in {"production", "development", "test"}:
+        raise ValueError("运行角色缺失或非法，必须是 production、development 或 test")
 
     configured = data_root
     if configured is None:
@@ -60,7 +60,7 @@ def validate_runtime_binding(
     project = (project_root or get_project_root()).resolve()
     test_expected = os.environ.get("BIYU_TEST_DATA_ROOT", "").strip()
     production_expected = os.environ.get("BIYU_PRODUCTION_DATA_ROOT", "").strip()
-    if selected_role == "test":
+    if selected_role in {"development", "test"}:
         expected = Path(test_expected).expanduser().resolve() if test_expected else (project / "data")
         if resolved != expected:
             raise ValueError(f"运行角色与数据根不匹配：test 应使用 {expected}，实际为 {resolved}")

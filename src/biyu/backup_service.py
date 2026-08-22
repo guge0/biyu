@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import errno
 import os
 import re
 import shutil
@@ -97,6 +98,35 @@ def load_backup_settings() -> BackupSettings:
 
 def save_backup_settings(settings: BackupSettings) -> None:
     _atomic_json(_settings_path(), {"schema_version": 1, **asdict(settings)})
+
+
+def validate_backup_destination(destination: Path) -> Path:
+    """Require an existing writable directory before changing saved settings."""
+    path = Path(destination).expanduser()
+    if not path.exists():
+        raise RuntimeError(f"备份目录不存在：{path}")
+    if not path.is_dir():
+        raise RuntimeError(f"备份位置不是文件夹：{path}")
+    probe = path / f".biyu-write-test-{os.getpid()}-{threading.get_ident()}.tmp"
+    try:
+        with probe.open("xb") as handle:
+            handle.write(b"biyu")
+            handle.flush()
+            os.fsync(handle.fileno())
+    except PermissionError as exc:
+        raise RuntimeError(f"备份目录不可写：{path}（{exc}）") from exc
+    except OSError as exc:
+        if exc.errno == errno.ENOSPC:
+            raise RuntimeError(f"备份磁盘空间不足：{path}") from exc
+        raise RuntimeError(f"备份目录不可写：{path}（{exc}）") from exc
+    finally:
+        try:
+            probe.unlink()
+        except FileNotFoundError:
+            pass
+        except OSError:
+            pass
+    return path.resolve()
 
 
 def next_backup_at(*, now: datetime | None = None) -> str:
@@ -311,21 +341,36 @@ def run_backup(
                     shutil.rmtree(old)
                     removed += 1
             finished = finished_precise.replace(microsecond=0)
+            state = "ok" if verified_books else "needs_attention"
             result = BackupResult(
                 backup_id, scope, started.isoformat(), finished.isoformat(), str(target),
-                len(verified_books), files, removed, "ok", duration,
+                len(verified_books), files, removed, state, duration,
             )
-            _write_status(destination, BackupStatus(
-                scope=scope,
-                last_backup_at=finished.isoformat(),
-                last_backup_path=str(target),
-                state="ok",
-                message="备份完成",
-                book_count=result.book_count,
-                copied_files=result.copied_files,
-                duration_seconds=result.duration_seconds,
-                last_attempt_at=finished.isoformat(),
-            ), status_dir=status_dir)
+            if verified_books:
+                status = BackupStatus(
+                    scope=scope,
+                    last_backup_at=finished.isoformat(),
+                    last_backup_path=str(target),
+                    state="ok",
+                    message=f"备份完成：{result.book_count} 本 · {target} · 用时 {duration:.3f} 秒",
+                    book_count=result.book_count,
+                    copied_files=result.copied_files,
+                    duration_seconds=result.duration_seconds,
+                    last_attempt_at=finished.isoformat(),
+                )
+            else:
+                status = BackupStatus(
+                    scope=scope,
+                    last_backup_at=previous.last_backup_at,
+                    last_backup_path=previous.last_backup_path,
+                    state="needs_attention",
+                    message="这次备份没有备到任何书，请检查数据位置。",
+                    book_count=previous.book_count,
+                    copied_files=previous.copied_files,
+                    duration_seconds=previous.duration_seconds,
+                    last_attempt_at=finished.isoformat(),
+                )
+            _write_status(destination, status, status_dir=status_dir)
             return result
         except Exception as exc:
             if partial is not None and partial.exists():
