@@ -58,7 +58,7 @@ biyu = [
 ]
 
 [tool.setuptools.data-files]
-config = ["config/models.yaml.example"]
+config = ["config/models.yaml.example", "config/published_version.json"]
 "Lib/config" = [
     "config/auditor.yaml",
     "config/default.yaml",

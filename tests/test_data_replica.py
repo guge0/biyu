@@ -12,6 +12,8 @@ def test_replica_script_uses_snapshots_hashes_and_never_writes_source() -> None:
     assert "Remove-Item -LiteralPath $_.Directory.FullName" in script
     assert "^snapshot-(\\d{8}T\\d{6}Z)$" in script
     assert "status.json" in script
+    assert "$env:BIYU_DATA_ROOT" in script
+    assert "$env:BIYU_REPLICA_ROOT" in script
 
 
 def test_replica_keeps_a_bounded_thirty_day_recovery_window() -> None:
@@ -44,6 +46,7 @@ def test_replica_installer_matches_runner_parameters_and_runs_silently() -> None
     assert "-Hidden" in installer
     assert "('-File \"{0}\"' -f $runner)" in installer
     assert "('-DestinationRoot \"{0}\"' -f $DestinationRoot)" in installer
+    assert "('-SourcePath \"{0}\"' -f $sourceRoot)" in installer
     assert '$taskArguments = $argumentParts -join " "' in installer
 
 

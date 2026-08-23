@@ -32,6 +32,8 @@ from biyu.cli.talk_cmd import _bookroom_bat, open_talk
 from biyu.ui.cli_executor import execute, running_action
 from biyu.ui.sse import sse_generator
 from biyu.ui.workbench_state import (
+    STEP_LABEL,
+    STEP_LAYER,
     STEP_STAGE,
     asset_state,
     persisted_run_state,
@@ -415,7 +417,12 @@ async def generate_planning_with_architect(book: str, chapter: int) -> dict[str,
 
 
 def _replica_status() -> dict[str, Any]:
-    root = Path(os.environ.get("BIYU_REPLICA_ROOT", r"D:\biyu-data-replica"))
+    configured_root = os.environ.get("BIYU_REPLICA_ROOT", "").strip()
+    if configured_root:
+        root = Path(configured_root).expanduser()
+    else:
+        data_root = os.environ.get("BIYU_DATA_ROOT", "").strip()
+        root = Path(data_root).expanduser().resolve().parent / "biyu-data-replica" if data_root else Path(r"D:\biyu-data-replica")
     path = root / "status.json"
     if not path.exists():
         return {"configured": False, "last_success": "", "snapshot_count": 0, "earliest_recovery": "", "failed": False, "last_error": ""}
@@ -1295,6 +1302,8 @@ def chapter_snapshot(book_dir: Path, chapter: int, book_key: str | None = None) 
         "chapter_complete": verdict.exists(),
         "axes": {"asset": assets, "step": step, "run": run},
         "stage": STEP_STAGE[step],
+        "layer": STEP_LAYER[step],
+        "stage_label": STEP_LABEL[step],
         "first_generation": first_generation,
         "stale": stale,
         "running_action": running,
@@ -1679,18 +1688,93 @@ def _zebian_opening_prompt(book_title: str, book_dir: Path) -> str:
     )
 
 
+def _zebian_sessions_path(book_dir: Path) -> Path:
+    """Return the per-book registry for Claude Code editor conversations."""
+    return book_dir / "consults" / "zebian_sessions.json"
+
+
+def _load_zebian_sessions(book_dir: Path) -> list[dict[str, Any]]:
+    path = _zebian_sessions_path(book_dir)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+    except (OSError, json.JSONDecodeError):
+        payload = []
+    if isinstance(payload, dict):
+        payload = payload.get("sessions", [])
+    if not isinstance(payload, list):
+        return []
+    sessions = [item for item in payload if isinstance(item, dict) and item.get("id")]
+    return sorted(
+        sessions,
+        key=lambda item: (item.get("last_used_at", 0), item.get("created_at", 0)),
+        reverse=True,
+    )
+
+
+def _save_zebian_sessions(book_dir: Path, sessions: list[dict[str, Any]]) -> None:
+    path = _zebian_sessions_path(book_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(sessions, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _select_zebian_session(
+    book_dir: Path, *, mode: str, requested_id: str | None,
+) -> tuple[str, bool, list[dict[str, Any]]]:
+    """Select an existing session or create one.
+
+    ``mode=new`` is kept as the API default for compatibility with old callers;
+    the web UI passes ``mode=recent`` so its normal action continues the latest
+    conversation.  ``requested_id`` always wins and must belong to this book.
+    """
+    sessions = _load_zebian_sessions(book_dir)
+    now = time.time()
+    existing = None
+    if requested_id:
+        existing = next((s for s in sessions if str(s.get("id")) == requested_id), None)
+        if existing is None:
+            raise HTTPException(status_code=404, detail="责编历史会话不存在或不属于本书。")
+    elif mode in {"recent", "resume", "continue"}:
+        existing = max(sessions, key=lambda s: (s.get("last_used_at", 0), s.get("created_at", 0)), default=None)
+
+    if existing is not None:
+        existing["last_used_at"] = now
+        _save_zebian_sessions(book_dir, sessions)
+        return str(existing["id"]), True, sessions
+
+    session = {
+        "id": str(uuid4()),
+        "created_at": now,
+        "last_used_at": now,
+        "label": f"责编对话 {datetime.fromtimestamp(now).strftime('%Y-%m-%d %H:%M')}",
+    }
+    sessions.insert(0, session)
+    _save_zebian_sessions(book_dir, sessions)
+    return str(session["id"]), False, sessions
+
+
+def _forget_zebian_session(book_dir: Path, session_id: str) -> None:
+    sessions = _load_zebian_sessions(book_dir)
+    remaining = [s for s in sessions if str(s.get("id")) != session_id]
+    if remaining != sessions:
+        if remaining:
+            _save_zebian_sessions(book_dir, remaining)
+        else:
+            _zebian_sessions_path(book_dir).unlink(missing_ok=True)
+
+
 def _powershell_quote(value: str) -> str:
     return "'" + value.replace("'", "''") + "'"
 
 
 def _zebian_launch_command(
-    launcher: Path, session_id: str, opening_prompt: str, project_root: Path,
+    launcher: Path, session_id: str, opening_prompt: str, project_root: Path, *, resume: bool = False,
 ) -> tuple[list[str], int]:
+    session_flag = "--resume" if resume else "--session-id"
     terminal = shutil.which("wt.exe")
     if terminal:
         script = "& " + " ".join(
             _powershell_quote(value)
-            for value in (str(launcher), "--session-id", session_id, opening_prompt)
+            for value in (str(launcher), session_flag, session_id, opening_prompt)
         )
         return (
             [
@@ -1715,18 +1799,81 @@ def _zebian_launch_command(
             "cmd.exe",
             "/d",
             "/c",
+            "start",
+            "笔驭 · 责编",
+            "/d",
+            str(project_root),
+            "cmd.exe",
+            "/d",
+            "/k",
             str(launcher),
-            "--session-id",
+            session_flag,
             session_id,
             opening_prompt,
         ],
-        getattr(subprocess, "CREATE_NEW_CONSOLE", 0),
+        0,
     )
 
 
+def _resolve_zebian_runtime(project_root: Path, launcher: Path) -> tuple[Path, Path]:
+    """Resolve a real checkout and its Scripts directory for the editor launcher.
+
+    Installed wheels can make ``get_project_root()`` point inside ``.venv\\Lib``.
+    An inherited BIYU_PROJECT_ROOT is only trusted when it has the checkout
+    contract; otherwise the launcher location and current interpreter win.
+    """
+    interpreter_scripts = Path(sys.executable).resolve().parent
+    candidates: list[Path] = []
+    configured = os.environ.get("BIYU_PROJECT_ROOT", "").strip()
+    if configured:
+        candidates.append(Path(configured).expanduser())
+    launcher_path = launcher.resolve()
+    launcher_root = launcher_path.parent.parent if launcher_path.parent.name.casefold() == "scripts" else launcher_path.parent
+
+    def launcher_for(root: Path) -> bool:
+        return (root / "scripts" / "书房.bat").is_file() or (root / "书房.bat").is_file()
+
+    def scripts_for(root: Path) -> Path:
+        return root / ".venv" / "Scripts"
+    configured_root = Path(configured).expanduser().resolve() if configured else None
+    if configured_root is not None and launcher_for(configured_root):
+        # Preserve an explicit checkout's missing-executable error rather than
+        # silently mixing it with another environment.
+        return configured_root, scripts_for(configured_root)
+    if launcher_path.parent.name.casefold() != "scripts":
+        # Installed-package callers and isolated tests may provide a launcher
+        # directly; pair it with the interpreter that is actually running.
+        return launcher_root, interpreter_scripts
+    candidates.append(launcher_root)
+    candidates.append(project_root)
+    candidates.append(Path.cwd())
+    for candidate in candidates:
+        candidate = candidate.resolve()
+        checkout_biyu = scripts_for(candidate) / "biyu.exe"
+        if launcher_for(candidate) and checkout_biyu.is_file():
+            return candidate, scripts_for(candidate)
+        if candidate == launcher_root and launcher_path.is_file() and checkout_biyu.is_file():
+            return candidate, scripts_for(candidate)
+    # Installed environments do not need a checkout-local biyu.exe to launch
+    # the batch file; PATH should still expose the running interpreter's CLI.
+    return launcher_root if launcher_path.is_file() else project_root, interpreter_scripts
+
+
+@router.get("/books/{book}/zebian/sessions")
+def list_zebian_sessions(book: str) -> dict[str, Any]:
+    """List Claude Code editor sessions registered for one book."""
+    return {"sessions": _load_zebian_sessions(_book_dir(book))}
+
+
 @router.post("/books/{book}/zebian")
-def open_zebian(book: str, request: Request) -> dict[str, str]:
-    """Open the editor skill in a fresh Claude Code conversation."""
+def open_zebian(book: str, request: Request) -> dict[str, Any]:
+    """Open the editor skill, continuing or creating a per-book conversation.
+
+    Query parameters are deliberately lightweight so the existing POST contract
+    remains callable by installed clients: ``mode=recent`` continues the latest
+    session, ``mode=new`` starts a new one, and ``session_id`` resumes a selected
+    historical session.
+    """
     book_dir = _book_dir(book)
     try:
         port = request.url.port
@@ -1738,6 +1885,11 @@ def open_zebian(book: str, request: Request) -> dict[str, str]:
     settings_url = f"{request.url.scheme}://127.0.0.1:{port}/api/settings/editor"
     book_title = _zebian_book_title(book_dir)
     opening_prompt = _zebian_opening_prompt(book_title, book_dir)
+    requested_mode = request.query_params.get("mode")
+    mode = (requested_mode or "new").strip().lower()
+    requested_session_id = request.query_params.get("session_id") or None
+    if mode not in {"new", "recent", "resume", "continue"}:
+        raise HTTPException(status_code=400, detail="责编会话模式无效，只接受 new 或 recent。")
     launcher = _bookroom_bat()
     if not launcher.exists():
         raise HTTPException(
@@ -1752,18 +1904,8 @@ def open_zebian(book: str, request: Request) -> dict[str, str]:
     env["BIYU_SETTINGS_EDITOR_URL"] = settings_url
     env["BIYU_SETTINGS_DATA_ROOT"] = str(data_root)
     env["BIYU_RUNTIME_ROLE"] = "test" if port == 8090 else "production"
-    project_root = get_project_root()
-    # A launcher-provided checkout root is authoritative. When the service is
-    # started directly from an installed environment, use that interpreter's
-    # virtual environment instead of guessing from site-packages parents.
-    # The installed package may resolve ``project_root`` inside venv\Lib;
-    # the running interpreter is the authoritative environment in that case.
-    interpreter_scripts = Path(sys.executable).resolve().parent
-    checkout_scripts = project_root / ".venv" / "Scripts"
-    # A launcher-provided checkout is an explicit contract, including its
-    # failure state. Without it, fall back to the interpreter's environment
-    # so installed wheels do not guess a checkout from site-packages parents.
-    venv_scripts = checkout_scripts if os.environ.get("BIYU_PROJECT_ROOT") else interpreter_scripts
+    project_root, venv_scripts = _resolve_zebian_runtime(get_project_root(), launcher)
+    env["BIYU_PROJECT_ROOT"] = str(project_root)
     biyu_executable = venv_scripts / "biyu.exe"
     if not biyu_executable.is_file():
         raise HTTPException(
@@ -1773,9 +1915,12 @@ def open_zebian(book: str, request: Request) -> dict[str, str]:
                 "opening_prompt": opening_prompt,
             },
         )
+    session_id, resumed, sessions = _select_zebian_session(
+        book_dir, mode=mode, requested_id=requested_session_id,
+    )
     env["PATH"] = str(venv_scripts) + os.pathsep + env.get("PATH", "")
     command, creationflags = _zebian_launch_command(
-        launcher, str(uuid4()), opening_prompt, project_root,
+        launcher, session_id, opening_prompt, project_root, resume=resumed,
     )
     try:
         subprocess.Popen(
@@ -1785,6 +1930,8 @@ def open_zebian(book: str, request: Request) -> dict[str, str]:
             creationflags=creationflags,
         )
     except Exception as exc:
+        if not resumed:
+            _forget_zebian_session(book_dir, session_id)
         raise HTTPException(
             status_code=500,
             detail={
@@ -1792,9 +1939,16 @@ def open_zebian(book: str, request: Request) -> dict[str, str]:
                 "opening_prompt": opening_prompt,
             },
         ) from exc
+    message = f"《{book_title}》责编已打开；{'已续接历史对话' if resumed else '已开始新对话'}。"
+    if mode == "new" and not resumed:
+        # Keep the old wording for installed clients and explicit fresh starts.
+        message += "每次都是新对话。"
     return {
-        "message": f"《{book_title}》责编已打开；每次都是新对话。",
+        "message": message,
         "opening_prompt": opening_prompt,
+        "session_id": session_id,
+        "resumed": resumed,
+        "sessions": sessions,
     }
 
 

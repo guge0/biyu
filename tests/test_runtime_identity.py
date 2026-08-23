@@ -30,6 +30,8 @@ def test_settings_page_contains_runtime_identity_hook() -> None:
     assert "info.version" in script
     assert "info.checkout" not in script
     assert "info.data_root" not in script
+    assert "update-dot" in script
+    assert "update_available" in script
 
 
 def test_dynamic_html_versions_match_current_asset_hashes() -> None:

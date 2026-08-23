@@ -227,11 +227,16 @@
         '    <div class="entry-desc">北极星、大纲、世界观七格、人物卡 —— 写手和导演每章都读这里</div>' +
         '    <span id="settings-entry-state" class="entry-state">9 格 · 一格没填</span>' +
         '  </a>' +
-        '  <button class="entry-card" id="zebian-entry" style="cursor:pointer;text-align:left;font-family:inherit;font-size:inherit;">' +
+        '  <!-- 旧版“每次都是新对话”已升级为可续接/可选历史/可新建。 -->' +
+        '  <div class="entry-card" id="zebian-entry" role="button" tabindex="0" style="cursor:pointer;text-align:left;font-family:inherit;font-size:inherit;">' +
         '    <div class="entry-label">责编</div>' +
-        '    <div class="entry-desc">在 Claude Code 里跟责编聊。每次都是新对话，它会读你已存进设定集的内容。</div>' +
+        '    <div class="entry-desc">在 Claude Code 里跟责编聊。可继续最近对话、选择历史会话或开始新对话；它会读你已存进设定集的内容。</div>' +
         '    <span id="zebian-entry-status" class="entry-state"></span><span id="zebian-copy" class="entry-back-btn b2 bs" hidden>复制开场白</span>' +
-        '  </button>' +
+        '    <span id="zebian-session-tools" hidden style="display:flex;gap:8px;align-items:center;margin-top:8px;" onclick="event.stopPropagation()">' +
+        '      <select id="zebian-session-select" aria-label="选择责编历史会话" style="max-width:220px;"></select>' +
+        '      <button id="zebian-new-session" type="button">开始新对话</button>' +
+        '    </span>' +
+        '  </div>' +
         '</div>' +
         '<div class="entry-grid entry-grid-sub">' +
         '  <a href="/overview.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
@@ -274,10 +279,26 @@
         if (event.target.id === "zebian-copy") return;
         launchZebian(book, event.currentTarget);
       });
+      document.getElementById("zebian-entry").addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          launchZebian(book, event.currentTarget);
+        }
+      });
       document.getElementById("zebian-copy").addEventListener("click", function (event) {
         event.stopPropagation();
         copyZebianPrompt(book);
       });
+      document.getElementById("zebian-session-select").addEventListener("change", function (event) {
+        event.stopPropagation();
+        var selected = event.currentTarget.value;
+        if (selected) launchZebian(book, document.getElementById("zebian-entry"), { session_id: selected });
+      });
+      document.getElementById("zebian-new-session").addEventListener("click", function (event) {
+        event.stopPropagation();
+        launchZebian(book, document.getElementById("zebian-entry"), { mode: "new" });
+      });
+      loadZebianSessions(book);
       fetch("/api/settings/status").then(function (response) { return response.json(); }).then(function (payload) {
         document.getElementById("settings-entry").hidden = !payload.enabled;
         if (!payload.enabled) return;
@@ -329,7 +350,30 @@
       return "我们在写《" + title + "》。请使用 zebian skill 担任本书责编，先读取我已经存进设定集的内容。";
     }
 
-    async function launchZebian(book, button) {
+    async function loadZebianSessions(book) {
+      try {
+        var response = await fetch("/api/workbench/books/" + encodeURIComponent(book.id || book.name) + "/zebian/sessions");
+        if (!response.ok) return;
+        var payload = await response.json();
+        var sessions = payload.sessions || [];
+        var tools = document.getElementById("zebian-session-tools");
+        var select = document.getElementById("zebian-session-select");
+        if (!tools || !select || !sessions.length) return;
+        select.innerHTML = '<option value="">选择历史对话…</option>' + sessions.map(function (item) {
+          var label = item.label || item.id;
+          return '<option value="' + String(item.id).replace(/"/g, '&quot;') + '">' + escapeHtml(label) + '</option>';
+        }).join("");
+        tools.hidden = false;
+      } catch (_error) { /* 历史列表不可用时仍可继续最近/新建 */ }
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, function (char) {
+        return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[char];
+      });
+    }
+
+    async function launchZebian(book, button, options) {
       if (button.disabled) return;
       var status = document.getElementById("zebian-entry-status");
       var copy = document.getElementById("zebian-copy");
@@ -337,7 +381,9 @@
       copy.hidden = true;
       status.textContent = "正在打开…";
       try {
-        var response = await fetch("/api/workbench/books/" + encodeURIComponent(book.id || book.name) + "/zebian", { method: "POST" });
+        options = options || { mode: "recent" };
+        var query = new URLSearchParams(options).toString();
+        var response = await fetch("/api/workbench/books/" + encodeURIComponent(book.id || book.name) + "/zebian?" + query, { method: "POST" });
         var payload = await response.json().catch(function () { return {}; });
         if (!response.ok) {
           var detail = payload.detail || {};
@@ -346,6 +392,7 @@
         }
         zebianOpeningPrompt = payload.opening_prompt || fallbackOpeningPrompt(book);
         status.textContent = payload.message;
+        loadZebianSessions(book);
       } catch (error) {
         zebianOpeningPrompt = zebianOpeningPrompt || fallbackOpeningPrompt(book);
         copy.hidden = false;

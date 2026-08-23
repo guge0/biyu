@@ -42,6 +42,76 @@ from biyu import __version__
 BUILD_DATE = "20260819"
 
 
+def _version_key(value: str) -> tuple[int, ...] | None:
+    """Parse a simple dotted release version without adding a dependency."""
+    match = re.fullmatch(r"v?(\d+(?:\.\d+)*)", str(value).strip())
+    if not match:
+        return None
+    return tuple(int(part) for part in match.group(1).split("."))
+
+
+def _release_manifest_candidates() -> list[Path]:
+    configured = os.environ.get("BIYU_RELEASE_MANIFEST", "").strip()
+    candidates: list[Path] = []
+    if configured:
+        candidates.append(Path(configured).expanduser())
+    project_root = os.environ.get("BIYU_PROJECT_ROOT", "").strip()
+    if project_root:
+        candidates.append(Path(project_root) / "config" / "published_version.json")
+    candidates.append(Path.cwd() / "config" / "published_version.json")
+    data_root = os.environ.get("BIYU_DATA_ROOT", "").strip()
+    if data_root:
+        candidates.append(Path(data_root) / "published_version.json")
+    seen: set[str] = set()
+    unique: list[Path] = []
+    for candidate in candidates:
+        resolved = str(candidate.expanduser().resolve()).casefold()
+        if resolved not in seen:
+            seen.add(resolved)
+            unique.append(candidate)
+    return unique
+
+
+def _published_release() -> tuple[str | None, str | None, str | None]:
+    """Read a local release manifest as ``(version, build, source)``."""
+    env_version = os.environ.get("BIYU_PUBLISHED_VERSION", "").strip()
+    if env_version:
+        return env_version, os.environ.get("BIYU_PUBLISHED_BUILD", "").strip() or None, "environment"
+    for path in _release_manifest_candidates():
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            continue
+        if isinstance(payload, str):
+            version, build = payload.strip(), None
+        elif isinstance(payload, dict):
+            version = str(payload.get("version") or payload.get("release") or "").strip()
+            build_value = payload.get("build")
+            build = str(build_value).strip() if build_value else None
+        else:
+            continue
+        if version:
+            return version, build, str(path)
+    return None, None, None
+
+
+def _release_update() -> dict[str, object]:
+    current = __version__
+    published, published_build, source = _published_release()
+    role = os.environ.get("BIYU_RUNTIME_ROLE", "").strip().lower()
+    enabled = role not in {"development", "test"}
+    current_key = _version_key(current)
+    published_key = _version_key(published or "")
+    available = bool(enabled and published and published_key and current_key and published_key > current_key)
+    return {
+        "available": available,
+        "current": current,
+        "published": published,
+        "published_build": published_build,
+        "source": source,
+    }
+
+
 def _runtime_label() -> str:
     """Return the product name; deployment details stay in diagnostics."""
     return "笔驭"
@@ -155,7 +225,18 @@ app.include_router(_web_router)
 @app.get("/api/version")
 def runtime_version() -> dict[str, object]:
     identity = _runtime_identity()
-    return {"version": __version__, "build": f"{BUILD_DATE} · {identity['sha']}", "runtime": _runtime_label(), **identity}
+    update = _release_update()
+    return {
+        "version": __version__,
+        "build": f"{BUILD_DATE} · {identity['sha']}",
+        "runtime": _runtime_label(),
+        "update": update,
+        # Flat aliases keep simple clients compatible with the small original
+        # version payload while the nested object carries release metadata.
+        "update_available": update["available"],
+        "latest_version": update["published"],
+        **identity,
+    }
 
 
 _ASSET_REF = re.compile(r'(?P<prefix>(?:src|href)="/(?P<name>[^"?]+))\?v=[^"]+(?P<suffix>")')

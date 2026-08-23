@@ -61,6 +61,20 @@
     if (!label) return;
     label.textContent = `笔驭 ${info.version} · ${info.sha}`;
     label.title = `笔驭 ${info.version}`;
+    const update = info.update || {};
+    const updateDot = $("update-dot");
+    const updateLabel = $("update-label");
+    const hasUpdate = Boolean(update.available || info.update_available);
+    if (updateDot) {
+      updateDot.hidden = !hasUpdate;
+      updateDot.title = hasUpdate ? `有新版本：${update.published || info.latest_version || "可用更新"}` : "暂无更新";
+    }
+    if (updateLabel) {
+      updateLabel.hidden = !hasUpdate;
+      updateLabel.textContent = hasUpdate ? `有更新 · ${update.published || info.latest_version}` : "";
+    }
+    const badge = $("version-badge");
+    if (badge) badge.classList.toggle("has-update", hasUpdate);
     const location = $("data-root-location");
     if (location) {
       const temporary = info.data_root_temporary ? "（这次是临时指定的位置）" : "";

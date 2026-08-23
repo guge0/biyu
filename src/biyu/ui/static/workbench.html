@@ -39,6 +39,13 @@
       <span id="replica-warning-message">防手滑副本尚未设置。它不是防灾措施：机器丢失或损坏时会和原件一起丢失。</span>
       <button id="replica-warning-ack" type="button">我知道，先不做</button>
     </section>
+    <section id="workbench-layer-status" class="workbench-layer-status" aria-label="中枢裁定层级" role="status">
+      <span class="workbench-layer-kicker">中枢裁定</span>
+      <strong id="workbench-layer">正在读取层级…</strong>
+      <span class="workbench-layer-separator">·</span>
+      <span>当前阶段</span>
+      <strong id="workbench-stage">正在读取…</strong>
+    </section>
     <section id="stage-bar" class="stage-bar" aria-label="写作阶段"></section>
     <div id="failure-card" class="error-banner" role="alert" hidden><button id="failure-close" class="error-banner-close" type="button" aria-label="关闭失败提示">×</button><span class="fail-title">上次操作没有完成</span><p id="failure-reason"></p><p>正文和当前步骤都没有改变，可以直接重试或返回方案调整。</p></div>
     <button id="diagnosis-restore" hidden>回到刚才的候选稿</button>

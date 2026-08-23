@@ -128,6 +128,35 @@ def test_zebian_launch_uses_interpreter_environment_when_no_checkout_is_declared
     assert calls[0]["env"]["PATH"].split(os.pathsep)[0] == str(scripts)
 
 
+def test_zebian_launch_rejects_venv_lib_as_project_root_and_uses_checkout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import biyu.ui.workbench as workbench
+
+    book = _book(tmp_path)
+    checkout = tmp_path / "checkout"
+    launcher = checkout / "scripts" / "书房.bat"
+    scripts = checkout / ".venv" / "Scripts"
+    launcher.parent.mkdir(parents=True)
+    scripts.mkdir(parents=True)
+    launcher.write_text("@echo off\n", encoding="utf-8")
+    (scripts / "biyu.exe").write_bytes(b"")
+    calls: list[dict[str, object]] = []
+    monkeypatch.setattr(workbench, "_book_dir", lambda _book: book)
+    monkeypatch.setattr(workbench, "_bookroom_bat", lambda: launcher)
+    monkeypatch.setattr(workbench, "get_project_root", lambda: checkout / ".venv" / "Lib")
+    monkeypatch.setenv("BIYU_PROJECT_ROOT", str(checkout / ".venv" / "Lib"))
+    monkeypatch.setattr(workbench, "get_data_root", lambda: book.parent)
+    monkeypatch.setattr(workbench.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(workbench.subprocess, "Popen", lambda _argv, **kwargs: calls.append(kwargs))
+
+    workbench.open_zebian("book-id", _request())
+
+    assert calls[0]["cwd"] == str(checkout)
+    assert calls[0]["env"]["BIYU_PROJECT_ROOT"] == str(checkout)
+    assert calls[0]["env"]["PATH"].split(os.pathsep)[0] == str(scripts)
+
+
 def test_long_context_middle_gap_keeps_real_chapter_numbers(tmp_path: Path) -> None:
     chapters = tmp_path / "chapters"
     outlines = tmp_path / "outlines"

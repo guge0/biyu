@@ -97,8 +97,60 @@ def test_zebian_action_falls_back_to_classic_console_without_windows_terminal(
 
     workbench.open_zebian("book-id", _request())
 
-    assert calls[0][0][:4] == ["cmd.exe", "/d", "/c", str(launcher)]
-    assert calls[0][1]["creationflags"] == getattr(workbench.subprocess, "CREATE_NEW_CONSOLE", 0)
+    assert calls[0][0][:9] == [
+        "cmd.exe", "/d", "/c", "start", "笔驭 · 责编", "/d", str(tmp_path), "cmd.exe", "/d",
+    ]
+    assert calls[0][0][9:11] == ["/k", str(launcher)]
+    assert calls[0][1]["creationflags"] == 0
+
+
+def test_zebian_sessions_can_continue_select_history_and_start_new(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import biyu.ui.workbench as workbench
+
+    book = _book(tmp_path)
+    launcher = tmp_path / "书房.bat"
+    launcher.write_text("@echo off\n", encoding="utf-8")
+    _install_fake_biyu(tmp_path)
+    calls: list[tuple[list[str], dict[str, object]]] = []
+    monkeypatch.setattr(workbench, "_book_dir", lambda _book: book)
+    monkeypatch.setattr(workbench, "_bookroom_bat", lambda: launcher)
+    monkeypatch.setattr(workbench, "get_project_root", lambda: tmp_path)
+    monkeypatch.setattr(workbench, "get_data_root", lambda: book.parent)
+    monkeypatch.setattr(workbench.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(workbench.subprocess, "Popen", lambda argv, **kwargs: calls.append((argv, kwargs)))
+
+    first = workbench.open_zebian("book-id", _request(8090))
+    first_id = first["session_id"]
+    recent_request = _request(8090)
+    recent_request = Request({
+        "type": "http", "http_version": "1.1", "method": "POST", "scheme": "http",
+        "path": "/?mode=recent", "raw_path": b"/?mode=recent", "query_string": b"mode=recent",
+        "headers": [], "client": ("127.0.0.1", 50000), "server": ("127.0.0.1", 8090), "root_path": "",
+    })
+    second = workbench.open_zebian("book-id", recent_request)
+    assert second["session_id"] == first_id and second["resumed"] is True
+
+    new_request = Request({
+        "type": "http", "http_version": "1.1", "method": "POST", "scheme": "http",
+        "path": "/?mode=new", "raw_path": b"/?mode=new", "query_string": b"mode=new",
+        "headers": [], "client": ("127.0.0.1", 50000), "server": ("127.0.0.1", 8090), "root_path": "",
+    })
+    third = workbench.open_zebian("book-id", new_request)
+    assert third["session_id"] != first_id and third["resumed"] is False
+    listed = workbench.list_zebian_sessions("book-id")["sessions"]
+    assert {item["id"] for item in listed} == {first_id, third["session_id"]}
+
+    selected_request = Request({
+        "type": "http", "http_version": "1.1", "method": "POST", "scheme": "http",
+        "path": f"/?session_id={first_id}", "raw_path": f"/?session_id={first_id}".encode(),
+        "query_string": f"session_id={first_id}".encode(), "headers": [],
+        "client": ("127.0.0.1", 50000), "server": ("127.0.0.1", 8090), "root_path": "",
+    })
+    selected = workbench.open_zebian("book-id", selected_request)
+    assert selected["session_id"] == first_id and selected["resumed"] is True
+    assert "--resume" in calls[1][0] and first_id in calls[1][0]
 
 
 def test_zebian_launch_failure_keeps_copyable_opening_prompt(

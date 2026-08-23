@@ -110,3 +110,36 @@ def test_three_axis_frontend_has_failure_card_and_no_s_state_dependency() -> Non
     assert "current.axes.run" in js
     assert "current.axes.step" in js
     assert "current.state === 'S4'" not in js
+
+
+def test_snapshot_exposes_central_verdict_layer_and_precise_stage(tmp_path: Path) -> None:
+    import biyu.ui.workbench as wb
+    from biyu.ui.workbench_state import write_workbench_step
+
+    book = tmp_path / "Book"
+    _write(book / "outlines/ch1.md", "细纲")
+    expected = {
+        "outline": ("细纲层", "细纲"),
+        "planning": ("方案层", "写作方案"),
+        "generation": ("执笔层", "生成正文"),
+        "reading": ("读稿层", "读稿定夺"),
+        "revision": ("执笔层", "返修候选稿"),
+        "adoption": ("读稿层", "采用正式正文"),
+        "review": ("读稿层", "评章摘句"),
+    }
+    for step, (layer, stage_label) in expected.items():
+        write_workbench_step(book, 1, step)
+        snapshot = wb.chapter_snapshot(book, 1)
+        assert snapshot["layer"] == layer
+        assert snapshot["stage_label"] == stage_label
+
+
+def test_layer_status_is_visible_and_uses_snapshot_with_legacy_fallback() -> None:
+    html = Path("src/biyu/ui/static/workbench.html").read_text(encoding="utf-8")
+    script = Path("src/biyu/ui/static/workbench.js").read_text(encoding="utf-8")
+    assert 'id="workbench-layer-status"' in html
+    assert 'id="workbench-layer"' in html
+    assert 'id="workbench-stage"' in html
+    assert "function renderLayerStatus()" in script
+    assert "current.layer || STEP_LAYERS[step]" in script
+    assert "current.stage_label || STEP_LABELS[step]" in script

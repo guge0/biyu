@@ -1,11 +1,26 @@
 param(
-    [string]$SourcePath = (Join-Path $PSScriptRoot "..\data"),
-    [string]$DestinationRoot = "D:\biyu-data-replica",
+    [string]$SourcePath = "",
+    [string]$DestinationRoot = "",
     [ValidateRange(24, 168)][int]$HourlyRetentionHours = 72,
     [ValidateRange(30, 90)][int]$DailyRetentionDays = 31
 )
 
 $ErrorActionPreference = "Stop"
+
+if ([string]::IsNullOrWhiteSpace($SourcePath)) {
+    $SourcePath = if ([string]::IsNullOrWhiteSpace($env:BIYU_DATA_ROOT)) {
+        (Join-Path $PSScriptRoot "..\data")
+    } else {
+        [System.IO.Path]::GetFullPath($env:BIYU_DATA_ROOT)
+    }
+}
+if ([string]::IsNullOrWhiteSpace($DestinationRoot)) {
+    $DestinationRoot = if (-not [string]::IsNullOrWhiteSpace($env:BIYU_REPLICA_ROOT)) {
+        [System.IO.Path]::GetFullPath($env:BIYU_REPLICA_ROOT)
+    } else {
+        Join-Path (Split-Path -Parent ([System.IO.Path]::GetFullPath($SourcePath))) "biyu-data-replica"
+    }
+}
 
 function Write-ReplicaStatus([hashtable]$Status) {
     $statusPath = Join-Path $DestinationRoot "status.json"

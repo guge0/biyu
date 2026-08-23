@@ -148,3 +148,21 @@ def test_shared_workbench_cache_contract_is_red_on_mismatch_and_green_on_match()
         assert_workbench_js_src(html.replace("workbench.js?v=c2-1", "workbench.js?v=wrong"))
 
     assert_workbench_js_src(html)
+
+
+def test_replica_status_defaults_to_sibling_of_active_data_root(tmp_path: Path, monkeypatch) -> None:
+    data_root = tmp_path / "BiyuData"
+    data_root.mkdir()
+    replica_root = tmp_path / "biyu-data-replica"
+    replica_root.mkdir()
+    (replica_root / "status.json").write_text(
+        json.dumps({"last_success": "now", "snapshot_count": 2}), encoding="utf-8"
+    )
+    monkeypatch.setenv("BIYU_DATA_ROOT", str(data_root))
+    monkeypatch.delenv("BIYU_REPLICA_ROOT", raising=False)
+
+    status = workbench._replica_status()
+
+    assert status["configured"] is True
+    assert status["snapshot_count"] == 2
+    assert status["last_success"] == "now"

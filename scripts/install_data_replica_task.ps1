@@ -1,10 +1,22 @@
 param(
-    [string]$DestinationRoot = "D:\biyu-data-replica",
+    [string]$DestinationRoot = "",
     [ValidateRange(24, 168)][int]$HourlyRetentionHours = 72,
     [ValidateRange(30, 90)][int]$DailyRetentionDays = 31
 )
 
 $ErrorActionPreference = "Stop"
+$sourceRoot = if ([string]::IsNullOrWhiteSpace($env:BIYU_DATA_ROOT)) {
+    [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\data"))
+} else {
+    [System.IO.Path]::GetFullPath($env:BIYU_DATA_ROOT)
+}
+if ([string]::IsNullOrWhiteSpace($DestinationRoot)) {
+    $DestinationRoot = if (-not [string]::IsNullOrWhiteSpace($env:BIYU_REPLICA_ROOT)) {
+        [System.IO.Path]::GetFullPath($env:BIYU_REPLICA_ROOT)
+    } else {
+        Join-Path (Split-Path -Parent $sourceRoot) "biyu-data-replica"
+    }
+}
 $runner = Join-Path $PSScriptRoot "run_data_replica.ps1"
 if (-not (Test-Path -LiteralPath $runner)) { throw "Replica runner not found: $runner" }
 $taskName = "BiyuDataReplica"
@@ -14,6 +26,7 @@ $argumentParts = @(
     "-WindowStyle Hidden",
     "-ExecutionPolicy Bypass",
     ('-File "{0}"' -f $runner),
+    ('-SourcePath "{0}"' -f $sourceRoot),
     ('-DestinationRoot "{0}"' -f $DestinationRoot),
     "-HourlyRetentionHours $HourlyRetentionHours",
     "-DailyRetentionDays $DailyRetentionDays"
@@ -43,6 +56,7 @@ Register-ScheduledTask `
     -Force | Out-Null
 
 & $runner `
+    -SourcePath $sourceRoot `
     -DestinationRoot $DestinationRoot `
     -HourlyRetentionHours $HourlyRetentionHours `
     -DailyRetentionDays $DailyRetentionDays

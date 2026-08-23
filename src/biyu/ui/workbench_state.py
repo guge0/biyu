@@ -18,6 +18,29 @@ STEP_STAGE = {
     "review": 4,
 }
 
+# The central verdict is shown separately from the coarse five-step navigator.
+# Revision remains stage 3 in the navigator, but belongs to the writing layer
+# because the author is changing the candidate manuscript there.
+STEP_LAYER = {
+    "outline": "细纲层",
+    "planning": "方案层",
+    "generation": "执笔层",
+    "reading": "读稿层",
+    "revision": "执笔层",
+    "adoption": "读稿层",
+    "review": "读稿层",
+}
+
+STEP_LABEL = {
+    "outline": "细纲",
+    "planning": "写作方案",
+    "generation": "生成正文",
+    "reading": "读稿定夺",
+    "revision": "返修候选稿",
+    "adoption": "采用正式正文",
+    "review": "评章摘句",
+}
+
 
 def asset_state(book_dir: Path, chapter: int) -> str:
     official = (book_dir / "chapters" / f"ch{chapter}.md").exists()

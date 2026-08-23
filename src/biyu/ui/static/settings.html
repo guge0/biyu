@@ -24,8 +24,11 @@
         <button class="nav-item" id="roster-entry" type="button">人物卡总览</button><div id="character-links"></div>
         <div class="nav-group">其他</div><a class="nav-item" id="voiceprint-link">声纹 <span>→</span></a>
         <div class="nav-group">责编</div>
-        <button class="nav-item" id="zebian-launch" type="button">打开 Claude Code</button>
-        <p class="tier-tip">每次都是新对话；责编会读你已存进设定集的内容。</p>
+        <!-- 旧版“每次都是新对话”已升级为可续接/可选历史/可新建。 -->
+        <button class="nav-item" id="zebian-launch" type="button" aria-label="打开 Claude Code 并继续最近责编对话">继续最近责编对话</button>
+        <select id="zebian-session-select" class="nav-item" aria-label="选择责编历史会话" hidden><option value="">选择历史对话…</option></select>
+        <button class="nav-item" id="zebian-new-session" type="button">开始新责编对话</button>
+        <p class="tier-tip">可继续最近对话、选择历史会话或开始新对话；责编会读你已存进设定集的内容。</p>
         <button class="nav-item" id="zebian-copy" type="button" hidden>一键复制开场白</button>
         <p id="zebian-status" class="tier-tip" role="status"></p>
       </aside>

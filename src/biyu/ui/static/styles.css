@@ -85,6 +85,16 @@ strong,b{font-weight:500}
   background: #fff5f5;
 }
 .env-badge.env-prod .env-dot { background: var(--seal); }
+.update-dot {
+  width: 7px;
+  height: 7px;
+  margin-left: 2px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #c43d3d;
+  box-shadow: 0 0 0 2px #fff5f5;
+}
+.update-label { color: #a52d2d; }
 
 /* V-1：峰谷徽标（peak-badge）作者面不再出现，规则整体删除 */
 .nav-badges {

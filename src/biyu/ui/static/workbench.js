@@ -1,5 +1,7 @@
 const $ = id => document.getElementById(id);
 const STAGES = ['细纲', '写作方案', '生成正文', '读稿定夺', '评章摘句'];
+const STEP_LAYERS = Object.freeze({outline:'细纲层',planning:'方案层',generation:'执笔层',reading:'读稿层',revision:'执笔层',adoption:'读稿层',review:'读稿层'});
+const STEP_LABELS = Object.freeze({outline:'细纲',planning:'写作方案',generation:'生成正文',reading:'读稿定夺',revision:'返修候选稿',adoption:'采用正式正文',review:'评章摘句'});
 const LABELS = Object.freeze({pending:'待定夺', official:'正式正文'});
 const RUN_LABELS = Object.freeze({write:'正文已生成',rewrite:'候选稿已修订',diagnose:'返工根因已诊断',adopt:'已采用为正式正文',refresh_memory:'本章记忆已重算',regenerate:'候选稿已重新生成',excerpt:'摘句已记录',archive_excerpt:'摘句已移除',retag_excerpt:'摘句分类已更新',chapter_review:'章评已保存',revoke_planning:'方案已退回'});
 const QUOTE_NORMALIZE_RE = /[\s\u3000,，。.!！?？;；:：·、"“”‘’()（）\[\]【】\-—…]+/g;
@@ -403,6 +405,15 @@ function renderFailureState() {
   $('failure-reason').textContent = reason;
   $('reading-failure-reason').textContent = `${reason}。正文和当前步骤都没有改变，可以直接重试。`;
 }
+function renderLayerStatus() {
+  const step = String(current.axes?.step || '');
+  const layer = String(current.layer || STEP_LAYERS[step] || '');
+  const stage = String(current.stage_label || STEP_LABELS[step] || STAGES[Number(current.stage)] || '');
+  const layerNode = $('workbench-layer');
+  const stageNode = $('workbench-stage');
+  if (layerNode) layerNode.textContent = layer || '未裁定';
+  if (stageNode) stageNode.textContent = stage || '未开始';
+}
 function applyNavigationState() {
   $('previous-chapter').disabled = busy || Number(current.chapter || 1) <= 1;
 }
@@ -780,7 +791,7 @@ function renderPersistedRunState(){
 function render({preserveDirty=false}={}) {
   try {
     document.querySelectorAll('[data-panel]').forEach(panel => { panel.hidden = Number(panel.dataset.panel) !== shownStage; });
-    renderStageBar(); applyActionState();
+    renderLayerStatus(); renderStageBar(); applyActionState();
     if (!preserveDirty || !dirty.has('outline')) $('outline').value = current.outline || '';
     if (!preserveDirty || !dirty.has('planning')) $('planning').value = (current.planning || '').replace(/^(?:status|source):[^\n]*\r?\n?/gm, '').replace(/^\s+/, '');
     if (!preserveDirty || !dirty.has('chapter')) $('chapter-edit').value = current.chapter_text || '';

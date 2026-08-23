@@ -99,3 +99,51 @@ def test_temporary_data_root_notice_keeps_prototype_regular_weight() -> None:
     assert match is not None
     assert "font-weight: 400" in match.group("body")
     assert "font-weight: 600" not in match.group("body")
+
+
+def test_production_version_reads_local_release_manifest_and_marks_update(
+    monkeypatch, tmp_path: Path,
+) -> None:
+    import json
+    import biyu.ui.app as app_module
+
+    manifest = tmp_path / "published-version.json"
+    manifest.write_text(json.dumps({"version": "0.2.0", "build": "20260823"}), encoding="utf-8")
+    monkeypatch.setenv("BIYU_RUNTIME_ROLE", "production")
+    monkeypatch.setenv("BIYU_RELEASE_MANIFEST", str(manifest))
+    monkeypatch.setattr(app_module.subprocess, "check_output", lambda *args, **kwargs: "00a7b752\n")
+
+    payload = TestClient(app_module.app).get("/api/version").json()
+    assert payload["update_available"] is True
+    assert payload["latest_version"] == "0.2.0"
+    assert payload["update"] == {
+        "available": True,
+        "current": "0.1.0",
+        "published": "0.2.0",
+        "published_build": "20260823",
+        "source": str(manifest),
+    }
+
+
+def test_development_version_does_not_show_production_update_red_dot(monkeypatch, tmp_path: Path) -> None:
+    import json
+    import biyu.ui.app as app_module
+
+    manifest = tmp_path / "published-version.json"
+    manifest.write_text(json.dumps({"version": "9.9.9"}), encoding="utf-8")
+    monkeypatch.setenv("BIYU_RUNTIME_ROLE", "development")
+    monkeypatch.setenv("BIYU_RELEASE_MANIFEST", str(manifest))
+    payload = TestClient(app_module.app).get("/api/version").json()
+    assert payload["update_available"] is False
+    assert payload["update"]["published"] == "9.9.9"
+
+
+def test_shelf_version_badge_has_update_dot_and_release_label() -> None:
+    html = (STATIC / "index.html").read_text(encoding="utf-8")
+    script = (STATIC / "app.js").read_text(encoding="utf-8")
+    css = (STATIC / "styles.css").read_text(encoding="utf-8")
+    assert 'id="update-dot"' in html
+    assert 'id="update-label"' in html
+    assert 'update.available' in script
+    assert 'update-dot' in script
+    assert ".update-dot" in css
