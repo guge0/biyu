@@ -31,8 +31,9 @@
       <label>角色定位<textarea data-new-field="角色定位"></textarea></label><label>背景<textarea data-new-field="背景"></textarea></label><label>性格<textarea data-new-field="性格"></textarea></label>
       <label>叙述者怎么称呼他<input data-new-field="叙述者怎么称呼他"></label><label>他怎么自称<input data-new-field="他怎么自称"></label>
       <label>别人怎么叫他<textarea data-new-field="别人怎么叫他" placeholder="例如：母亲：孩子"></textarea></label><label>正文里不许用的称呼<textarea data-new-field="正文里不许用的称呼"></textarea></label><label>语声样本<textarea data-new-field="语声样本"></textarea></label>
-      <p class="new-character-status" role="status"></p><div class="actions"><button value="cancel">算了</button><button value="default" class="b1">创建人物卡</button></div></form>`;
+      <p class="new-character-status" role="status"></p><div class="actions"><button type="button" class="b3" data-cancel>算了</button><button type="submit" class="b1">创建人物卡</button></div></form>`;
     document.body.append(dialog); const form = dialog.querySelector('form');
+    form.querySelector('[data-cancel]').addEventListener('click', () => dialog.close());
     form.addEventListener('submit', async event => {
       event.preventDefault(); const status = form.querySelector('.new-character-status');
       const fields = fieldsFromForm(form); if (!fields['基础'].name) return;
