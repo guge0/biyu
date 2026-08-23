@@ -74,13 +74,11 @@ def test_installer_resolves_repository_root_from_scripts_directory() -> None:
     assert "$repo = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)" in text
 
 
-def test_launcher_refreshes_installed_package_after_git_pull() -> None:
+def test_launcher_starts_current_checkout_without_install_refresh() -> None:
     launcher = (ROOT / "scripts" / "start_biyu_ui.ps1").read_text(encoding="utf-8")
 
-    refresh = "install_biyu.ps1') -SkipPull -OnlyIfNeeded"
-    assert refresh in launcher
-    assert launcher.count(refresh) == 1
-    assert launcher.index(refresh) < launcher.index("$env:BIYU_ENV = 'prod'")
+    assert "install_biyu.ps1') -SkipPull -OnlyIfNeeded" not in launcher
+    assert "$env:PYTHONPATH = (Join-Path $projectRoot 'src')" in launcher
 
 
 def test_settings_write_requires_runtime_endpoint_and_persistent_author_data_root() -> None:
@@ -106,3 +104,11 @@ def test_development_launcher_imports_current_checkout_source() -> None:
     assert "$env:PYTHONPATH = (Join-Path $projectRoot 'src')" in launcher
     assert "Stopping the existing development service" in launcher
     assert "Port $Port is occupied by another application" in launcher
+
+
+def test_production_launcher_separates_start_from_install_and_restarts_own_service() -> None:
+    launcher = (ROOT / "scripts" / "start_biyu_ui.ps1").read_text(encoding="utf-8")
+    assert "$env:PYTHONPATH = (Join-Path $projectRoot 'src')" in launcher
+    assert "Stopping the existing Biyu service" in launcher
+    assert "Port $Port is occupied by another application" in launcher
+    assert "-OnlyIfNeeded" not in launcher
