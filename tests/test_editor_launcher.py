@@ -140,6 +140,11 @@ def test_zebian_entry_contract_is_present_on_settings_and_book_pages() -> None:
     assert "action==='talk'" not in settings_js
 
 
+def test_bookroom_launcher_has_explicit_missing_command_branch() -> None:
+    launcher = Path("scripts/书房.bat").read_text(encoding="utf-8")
+    assert "goto missing" in launcher
+
+
 def test_bookroom_launcher_uses_checkout_root_for_editable_layout(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -23,6 +23,7 @@ if not errorlevel 1 (
   set "CLAUDE_CMD=claude.exe"
   goto launch
 )
+goto missing
 
 :launch
 call "%CLAUDE_CMD%" %*
