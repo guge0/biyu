@@ -52,6 +52,11 @@ class VersionRequest(BaseModel):
     version: str
 
 
+class CreateCharacterRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    fields: dict[str, Any] | None = None
+
+
 def _enabled() -> None:
     if not feature_enabled("settings_page"):
         raise HTTPException(status_code=404, detail="设定集尚未开启。")
@@ -345,6 +350,23 @@ def restore_cell_history(book: str, cell_id: str, index: int, request: VersionRe
 @router.put("/books/{book}/characters/{name}")
 def save_character(book: str, name: str, request: SaveRequest) -> dict[str, Any]:
     return _save_character(book, name, request, actor="作者")
+
+
+@router.post("/books/{book}/characters")
+def create_character(book: str, request: CreateCharacterRequest) -> dict[str, Any]:
+    """Explicit author create action; updating an unknown name must not create a card."""
+    _enabled()
+    book_dir = _book_dir(book)
+    fields = request.fields if isinstance(request.fields, dict) else {}
+    base = fields.get("基础") if isinstance(fields.get("基础"), dict) else {}
+    name = str(base.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="请先填写人物姓名。")
+    if any(str(card.get("name") or "").strip() == name for card in _characters(book_dir)):
+        raise HTTPException(status_code=409, detail="已经有同名人物卡了，请换一个姓名。")
+    patch = _character_fields_to_patch(fields, name)
+    update_character_card(book_dir, patch, original_name=None, reason="settings_character_create", actor="作者")
+    return {"status": "ok", "character": _character_cell(book_dir, name)}
 
 
 def _save_character(
