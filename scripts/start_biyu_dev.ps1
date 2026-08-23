@@ -34,6 +34,7 @@ $env:BIYU_DATA_ROOT = $dataRoot
 $env:BIYU_DATA_ROOT_SOURCE = [string]$resolution.source
 $env:BIYU_TEST_DATA_ROOT = $dataRoot
 $env:BIYU_PROJECT_ROOT = $projectRoot
+$env:PYTHONPATH = (Join-Path $projectRoot 'src')
 $listener = Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($listener) {
     Write-Host "[X] Port $Port is already occupied. Nothing was stopped." -ForegroundColor Red

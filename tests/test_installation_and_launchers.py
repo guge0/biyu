@@ -99,3 +99,8 @@ def test_settings_write_requires_runtime_endpoint_and_persistent_author_data_roo
     assert "$env:BIYU_ENV = 'prod'" in launcher
     assert "D:\\BiyuProductionData" not in launcher
     assert "E:\\webnovel\\BiyuTestData" not in launcher
+
+
+def test_development_launcher_imports_current_checkout_source() -> None:
+    launcher = (ROOT / "scripts" / "start_biyu_dev.ps1").read_text(encoding="utf-8")
+    assert "$env:PYTHONPATH = (Join-Path $projectRoot 'src')" in launcher
