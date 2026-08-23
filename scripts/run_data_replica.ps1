@@ -47,7 +47,11 @@ function Select-RetainedSnapshots([array]$Snapshots, [datetime]$NowUtc) {
         if ($item.Timestamp -ge $hourCutoff) {
             if ($seenHours.Add($item.Timestamp.ToString("yyyyMMddHH"))) { $kept += $item }
         } elseif ($item.Timestamp -ge $dayCutoff) {
-            if ($seenDays.Add($item.Timestamp.ToString("yyyyMMdd"))) { $kept += $item }
+            # Use rolling 24-hour recovery bands from now, not calendar dates;
+            # Calendar reports retain ToString("yyyyMMdd") as the display format.
+            # snapshots around midnight must still collapse into one daily point.
+            $ageBand = [math]::Floor(($NowUtc - $item.Timestamp).TotalDays).ToString()
+            if ($seenDays.Add($ageBand)) { $kept += $item }
         }
     }
     return @($kept)

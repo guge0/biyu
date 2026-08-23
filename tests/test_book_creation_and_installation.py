@@ -213,7 +213,7 @@ def test_production_package_and_launcher_contracts(tmp_path: Path) -> None:
     )
     smoke_python = smoke_venv / "Scripts/python.exe"
     subprocess.run(
-        [str(smoke_python), "-m", "pip", "install", "--disable-pip-version-check", "--no-deps", str(wheel)],
+            [str(smoke_python), "-m", "pip", "install", "--disable-pip-version-check", "--no-deps", "--force-reinstall", str(wheel)],
         cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True,
     )
     imported = subprocess.run(
