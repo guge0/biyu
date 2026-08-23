@@ -104,3 +104,5 @@ def test_settings_write_requires_runtime_endpoint_and_persistent_author_data_roo
 def test_development_launcher_imports_current_checkout_source() -> None:
     launcher = (ROOT / "scripts" / "start_biyu_dev.ps1").read_text(encoding="utf-8")
     assert "$env:PYTHONPATH = (Join-Path $projectRoot 'src')" in launcher
+    assert "Stopping the existing development service" in launcher
+    assert "Port $Port is occupied by another application" in launcher

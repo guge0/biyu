@@ -37,8 +37,15 @@ $env:BIYU_PROJECT_ROOT = $projectRoot
 $env:PYTHONPATH = (Join-Path $projectRoot 'src')
 $listener = Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($listener) {
-    Write-Host "[X] Port $Port is already occupied. Nothing was stopped." -ForegroundColor Red
-    exit 2
+    $owner = Get-Process -Id $listener.OwningProcess -ErrorAction SilentlyContinue
+    if ($owner -and $owner.Path -and ([System.IO.Path]::GetFullPath($owner.Path) -like "$projectRoot\.venv\Scripts\*")) {
+        Write-Host "Stopping the existing development service (PID $($owner.Id))..."
+        Stop-Process -Id $owner.Id -Force
+        Start-Sleep -Milliseconds 500
+    } else {
+        Write-Host "[X] Port $Port is occupied by another application; nothing was stopped." -ForegroundColor Red
+        exit 2
+    }
 }
 & '.venv\Scripts\python.exe' -m uvicorn biyu.ui.app:app --host 127.0.0.1 --port $Port
 exit $LASTEXITCODE
