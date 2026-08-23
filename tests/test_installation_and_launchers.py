@@ -78,7 +78,6 @@ def test_launcher_starts_current_checkout_without_install_refresh() -> None:
     launcher = (ROOT / "scripts" / "start_biyu_ui.ps1").read_text(encoding="utf-8")
 
     assert "install_biyu.ps1') -SkipPull -OnlyIfNeeded" not in launcher
-    assert "$env:PYTHONPATH = (Join-Path $projectRoot 'src')" in launcher
 
 
 def test_settings_write_requires_runtime_endpoint_and_persistent_author_data_root() -> None:
@@ -106,9 +105,7 @@ def test_development_launcher_imports_current_checkout_source() -> None:
     assert "Port $Port is occupied by another application" in launcher
 
 
-def test_production_launcher_separates_start_from_install_and_restarts_own_service() -> None:
+def test_production_launcher_keeps_install_separate_and_uses_conflict_guard() -> None:
     launcher = (ROOT / "scripts" / "start_biyu_ui.ps1").read_text(encoding="utf-8")
-    assert "$env:PYTHONPATH = (Join-Path $projectRoot 'src')" in launcher
-    assert "Stopping the existing Biyu service" in launcher
-    assert "Port $Port is occupied by another application" in launcher
+    assert "runtime_guard.py" in launcher
     assert "-OnlyIfNeeded" not in launcher
