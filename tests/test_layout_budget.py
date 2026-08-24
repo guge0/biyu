@@ -125,11 +125,14 @@ def test_book_chapter_controls_present():
     for element_id in ("book", "chapter", "previous-chapter", "next-chapter"):
         assert f'id="{element_id}"' in title_row
     actions_row = HTML.split('<section class="workbench-actions-row"', 1)[1].split(
-        '<section id="replica-warning"', 1,
+        '<div id="failure-card"', 1,
     )[0]
     assert 'id="load" class="b1"' in actions_row
     assert 'id="stage-bar"' in actions_row
     assert 'id="workbench-more-toggle"' in actions_row
+    compact = CSS.split("@media (max-width:1280px)", 1)[1]
+    actions_rule = re.search(r"\.workbench-actions-row\{(?P<body>[^}]*)\}", compact).group("body")
+    assert "flex-direction:row" in actions_rule
     assert "$('load').onclick=load" in JS
     assert "$('previous-chapter').onclick" in JS
     assert "$('next-chapter').onclick" in JS

@@ -57,6 +57,7 @@ h3{font-size:16px;font-weight:500;font-family:var(--sans)}
 /* ---------- 顶部导航 ---------- */
 .top-nav{
   display:flex;align-items:center;justify-content:space-between;
+  gap:20px;width:100%;min-width:0;box-sizing:border-box;
   padding:14px 26px;border-bottom:1px solid var(--rule);
 }
 .top-nav .brand{display:flex;align-items:baseline;gap:24px}
@@ -251,7 +252,7 @@ textarea{resize:vertical}
 /* 写作品内容的文本域用衬线 */
 textarea.prose-input,.editing-pane{font-family:var(--serif);font-size:16px;line-height:1.9}
 .field:focus,input:focus,textarea:focus,select:focus{
-  border-color:var(--ink-soft);outline:2px solid var(--mark-bg);outline-offset:1px;
+  border-color:var(--ink-soft);outline:2px solid var(--ink-solid);outline-offset:1px;
 }
 ::placeholder{color:var(--ink-faint)}
 input:disabled,textarea:disabled,select:disabled{background:var(--paper);color:var(--ink-faint)}
@@ -307,7 +308,7 @@ details[open]>summary::before{transform:rotate(90deg)}
 
 /* ---------- 焦点：只在键盘操作时出现 ---------- */
 /* 鼠标点完不许留下焦点环。必须用 :focus-visible，不许用 :focus */
-:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+:focus-visible{outline:2px solid var(--ink-solid);outline-offset:2px}
 :focus:not(:focus-visible){outline:none;box-shadow:none}
 button:focus:not(:focus-visible),select:focus:not(:focus-visible),
 a:focus:not(:focus-visible){outline:none;box-shadow:none}

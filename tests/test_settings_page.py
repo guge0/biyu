@@ -290,9 +290,9 @@ def test_settings_static_page_has_required_floor_and_tier_copy() -> None:
     assert "立项资产历史" not in book
     assert 'id="setup-assets-panel"' not in book
     assert "9 格 · 一格没填" in book and "9 格 · 已填 " in book
-    assert "正在保存" in js and "disabled = true" in js
+    assert "正在保存" in js and "button.disabled=true" in js
     assert "直接写这一格的内容" in html
-    assert "保存只修改当前这一格" in html
+    assert "修改已有内容时，旧版会自动进入历史" in html
     assert "切成了这" not in html and "previewSave" not in js
     assert "$('save-button').onclick=confirmSave" in js
     assert "每一章都整张读，包括说话的例句" in js
@@ -302,7 +302,7 @@ def test_settings_static_page_has_required_floor_and_tier_copy() -> None:
     assert "写手和导演每一章都会读这里" in html
     assert "设定没有读取成功" in js
     assert "服务还是旧版本" in js
-    assert 'src="/settings.js?v=u1-2"' in html
+    assert 'src="/settings.js?v=u2-1"' in html
 
 
 def test_character_projection_has_five_human_sections_and_preserves_unmapped_fields(
@@ -468,6 +468,17 @@ def test_settings_static_page_uses_human_character_copy_without_native_dialogs()
     assert "还没有人物卡。" in js
     assert "写手和导演每章都会读这里——先建一张主角的卡。" in js
     assert "setRosterChrome(true)" in js
+    assert "startCreateCharacter" in js
+    assert "renderCharacterEditor(current.data,{isNew:true})" in js
+    assert "method:'POST'" in js
+    assert "data-name-error" in js
+    assert "showNameError(exc.message" in js
+    assert "!Object.keys(value).length" in js
+    assert "creatingCharacter?showRoster():showEdit()" in js
+    assert "new-character.js" not in html
+    assert "new-character.css" not in html
+    assert "showModal" not in html + js
+    assert "<dialog" not in html
 
 
 def test_author_character_create_is_explicit_and_rejects_duplicates(

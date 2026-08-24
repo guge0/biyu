@@ -113,32 +113,17 @@ def test_acknowledgement_write_failure_is_author_visible(monkeypatch) -> None:
     assert response.json()["detail"] == "没有保存成功，请稍后再试；顶部提醒仍会保留。"
 
 
-def test_workbench_has_four_replica_notice_states_and_ui_floor() -> None:
+def test_replica_guidance_lives_in_backup_panel_not_workbench() -> None:
     html = Path("src/biyu/ui/static/workbench.html").read_text(encoding="utf-8")
     script = Path("src/biyu/ui/static/workbench.js").read_text(encoding="utf-8")
+    shelf = Path("src/biyu/ui/static/index.html").read_text(encoding="utf-8")
 
-    assert 'id="replica-warning"' in html
-    assert 'id="replica-warning-ack"' in html
-    assert 'id="replica-status"' not in html
-    assert 'id="reading-more-replica"' in html
-    assert "我知道，先不做" in html
-    assert (
-        "防手滑副本尚未设置。它不是防灾措施："
-        "机器丢失或损坏时会和原件一起丢失。"
-    ) in html
-    assert "if(!status.configured&&!acknowledged)" in script
-    assert "if(status.configured&&status.failed)" in script
-    assert "if(status.configured)" in script
-    assert "当前没有任何防手滑副本，机器丢失或损坏时会全部丢失。" in script
-    assert "/replica-notice/acknowledge" in script
-    assert "button.disabled=true" in script
-    assert "button.textContent='正在保存…'" in script
-    assert "showError(error.message" in script
-    assert "finally" in script
-    assert not any(
-        "replica" in line and "localStorage" in line
-        for line in script.splitlines()
-    )
+    workbench_ui = html + script
+    for forbidden in ("replica-warning", "reading-more-replica", "防手滑副本", "副本尚未设置", "备份"):
+        assert forbidden not in workbench_ui
+    assert 'id="backup-panel"' in shelf
+    assert "它不是防灾措施" in shelf
+    assert "机器丢失或损坏时会和原件一起丢失" in shelf
 
 
 def test_shared_workbench_cache_contract_is_red_on_mismatch_and_green_on_match() -> None:

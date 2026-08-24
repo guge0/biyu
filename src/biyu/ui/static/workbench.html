@@ -25,7 +25,7 @@
         <span id="entry-status" class="status-text" role="status" hidden>正在读取本章…</span>
       </div>
       <div class="toolbar">
-        <label><span class="sr-only">书籍</span><select id="book" aria-label="书籍"></select></label><span id="reading-readonly-tag" class="reading-readonly-tag" title="" hidden>只读</span>
+        <select id="book" aria-label="当前书籍" hidden></select><a id="workbench-book-link" class="workbench-book-link" href="/book.html">← 回到这本书</a><span id="reading-readonly-tag" class="reading-readonly-tag" title="" hidden>只读</span>
         <span class="sep"></span>
         <button id="previous-chapter" class="b3">上一章</button>
         <label><span class="sr-only">章节</span><input id="chapter" class="chapter-num" type="number" min="1" value="1" aria-label="章节号"></label>
@@ -41,10 +41,6 @@
           <button id="open-import" type="button" class="b3">导入稿件</button>
         </div>
       </div>
-    </section>
-    <section id="replica-warning" class="replica-warning" role="status" hidden>
-      <span id="replica-warning-message">防手滑副本尚未设置。它不是防灾措施：机器丢失或损坏时会和原件一起丢失。</span>
-      <button id="replica-warning-ack" type="button">我知道，先不做</button>
     </section>
     <div id="failure-card" class="error-banner" role="alert" hidden><button id="failure-close" class="error-banner-close" type="button" aria-label="关闭失败提示">×</button><span class="fail-title">上次操作没有完成</span><p id="failure-reason"></p><p>正文和当前步骤都没有改变，可以直接重试或返回方案调整。</p></div>
     <button id="diagnosis-restore" hidden>回到刚才的候选稿</button>
@@ -132,7 +128,7 @@
             <article id="issue-detail" class="issue-detail"><div id="issue-detail-meta" class="issue-detail-meta"></div><h4>结论</h4><div id="issue-detail-conclusion" class="markdown"></div><section id="issue-detail-quote-wrap"><h4>正文里</h4><blockquote id="issue-detail-quote"></blockquote></section><section id="issue-detail-explanation-wrap"><h4>为什么</h4><div id="issue-detail-explanation" class="markdown"></div></section><h4>改法建议</h4><div id="issue-detail-suggestion" class="markdown"></div><h4>你的补充意见</h4><textarea id="issue-detail-comment" rows="3" placeholder="可不填"></textarea><div class="issue-detail-actions"><label><input id="issue-detail-selected" type="checkbox"> 送去返修</label><button id="issue-detail-locate" type="button" class="b3">定位正文</button><button id="issue-detail-ignore" type="button" class="b3">本轮忽略</button></div><footer><button id="issue-detail-prev" type="button" class="b3">← 上一条</button><button id="issue-detail-next" type="button" class="b3">下一条 →</button><span>勾选后回清单提交</span></footer></article>
           </div>
         </aside>
-        <footer class="reading-actions"><div class="reading-actions-main"><button id="adopt-button" data-action="adopt" class="b1">采 用</button><button id="save-chapter" class="b2">保存正文修改</button><div class="reading-more"><button id="reading-more-toggle" type="button" class="b3" aria-expanded="false">更多 ▾</button><div id="reading-more-menu" class="reading-more-menu" hidden><button data-action="revoke_planning" class="b3">退回方案</button><button data-action="regenerate" class="b3">重新生成</button><button id="reading-history-toggle" type="button" class="b3">本章文件与回收站</button><p id="reading-more-replica" class="reading-more-replica"></p></div></div><span id="global-dirty-reading" class="reading-dirty-note" hidden>有修改未保存</span><p id="adopt-reason" data-reason="adopt"></p><p data-reason="edit_chapter"></p><p data-reason="rewrite"></p><p data-reason="regenerate"></p></div><div class="reading-actions-side" aria-hidden="true"></div></footer>
+        <footer class="reading-actions"><div class="reading-actions-main"><button id="adopt-button" data-action="adopt" class="b1">采 用</button><button id="save-chapter" class="b2">保存正文修改</button><div class="reading-more"><button id="reading-more-toggle" type="button" class="b3" aria-expanded="false">更多 ▾</button><div id="reading-more-menu" class="reading-more-menu" hidden><button data-action="revoke_planning" class="b3">退回方案</button><button data-action="regenerate" class="b3">重新生成</button><button id="reading-history-toggle" type="button" class="b3">本章文件与回收站</button></div></div><span id="global-dirty-reading" class="reading-dirty-note" hidden>有修改未保存</span><p id="adopt-reason" data-reason="adopt"></p><p data-reason="edit_chapter"></p><p data-reason="rewrite"></p><p data-reason="regenerate"></p></div><div class="reading-actions-side" aria-hidden="true"></div></footer>
       </article>
       <article class="stage-panel" data-panel="4" hidden>
         <div class="panel-head"><div><h2>评章摘句</h2><p>从“读稿定夺”选中文字记录；这里查看数量、整理条目并保存章评。</p></div><div class="sample-counts">好句 <b id="good-count">0</b> · 问题句 <b id="bad-count">0</b></div></div>

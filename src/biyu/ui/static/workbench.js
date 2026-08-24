@@ -57,7 +57,7 @@ function showNotice(message) {
   row.append(icon,text,close);banner.append(row);banner.hidden=false;syncTopNoticePriority();
 }
 function syncTopNoticePriority(){
-  const ordered=['error-banner','failure-card','reading-failure-card','setup-restore-notice','replica-warning','memory-banner'];
+  const ordered=['error-banner','failure-card','reading-failure-card','setup-restore-notice','memory-banner'];
   const wanted=ordered.map((id,index)=>{
     const element=$(id);
     return index===0?!element.hidden:element.dataset.noticeWanted==='true';
@@ -420,6 +420,8 @@ function renderWorkbenchIdentity() {
   const selected = $('book')?.selectedOptions?.[0]?.textContent || $('book')?.value || '未选择书籍';
   if (name) name.textContent = `《${selected.replace(/^《|》$/g, '')}》`;
   if (number) number.textContent = String(current.chapter || $('chapter')?.value || '—');
+  const bookLink=$('workbench-book-link');
+  if(bookLink)bookLink.href=`/book.html?book=${encodeURIComponent($('book')?.value||'')}`;
 }
 function applyNavigationState() {
   $('previous-chapter').disabled = busy || Number(current.chapter || 1) <= 1;
@@ -612,48 +614,6 @@ function renderOutlineFactCheck(){
   if(characterNotice.count){const notice=document.createElement('p');notice.className='outline-character-notice';notice.textContent=characterNotice.message;box.append(notice);}
   box.hidden=false;
 }
-function renderReplicaStatus(){
-  const status=current.replica_status||{},notice=current.replica_notice||{},warning=$('replica-warning'),message=$('replica-warning-message'),button=$('replica-warning-ack');
-  const finish=()=>{warning.dataset.noticeWanted=String(!warning.hidden);};
-  $('reading-more-replica').textContent='正在读取防手滑副本状态…';
-  const acknowledged=notice.replica_unconfigured_acknowledged===true;
-  warning.hidden=true;warning.classList.remove('is-error');button.hidden=false;
-  if(notice.load_error&&!acknowledged&&$('error-banner').hidden)showError(notice.load_error);
-  if(!status.configured&&!acknowledged){
-    message.textContent='防手滑副本尚未设置。它不是防灾措施：机器丢失或损坏时会和原件一起丢失。';
-    warning.hidden=false;$('reading-more-replica').textContent='防手滑副本尚未设置。';
-    finish();return;
-  }
-  if(status.configured&&status.failed){
-    message.textContent=`防手滑副本最近一次没有完成：${status.last_error||'请联系维护者查看。'} 上次成功：${status.last_success||'尚无记录'}。`;
-    warning.classList.add('is-error');button.hidden=true;warning.hidden=false;$('reading-more-replica').textContent='防手滑副本最近一次未完成。';
-    finish();return;
-  }
-  if(status.configured){
-    $('reading-more-replica').textContent=`防手滑副本上次成功：${status.last_success||'尚无记录'}；当前保留 ${status.snapshot_count||0} 份；最早可恢复到：${status.earliest_recovery||'尚无记录'}。它和原件在同一台机器上，机器丢失或损坏时会一起丢失。`;
-    finish();return;
-  }
-  $('reading-more-replica').textContent='当前没有任何防手滑副本，机器丢失或损坏时会全部丢失。';
-  finish();
-}
-async function acknowledgeReplicaNotice(){
-  const button=$('replica-warning-ack');
-  if(button.disabled)return;
-  const original=button.textContent;
-  button.disabled=true;
-  button.textContent='正在保存…';
-  try{
-    const response=await api('/replica-notice/acknowledge',{method:'POST'});
-    current.replica_notice=await response.json();
-    renderReplicaStatus();
-    syncTopNoticePriority();
-  }catch(error){
-    showError(error.message||'没有保存成功，请稍后再试；顶部提醒仍会保留。');
-  }finally{
-    button.disabled=false;
-    button.textContent=original;
-  }
-}
 function renderSetupRestoreNotice(){
   const notice=current.setup_restore_notice||{},banner=$('setup-restore-notice');
   banner.hidden=notice.active!==true;
@@ -804,7 +764,6 @@ function render({preserveDirty=false}={}) {
     if (!preserveDirty || !dirty.has('chapter')) $('chapter-edit').value = current.chapter_text || '';
     $('outline-read').innerHTML = md(current.outline);
     renderOutlineFactCheck();
-    renderReplicaStatus();
     renderSetupRestoreNotice();
     $('planning-source').textContent=current.planning_has_draft
       ? `方案来源：${current.planning_source||'尚未保存'} · 这是待确认新稿，写手仍使用${current.current_plan_version?`方案 v${current.current_plan_version}`:'已确认方案'}`
@@ -1214,7 +1173,6 @@ $('adopt-review').onclick=()=>{closeAdoptGate();setReadingView('review');};
 $('adopt-cancel').onclick=closeAdoptGate;
 $('regenerate-confirm').onclick=async()=>{const button=$('regenerate-confirm');if(button.disabled)return;button.disabled=true;button.textContent='正在开始…';closeRegenerateGate();await stream('regenerate');};
 $('regenerate-cancel').onclick=closeRegenerateGate;
-$('replica-warning-ack').onclick=acknowledgeReplicaNotice;
 $('setup-restore-ack').onclick=acknowledgeSetupRestoreNotice;
 $('save-generation-voiceprint').onclick=saveGenerationVoiceprintSelection;
 $('prefill-outline').onclick=async()=>{try{const r=await api(`/books/${encodeURIComponent($('book').value)}/chapters/${$('chapter').value}/outline-template`);$('outline').value=(await r.json()).content;markDirty('outline');toggleView('outline-edit');}catch(e){showError(e.message);}};

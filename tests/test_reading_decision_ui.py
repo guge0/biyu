@@ -278,7 +278,7 @@ def test_v6_top_notice_priority_has_one_explicit_dispatcher() -> None:
     script = JS.read_text(encoding="utf-8")
 
     assert "function syncTopNoticePriority(" in script
-    assert "['error-banner','failure-card','reading-failure-card','setup-restore-notice','replica-warning','memory-banner']" in script
+    assert "['error-banner','failure-card','reading-failure-card','setup-restore-notice','memory-banner']" in script
     assert "syncTopNoticePriority();" in script
 
 

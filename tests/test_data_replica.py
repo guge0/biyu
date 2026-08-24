@@ -19,7 +19,6 @@ def test_replica_script_uses_snapshots_hashes_and_never_writes_source() -> None:
 def test_replica_keeps_a_bounded_thirty_day_recovery_window() -> None:
     script = Path("scripts/run_data_replica.ps1").read_text(encoding="utf-8")
     workbench = Path("src/biyu/ui/workbench.py").read_text(encoding="utf-8")
-    author_ui = Path("src/biyu/ui/static/workbench.js").read_text(encoding="utf-8")
 
     assert "[ValidateRange(24, 168)][int]$HourlyRetentionHours = 72" in script
     assert "[ValidateRange(30, 90)][int]$DailyRetentionDays = 31" in script
@@ -27,7 +26,6 @@ def test_replica_keeps_a_bounded_thirty_day_recovery_window() -> None:
     assert 'ToString("yyyyMMdd")' in script
     assert "earliest_recovery" in script
     assert "earliest_recovery" in workbench
-    assert "最早可恢复到" in author_ui
 
 
 def test_replica_installer_matches_runner_parameters_and_runs_silently() -> None:
@@ -116,12 +114,11 @@ def test_restore_scripts_require_a_staging_destination() -> None:
     assert "staging directory outside data" in restore
 
 
-def test_author_status_uses_only_replica_language() -> None:
+def test_workbench_has_no_persistent_replica_status() -> None:
     html = Path("src/biyu/ui/static/workbench.html").read_text(encoding="utf-8")
     script = Path("src/biyu/ui/static/workbench.js").read_text(encoding="utf-8")
     author_ui = html + script
-    assert 'id="replica-status"' not in html
-    assert 'id="reading-more-replica"' in html
-    assert "renderReplicaStatus" in script
-    for forbidden in ("备份", "已备份", "数据安全"):
+    for forbidden in ("replica-warning", "reading-more-replica", "renderReplicaStatus"):
+        assert forbidden not in author_ui
+    for forbidden in ("备份", "防手滑副本", "副本尚未设置"):
         assert forbidden not in author_ui

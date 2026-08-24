@@ -6,8 +6,8 @@
   <title>笔驭 · 设定集</title>
   <link rel="stylesheet" href="/styles.css?v=w1-1">
   <link rel="stylesheet" href="/biyu-paper.css?v=w1-1">
-  <link rel="stylesheet" href="/settings.css?v=r1-2">
-  <link rel="stylesheet" href="/new-character.css?v=c1-2">
+  <link rel="stylesheet" href="/settings.css?v=r2-1">
+  <link rel="stylesheet" href="/settings-ticket.css?v=s2-1">
 </head>
 <body>
   <nav class="top-nav"><a href="/" class="nav-brand">笔驭</a><div class="nav-links"><a href="/">书架</a><a id="workbench-link">工作台</a><a class="active">设定集</a></div><div id="runtime-identity" class="env-badge" title="当前运行环境">版本检测中…</div></nav>
@@ -38,7 +38,7 @@
           <p class="roster-rule">这一章没出场的人，写手只看到一行：姓名、档位、一句话定位。</p><div id="roster-groups"></div><details id="deleted-roster" hidden><summary>已删除的卡（0）· 展开</summary><div id="deleted-roster-list"></div></details>
         </section>
         <section id="reader" class="reading"></section>
-        <section id="editor-view" hidden><div id="character-editor"></div><textarea id="editor" class="editor" placeholder="直接写这一格的内容"></textarea><p class="paste-hint">保存只修改当前这一格；旧版会自动进入历史。</p></section>
+        <section id="editor-view" hidden><div id="character-editor"></div><textarea id="editor" class="editor" placeholder="直接写这一格的内容"></textarea><p class="paste-hint">填写完成后保存；修改已有内容时，旧版会自动进入历史。</p></section>
         <div class="actions"><button id="save-button" class="b1">保存这张卡</button><button id="back-button" class="b3">切回编辑</button><button id="archive-button" class="b3" hidden>删掉这张卡</button></div>
         <p id="action-status" role="status"></p>
         <section class="history"><h3>这一格的历史</h3><p>默认显示最近 5 版；同格 2 分钟内连存合并为一版。</p><div id="history-list"></div><details id="older-history" hidden><summary id="older-summary">更早的版本</summary><div id="older-history-list"></div></details></section>
@@ -46,6 +46,6 @@
     </div></div></div>
   </main>
   <section id="error-banner" class="error-banner" hidden></section>
-  <script src="/mini-md.js?v=u1-1"></script><script src="/settings.js?v=u1-2"></script><script src="/new-character.js?v=c1-1"></script><script src="/runtime-identity.js?v=a2-1"></script>
+  <script src="/mini-md.js?v=u1-1"></script><script src="/settings.js?v=u2-1"></script><script src="/runtime-identity.js?v=a2-1"></script>
 </body>
 </html>
