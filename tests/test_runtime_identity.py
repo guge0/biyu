@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from datetime import date
 
 from fastapi.testclient import TestClient
 import hashlib
@@ -18,7 +19,7 @@ def test_runtime_version_exposes_checkout_identity(monkeypatch, tmp_path: Path) 
     assert payload["role"] == "笔驭"
     assert payload["checkout"] == "biyu-dev"
     assert payload["repo"] == "guge0/biyu"
-    assert payload["build"] == "20260819 · 00a7b752"
+    assert payload["build"] == f"{date.today():%Y%m%d} · 00a7b752"
     assert payload["data_root"].endswith(r"BiyuTestData")
 
 

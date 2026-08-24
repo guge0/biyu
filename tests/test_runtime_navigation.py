@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from datetime import date
 
 from fastapi.testclient import TestClient
 
@@ -93,7 +94,7 @@ def test_runtime_version_endpoint_and_visible_shelf_badge(monkeypatch) -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["version"] == "0.1.0"
-    assert payload["build"] == "20260819 · 00a7b752"
+    assert payload["build"] == f"{date.today():%Y%m%d} · 00a7b752"
     assert payload["runtime"] == "笔驭"
     assert payload["role"] == "笔驭"
     assert payload["checkout"] == "biyu-dev"

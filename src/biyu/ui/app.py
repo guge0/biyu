@@ -20,6 +20,7 @@ import asyncio
 import subprocess
 import hashlib
 import re
+from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -39,7 +40,9 @@ from biyu.web.routes import router as _web_router
 from biyu import __version__
 
 
-BUILD_DATE = "20260819"
+# Keep the runtime stamp truthful for source checkouts; release packaging can
+# pin it explicitly through BIYU_BUILD_DATE.
+BUILD_DATE = os.environ.get("BIYU_BUILD_DATE", "") or date.today().strftime("%Y%m%d")
 
 
 def _version_key(value: str) -> tuple[int, ...] | None:
