@@ -32,7 +32,7 @@ def test_header_height_budget():
     )
     assert fixed <= 180
     title_row = re.search(
-        r'<header class="workbench-header workbench-title-row">(?P<body>.*?)</header>',
+        r'<header class="workbench-header workbench-title-row [^"]+">(?P<body>.*?)</header>',
         HTML,
         re.S,
     )
@@ -118,12 +118,18 @@ def test_no_overlap_in_right_pane():
 
 def test_book_chapter_controls_present():
     title_row = re.search(
-        r'<header class="workbench-header workbench-title-row">(?P<body>.*?)</header>',
+        r'<header class="workbench-header workbench-title-row [^"]+">(?P<body>.*?)</header>',
         HTML,
         re.S,
     ).group("body")
-    for element_id in ("book", "chapter", "previous-chapter", "next-chapter", "load"):
+    for element_id in ("book", "chapter", "previous-chapter", "next-chapter"):
         assert f'id="{element_id}"' in title_row
+    actions_row = HTML.split('<section class="workbench-actions-row"', 1)[1].split(
+        '<section id="replica-warning"', 1,
+    )[0]
+    assert 'id="load" class="b1"' in actions_row
+    assert 'id="stage-bar"' in actions_row
+    assert 'id="workbench-more-toggle"' in actions_row
     assert "$('load').onclick=load" in JS
     assert "$('previous-chapter').onclick" in JS
     assert "$('next-chapter').onclick" in JS

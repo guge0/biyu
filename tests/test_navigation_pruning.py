@@ -91,5 +91,7 @@ def test_every_retained_destination_has_a_shelf_path() -> None:
     assert 'href="/overview.html?book=' in book_html
     assert 'href="/good-sentences.html?book=' in book_html
     for target in ("/memory.html", "/voiceprint.html"):
-        assert f'href="{target}' in workbench_html
+        assert f'href="{target}?book=' in book_html
+    assert 'id="memory-link"' not in workbench_html
+    assert 'id="voiceprint-link"' not in workbench_html
     assert 'href="/overview.html' not in workbench_html

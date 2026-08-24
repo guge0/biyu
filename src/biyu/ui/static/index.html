@@ -15,15 +15,20 @@
       <a href="/workbench.html">工作台</a>
     </div>
     <div class="nav-badges">
-      <button id="connection-settings-button" class="nav-command" type="button">换 Key / 换模型</button>
+      <button id="connection-settings-button" class="nav-command" type="button" aria-label="Key 与模型设置">Key / 模型</button>
       <button id="backup-settings-button" class="nav-command" type="button">备份</button>
       <a href="/about.html" class="nav-command">介绍</a>
-      <div id="version-badge" class="env-badge env-test" title="当前运行版本">
+      <button id="version-badge" class="env-badge env-test" type="button" title="当前运行版本" aria-expanded="false" aria-controls="version-details">
         <span class="env-dot"></span>
         <span id="version-label">版本检测中…</span>
         <span id="update-dot" class="update-dot" hidden aria-label="有新版本"></span>
-        <span id="update-label" class="update-label" hidden></span>
-      </div>
+      </button>
+      <section id="version-details" class="version-details" hidden aria-label="版本详情">
+        <strong>版本信息</strong>
+        <p id="version-current"></p>
+        <p id="version-latest" hidden></p>
+        <span id="version-update-link" hidden>查看更新</span>
+      </section>
       <!-- 峰谷时段徽标(T7-3,D-81) -->
 <!-- 环境章 -->
 </div>
@@ -114,7 +119,7 @@
   <div id="setup-overlay" class="modal-overlay" hidden>
     <form id="setup-form" class="setup-card">
       <button id="setup-close" class="setup-close" type="button" aria-label="关闭">×</button>
-      <h2 id="setup-heading">第一次使用，先完成连接</h2>
+      <h2 id="setup-heading">连接模型</h2>
       <p id="setup-description">API Key 只存进系统钥匙串；系统会用一次极短请求校验连通性。</p>
       <p id="setup-key-state" class="status-text">API Key：未配置</p>
       <label>服务商<select id="setup-provider" required></select></label>
@@ -131,16 +136,6 @@
       <label id="setup-model-legacy" hidden>模型<select id="setup-model"></select></label>
       <button id="setup-advanced" class="setup-link" type="button" aria-expanded="false">分别指定每个环节用什么模型</button>
       <div id="setup-advanced-fields" hidden></div>
-      <div id="setup-book-fields">
-        <label>书籍<select id="setup-book"></select></label>
-        <label><input id="setup-create" type="checkbox"> 新建一本书</label>
-        <label id="setup-title-row" hidden>新书名<input id="setup-title"></label>
-        <label id="setup-genre-row" hidden>题材<select id="setup-genre">
-          <option value="xuanhuan">玄幻</option><option value="qihuan">奇幻</option>
-          <option value="dushi">都市</option><option value="kehuan">科幻</option>
-          <option value="lishi">历史</option><option value="xuanyi">悬疑</option>
-        </select></label>
-      </div>
       <div class="modal-actions">
         <button id="setup-cancel" class="btn-secondary" type="button" hidden>取消</button>
         <button id="setup-submit" class="btn-primary" type="submit">保存并试一下连接</button>

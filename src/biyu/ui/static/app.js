@@ -63,24 +63,47 @@
     label.title = `笔驭 ${info.version}`;
     const update = info.update || {};
     const updateDot = $("update-dot");
-    const updateLabel = $("update-label");
     const hasUpdate = Boolean(update.available || info.update_available);
     if (updateDot) {
       updateDot.hidden = !hasUpdate;
       updateDot.title = hasUpdate ? `有新版本：${update.published || info.latest_version || "可用更新"}` : "暂无更新";
     }
-    if (updateLabel) {
-      updateLabel.hidden = !hasUpdate;
-      updateLabel.textContent = hasUpdate ? `有更新 · ${update.published || info.latest_version}` : "";
-    }
     const badge = $("version-badge");
     if (badge) badge.classList.toggle("has-update", hasUpdate);
+    const current = $("version-current");
+    const latest = $("version-latest");
+    if (current) current.textContent = `当前版本：${info.version} · ${info.sha}`;
+    if (latest) {
+      latest.hidden = !hasUpdate;
+      latest.textContent = hasUpdate ? `最新版本：${update.published || info.latest_version}${update.published_build ? ` · ${update.published_build}` : ""}` : "暂无可用更新";
+    }
+    const link = $("version-update-link");
+    if (link) {
+      link.hidden = !hasUpdate;
+      link.href = update.url || "#";
+    }
     const location = $("data-root-location");
     if (location) {
       const temporary = info.data_root_temporary ? "（这次是临时指定的位置）" : "";
       location.textContent = `你的书存在：${info.data_root}${temporary}`;
       location.classList.toggle("temporary", Boolean(info.data_root_temporary));
     }
+  }
+
+  const versionBadge = $("version-badge");
+  const versionDetails = $("version-details");
+  if (versionBadge && versionDetails) {
+    versionBadge.addEventListener("click", event => {
+      event.stopPropagation();
+      const expanded = versionBadge.getAttribute("aria-expanded") === "true";
+      versionBadge.setAttribute("aria-expanded", String(!expanded));
+      versionDetails.hidden = expanded;
+    });
+    versionDetails.addEventListener("click", event => event.stopPropagation());
+    document.addEventListener("click", () => {
+      versionBadge.setAttribute("aria-expanded", "false");
+      versionDetails.hidden = true;
+    });
   }
 
 

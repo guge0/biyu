@@ -23,8 +23,8 @@ const voiceprintLink = $('voiceprint-link');
 const selectedBook = new URLSearchParams(location.search).get('book');
 if (selectedBook) {
   workbenchSelfLink.href = `/workbench.html?book=${encodeURIComponent(selectedBook)}`;
-  memoryLink.href = `/memory.html?book=${encodeURIComponent(selectedBook)}`;
-  voiceprintLink.href = `/voiceprint.html?book=${encodeURIComponent(selectedBook)}`;
+  if (memoryLink) memoryLink.href = `/memory.html?book=${encodeURIComponent(selectedBook)}`;
+  if (voiceprintLink) voiceprintLink.href = `/voiceprint.html?book=${encodeURIComponent(selectedBook)}`;
 }
 function locationDraftKey(book){return `biyu:workbench:location:${book}`;}
 function syncWorkbenchLocation(){
@@ -36,8 +36,8 @@ function syncWorkbenchLocation(){
   localStorage.setItem(locationDraftKey(book),String(current.chapter));
   const encodedBook=encodeURIComponent(book),chapter=encodeURIComponent(current.chapter);
   workbenchSelfLink.href=`/workbench.html?book=${encodedBook}&chapter=${chapter}`;
-  memoryLink.href=`/memory.html?book=${encodedBook}&chapter=${chapter}`;
-  voiceprintLink.href=`/voiceprint.html?book=${encodedBook}&chapter=${chapter}`;
+  if (memoryLink) memoryLink.href=`/memory.html?book=${encodedBook}&chapter=${chapter}`;
+  if (voiceprintLink) voiceprintLink.href=`/voiceprint.html?book=${encodedBook}&chapter=${chapter}`;
 }
 
 function showError(message) {
@@ -413,6 +413,13 @@ function renderLayerStatus() {
   const stageNode = $('workbench-stage');
   if (layerNode) layerNode.textContent = layer || '未裁定';
   if (stageNode) stageNode.textContent = stage || '未开始';
+}
+function renderWorkbenchIdentity() {
+  const name = $('workbench-book-name');
+  const number = $('workbench-chapter-number');
+  const selected = $('book')?.selectedOptions?.[0]?.textContent || $('book')?.value || '未选择书籍';
+  if (name) name.textContent = `《${selected.replace(/^《|》$/g, '')}》`;
+  if (number) number.textContent = String(current.chapter || $('chapter')?.value || '—');
 }
 function applyNavigationState() {
   $('previous-chapter').disabled = busy || Number(current.chapter || 1) <= 1;
@@ -791,7 +798,7 @@ function renderPersistedRunState(){
 function render({preserveDirty=false}={}) {
   try {
     document.querySelectorAll('[data-panel]').forEach(panel => { panel.hidden = Number(panel.dataset.panel) !== shownStage; });
-    renderLayerStatus(); renderStageBar(); applyActionState();
+    renderWorkbenchIdentity(); renderLayerStatus(); renderStageBar(); applyActionState();
     if (!preserveDirty || !dirty.has('outline')) $('outline').value = current.outline || '';
     if (!preserveDirty || !dirty.has('planning')) $('planning').value = (current.planning || '').replace(/^(?:status|source):[^\n]*\r?\n?/gm, '').replace(/^\s+/, '');
     if (!preserveDirty || !dirty.has('chapter')) $('chapter-edit').value = current.chapter_text || '';
@@ -1166,6 +1173,21 @@ $('reading-failure-close').onclick=()=>{failureDismissedFor=failureIdentity();re
 $('run-surface-close').onclick=()=>{$('run-surface').hidden=true;};
 $('selection-revision').onclick=addSelectionToRevision;
 $('open-import').onclick=openImportDialog;
+const workbenchMoreToggle = $('workbench-more-toggle');
+const workbenchMoreMenu = $('workbench-more-menu');
+if (workbenchMoreToggle && workbenchMoreMenu) {
+  workbenchMoreToggle.onclick = event => {
+    event.stopPropagation();
+    const open = workbenchMoreToggle.getAttribute('aria-expanded') === 'true';
+    workbenchMoreToggle.setAttribute('aria-expanded', String(!open));
+    workbenchMoreMenu.hidden = open;
+  };
+  workbenchMoreMenu.onclick = event => event.stopPropagation();
+  document.addEventListener('click', () => {
+    workbenchMoreToggle.setAttribute('aria-expanded', 'false');
+    workbenchMoreMenu.hidden = true;
+  });
+}
 $('import-cancel').onclick=()=>{$('import-dialog').hidden=true;};
 $('import-next').onclick=previewImportDialog;
 $('import-confirm').onclick=commitImportDialog;

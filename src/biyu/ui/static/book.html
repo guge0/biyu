@@ -40,7 +40,7 @@
       margin: 0 0 24px;
     }
 
-    /* S-1 六入口主次：工作台大卡两列 + 概览一列；其余四卡一行 */
+    /* S-1 书级入口：三个主入口在首行，记忆/声纹等次级入口从第二行开始。 */
     .entry-grid {
       display: grid;
       gap: 12px;
@@ -89,6 +89,27 @@
     .entry-back-btn {
       margin-top: 16px;
       align-self: flex-start;
+    }
+    .zebian-session-tools {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 8px;
+    }
+    .zebian-session-tools[hidden] { display: none; }
+    .zebian-session-tools select {
+      min-width: 0;
+      height: 31px;
+      padding: 5px 28px 5px 10px;
+      border-color: var(--btn-border);
+      background-color: transparent;
+      font-size: 12px;
+    }
+    .zebian-session-tools button {
+      white-space: nowrap;
+      font-weight: 400;
     }
 
     /* 改名弹窗(复用 app.js 弹窗样式；输入框样式 U-1 收敛到 styles.css 全局) */
@@ -232,13 +253,21 @@
         '    <div class="entry-label">责编</div>' +
         '    <div class="entry-desc">在 Claude Code 里跟责编聊。可继续最近对话、选择历史会话或开始新对话；它会读你已存进设定集的内容。</div>' +
         '    <span id="zebian-entry-status" class="entry-state"></span><span id="zebian-copy" class="entry-back-btn b2 bs" hidden>复制开场白</span>' +
-        '    <span id="zebian-session-tools" hidden style="display:flex;gap:8px;align-items:center;margin-top:8px;" onclick="event.stopPropagation()">' +
-        '      <select id="zebian-session-select" aria-label="选择责编历史会话" style="max-width:220px;"></select>' +
-        '      <button id="zebian-new-session" type="button">开始新对话</button>' +
+        '    <span id="zebian-session-tools" class="zebian-session-tools" hidden onclick="event.stopPropagation()">' +
+        '      <select id="zebian-session-select" aria-label="选择责编历史会话"></select>' +
+        '      <button id="zebian-new-session" class="b2 bs" type="button" aria-label="开始新责编对话">新对话</button>' +
         '    </span>' +
         '  </div>' +
         '</div>' +
         '<div class="entry-grid entry-grid-sub">' +
+        '  <a href="/memory.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
+        '    <div class="entry-label">本书记忆</div>' +
+        '    <div class="entry-desc">跨章事实、承诺和人物状态</div>' +
+        '  </a>' +
+        '  <a href="/voiceprint.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
+        '    <div class="entry-label">本书声纹</div>' +
+        '    <div class="entry-desc">全书通用的叙述与角色声音</div>' +
+        '  </a>' +
         '  <a href="/overview.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
         '    <div class="entry-icon">▤</div>' +
         '    <div class="entry-label">整书概览</div>' +
@@ -280,6 +309,7 @@
         launchZebian(book, event.currentTarget);
       });
       document.getElementById("zebian-entry").addEventListener("keydown", function (event) {
+        if (event.target !== event.currentTarget) return;
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           launchZebian(book, event.currentTarget);

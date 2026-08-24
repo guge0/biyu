@@ -148,7 +148,7 @@ async def complete_setup(payload: dict[str, Any]) -> dict[str, str]:
         if not title:
             raise HTTPException(status_code=400, detail="请填写新书名")
         book = _create_book(title, str(payload.get("genre", "xuanhuan")))
-    elif not any(item["id"] == book for item in _books()):
+    elif book and not any(item["id"] == book for item in _books()):
         raise HTTPException(status_code=400, detail="请选择一本已有的书，或新建一本")
     provider_name = str(payload.get("provider") or selected["provider"])
     extra_providers = _store_extra_provider_keys(payload, provider_name)

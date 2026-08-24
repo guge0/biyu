@@ -136,14 +136,18 @@ def test_q2_book_navigation_and_q1_copy_export_ui_contracts() -> None:
         "起名/改名",
         "纪要",
         "设定集",
+        "本书记忆",
+        "本书声纹",
     ):
         assert f'<div class="entry-label">{label}</div>' in book
-    assert book.count('class="entry-card"') == 7
+    assert book.count('class="entry-card"') == 9
     assert '<div class="entry-label">责编</div>' in book
     assert 'entry-card-primary' in book
     assert '跟责编聊出来的结论：否掉的方向、还没定的分歧、你的口味' in book
     assert 'id="overview-link"' not in workbench
-    assert 'id="voiceprint-link"' in workbench
+    assert 'id="voiceprint-link"' not in workbench
+    assert 'href="/voiceprint.html?book=' in book
+    assert 'href="/memory.html?book=' in book
     assert 'id="copy-chapter"' in workbench
     assert "navigator.clipboard" in workbench_js
     assert "document.execCommand('copy')" in workbench_js

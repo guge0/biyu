@@ -8,10 +8,6 @@
    const provider = $('setup-provider');
    const customFields = $('setup-custom-fields');
    const landing = $('setup-landing');
-   const book = $('setup-book');
-   const create = $('setup-create');
-   const titleRow = $('setup-title-row');
-   const genreRow = $('setup-genre-row');
    const status = $('setup-status');
    const submit = $('setup-submit');
    const cancel = $('setup-cancel');
@@ -125,9 +121,8 @@
        return;
      }
      regularMode = true;
-     $('setup-heading').textContent = '换 Key / 换模型';
+     $('setup-heading').textContent = 'Key 与模型';
      $('setup-description').textContent = '已保存的 Key 不会显示。留空表示继续使用当前服务商的 Key。';
-     $('setup-book-fields').hidden = true;
      $('setup-key').required = false;
       document.getElementById('setup-key').value='';
      cancel.hidden = false;
@@ -141,25 +136,13 @@
 
    const openFirstRun = () => {
      regularMode = false;
-     $('setup-heading').textContent = '第一次使用，先完成连接';
+     $('setup-heading').textContent = '连接模型';
      $('setup-description').textContent = 'API Key 只存进系统钥匙串；系统会用一次极短请求校验连通性。';
-     $('setup-book-fields').hidden = false;
      $('setup-key').required = true;
      cancel.hidden = true;
      fillModels();
      if ($('setup-model-legacy')) $('setup-model-legacy').hidden = true;
-     book.replaceChildren(...snapshot.books.map(item => new Option(item.title, item.id)));
-     if (!snapshot.books.length) {
-       create.checked = true;
-       create.onchange();
-     }
      overlay.hidden = false;
-   };
-
-   create.onchange = () => {
-     titleRow.hidden = !create.checked;
-     genreRow.hidden = !create.checked;
-     book.disabled = create.checked;
    };
    model.onchange = renderKeyState;
    cancel.onclick = closeSetup;
@@ -189,10 +172,6 @@
              model: model.value,
              provider: provider?.value,
              stage_overrides: stageOverrides(),
-             book: book.value,
-             create_book: create.checked,
-             book_title: $('setup-title').value,
-             genre: $('setup-genre').value,
              provider_keys: providerKeys,
            };
        const response = await fetch(regularMode ? '/api/setup/update' : '/api/setup/complete', {

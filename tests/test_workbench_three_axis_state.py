@@ -134,12 +134,8 @@ def test_snapshot_exposes_central_verdict_layer_and_precise_stage(tmp_path: Path
         assert snapshot["stage_label"] == stage_label
 
 
-def test_layer_status_is_visible_and_uses_snapshot_with_legacy_fallback() -> None:
+def test_layer_status_is_not_author_visible() -> None:
     html = Path("src/biyu/ui/static/workbench.html").read_text(encoding="utf-8")
     script = Path("src/biyu/ui/static/workbench.js").read_text(encoding="utf-8")
-    assert 'id="workbench-layer-status"' in html
-    assert 'id="workbench-layer"' in html
-    assert 'id="workbench-stage"' in html
-    assert "function renderLayerStatus()" in script
-    assert "current.layer || STEP_LAYERS[step]" in script
-    assert "current.stage_label || STEP_LABELS[step]" in script
+    assert 'id="workbench-layer-status"' not in html
+    assert '中枢裁定' not in html

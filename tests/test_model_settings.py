@@ -127,6 +127,40 @@ def test_first_run_saves_provider_and_stage_overrides_without_legacy_global_mode
     assert saved == [{"provider": "demo", "stage_overrides": {"planner": "model-a"}, "selected_book": "book-1", "complete": True}]
 
 
+def test_first_run_can_save_connection_without_any_book(monkeypatch) -> None:
+    import biyu.ui.setup as setup
+    from biyu.ui.app import app
+
+    saved = []
+
+    class Adapter:
+        async def generate(self, *_args, **_kwargs):
+            return None
+
+    class Registry:
+        def __init__(self, _path):
+            pass
+
+        def get_adapter_for_key(self, alias, key):
+            assert alias == "model-a" and key == "secret"
+            return Adapter()
+
+    monkeypatch.setattr(setup, "_catalog", lambda: [{"alias": "model-a", "provider": "demo", "label": "Demo"}])
+    monkeypatch.setattr(setup, "_books", lambda: [])
+    monkeypatch.setattr(setup, "ModelRegistry", Registry)
+    monkeypatch.setattr(setup, "store_provider_secret", lambda *_args: "系统钥匙串")
+    monkeypatch.setattr(setup, "save_setup", lambda value: saved.append(value))
+
+    response = TestClient(app).post(
+        "/api/setup/complete",
+        json={"provider": "demo", "model": "model-a", "api_key": "secret"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["book"] == ""
+    assert saved == [{"provider": "demo", "stage_overrides": {}, "selected_book": "", "complete": True}]
+
+
 def test_first_run_ui_masks_key_and_redirects_direct_workbench() -> None:
     index = Path("src/biyu/ui/static/index.html").read_text(encoding="utf-8")
     setup_js = Path("src/biyu/ui/static/setup.js").read_text(encoding="utf-8")
@@ -149,7 +183,18 @@ def test_shelf_has_regular_model_settings_without_rendering_saved_key() -> None:
     assert 'value=' not in index.split('id="setup-key"', 1)[1].split(">", 1)[0]
     assert "/api/setup/update" in setup_js
     assert "configured_providers" in setup_js
-    assert "换 Key / 换模型" in index
+    assert "Key / 模型" in index
+    assert 'id="setup-book-fields"' not in index
+    assert "create_book" not in setup_js
+
+
+def test_readme_requires_recheck_and_taste_comparison_before_enabling_polish() -> None:
+    readme = Path("README.md").read_text(encoding="utf-8")
+
+    assert "润色默认关闭" in readme
+    assert "润色后的正文重新跑一次核对" in readme
+    assert "真实改前/改后对照" in readme
+    assert "由老板确认口味" in readme
 
 
 def test_setup_dialog_supports_multiple_provider_keys_and_can_close() -> None:

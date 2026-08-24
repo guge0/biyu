@@ -57,7 +57,7 @@ def test_no_private_config_starts_and_opens_first_run_setup(
         status = client.get("/api/setup/status")
 
     assert page.status_code == 200
-    assert "第一次使用，先完成连接" in page.text
+    assert "连接模型" in page.text
     assert status.status_code == 200
     assert status.json()["ready"] is False
     assert [item["alias"] for item in status.json()["models"]] == ["safe-writer"]
@@ -118,6 +118,6 @@ def test_readme_explains_model_and_provider_boundaries() -> None:
     text = Path("README.md").read_text(encoding="utf-8")
 
     assert "DeepSeek、Kimi（Moonshot）、GLM、豆包" in text
-    assert "换 Key / 换模型" in text
+    assert "Key / 模型" in text
     assert "endpoint ID" in text
     assert "adapter" in text

@@ -465,3 +465,41 @@ def test_settings_static_page_uses_human_character_copy_without_native_dialogs()
     assert "confirm(" not in js
     assert "归档人物卡" not in html + js
     assert "删掉这张卡" in html + js
+    assert "还没有人物卡。" in js
+    assert "写手和导演每章都会读这里——先建一张主角的卡。" in js
+    assert "setRosterChrome(true)" in js
+
+
+def test_author_character_create_is_explicit_and_rejects_duplicates(
+    client: tuple[TestClient, Path],
+) -> None:
+    http, book = client
+    fields = {
+        "基础": {"name": "新人物", "tier": "protagonist", "role": ""},
+        "背景": "",
+        "性格": "",
+        "称谓": {},
+        "语声样本": [],
+    }
+
+    created = http.post(
+        "/api/settings/books/book-id/characters",
+        json={"fields": fields},
+    )
+    assert created.status_code == 200, created.text
+    assert created.json()["character"]["name"] == "新人物"
+
+    duplicate = http.post(
+        "/api/settings/books/book-id/characters",
+        json={"fields": fields},
+    )
+    assert duplicate.status_code == 409
+    assert "同名人物卡" in duplicate.json()["detail"]
+
+    before = (book / "characters.yaml").read_bytes()
+    missing_update = http.put(
+        "/api/settings/books/book-id/characters/打错的名字",
+        json={"version": "missing", "fields": fields},
+    )
+    assert missing_update.status_code == 404
+    assert (book / "characters.yaml").read_bytes() == before

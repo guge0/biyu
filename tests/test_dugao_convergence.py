@@ -139,13 +139,14 @@ def test_b12_copy_chapter_inside_reading_title_row():
 
 
 def test_b13_button_tier_restructure():
-    """B13:实心只留采用;提交本轮修改/读取此章/导入稿件描边;全选/清空/本轮忽略/重新诊断/退回改方案纯文字。"""
+    """中枢顶部只把读取此章做实心；低频导入稿件收进更多。"""
     html = _read("src/biyu/ui/static/workbench.html")
-    # 采用 = 实心 b1
+    # 阶段内部采用仍是确认动作；顶部唯一实心动作是读取此章。
     assert 'data-action="adopt" class="b1"' in html
-    # 描边 = b2
-    assert 'id="load" class="b2"' in html
-    assert 'id="open-import" type="button" class="b2"' in html
+    assert 'id="load" class="b1"' in html
+    assert 'id="open-import" type="button" class="b3"' in html
+    assert 'id="workbench-more-menu"' in html
+    # 提交本轮修改保留描边层级。
     assert 'id="submit-revision" class="b2' in html
     # 纯文字 = b3
     assert 'id="revision-select-all" type="button" class="b3"' in html

@@ -94,7 +94,13 @@ strong,b{font-weight:500}
   background: #c43d3d;
   box-shadow: 0 0 0 2px #fff5f5;
 }
-.update-label { color: #a52d2d; }
+.update-dot[hidden] { display: none; }
+.version-details { position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; width: 230px; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 3px; background: var(--surface); box-shadow: 0 4px 16px rgb(38 33 25 / 12%); color: var(--ink-soft); font-size: 12px; line-height: 1.7; }
+.version-details strong { display: block; color: var(--ink); font-weight: 500; margin-bottom: 4px; }
+.version-details p { margin: 2px 0; }
+.version-details a { color: var(--ink-soft); text-decoration: underline; text-underline-offset: 3px; }
+.env-badge { position: relative; }
+.env-badge.has-update .update-dot { position: absolute; top: 2px; right: 2px; margin: 0; }
 
 /* V-1：峰谷徽标（peak-badge）作者面不再出现，规则整体删除 */
 .nav-badges {
@@ -1541,7 +1547,7 @@ button{font-family:inherit;cursor:default}
   .workbench .chapter-picker input{width:54px}
   .workbench .chapter-picker button{min-height:26px;padding:2px 8px;font-size:12px}
   .workbench .stage-bar{height:var(--workbench-step-row);min-height:var(--workbench-step-row);display:flex;gap:22px;padding:0;border-bottom:1px solid var(--line);flex:none}
-  .workbench .stage-button{background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;padding:5px 0 6px;color:var(--ink-dim);font-size:13px;box-shadow:none}
+.workbench .stage-button{background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;padding:5px 0 6px;color:var(--ink-dim);font-size:13px;box-shadow:none}
   /* V-1：done/current/locked/available/focus-visible 颜色由 biyu-paper.css 统一（旧蓝绿规则已删） */
   .workbench .stage-shell{flex:1;min-height:0;position:relative;padding-top:var(--workbench-stage-gap)}
   .workbench .reading-layout{height:100%;grid-template-columns:minmax(0,1.45fr) minmax(330px,1fr);gap:14px;padding:12px 14px}
@@ -1588,6 +1594,28 @@ button{font-family:inherit;cursor:default}
   .workbench .run-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12.5px;color:var(--ink-dim)}
   .workbench .notice-banner{background:var(--surface);border-color:var(--btn-border);color:var(--ink-soft)}
   .workbench .notice-banner .error-banner-icon,.workbench .notice-banner .error-banner-msg,.workbench .notice-banner .error-banner-close{color:var(--ink-soft)}
+}
+
+/* 中枢顶部两层：身份与本章操作。旧层级状态保留给辅助技术，不占视觉层。 */
+.workbench-identity-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:12px 0 10px;border-bottom:0}
+.workbench-identity-row .wb-title{display:flex;align-items:baseline;gap:8px;min-width:0;color:var(--ink)}
+.workbench-book-name{font-size:19px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(48vw,620px)}
+.workbench-title-separator{color:var(--ink-faint)}
+.workbench-identity-row .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.workbench-identity-row .toolbar #book{max-width:190px}
+.workbench-actions-row{display:flex;align-items:center;gap:18px;min-height:42px;padding:0 0 10px;border-bottom:1px solid var(--line)}
+.workbench-actions-row .stage-bar{flex:1;min-width:0;border-bottom:0;overflow-x:auto}
+.workbench-more{position:relative;margin-left:auto;flex:none}
+.workbench-more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:40;min-width:150px;max-width:calc(100vw - 24px);box-sizing:border-box;padding:5px 0;border:1px solid var(--line);border-radius:2px;background:var(--card);box-shadow:0 8px 24px rgb(55 44 25 / 12%)}
+.workbench-more-menu button{display:block;width:100%;height:34px;padding:0 14px;border:0;background:transparent;text-align:left;white-space:nowrap}
+.workbench-more-menu button:hover{background:rgb(55 44 25 / 5%)}
+.workbench-layer-status{display:none}
+@media (max-width:1280px){
+  .workbench .workbench-identity-row{height:auto;min-height:0;align-items:flex-start;flex-direction:column;gap:10px}
+  .workbench-identity-row .toolbar{width:100%;flex-wrap:wrap}
+  .workbench-actions-row{align-items:flex-start;flex-direction:column;gap:8px}
+  .workbench-actions-row .stage-bar{width:100%;flex:none}
+  .workbench-more{margin-left:0}
 }
 
 .sample-preview-item{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
@@ -1714,7 +1742,7 @@ button{font-family:inherit;cursor:default}
 .nav-links a.active,.nav-links a.on{color:var(--ink);font-weight:500}
 .nav-command{border:0;background:transparent;color:var(--ink-mute);font:inherit;font-size:13px;font-weight:400;padding:0;cursor:pointer}.nav-command:hover{color:var(--ink)}
 .nav-links a:hover{color:var(--ink-soft)}
-.nav-badges{display:flex;align-items:center;gap:8px}
+.nav-badges{display:flex;align-items:center;gap:8px;position:relative}
 .ver{font-size:12px;color:var(--ink-faint)}
 
 /* 兼容旧 book-card 用新 card 视觉 */
@@ -1854,7 +1882,7 @@ label{min-height:0}
 .setup-card.backup-panel{width:min(520px,100%);max-width:520px;min-width:0;max-height:calc(100dvh - 32px);padding:28px 30px 24px;border-radius:2px!important;overflow-x:hidden;overflow-y:auto}
 
 /* Model configuration follows the v3 window prototype rather than the generic modal skin. */
-#setup-overlay .setup-card{width:min(600px,calc(100vw - 32px));max-width:600px;padding:28px 30px 24px;border-radius:2px!important;background:#FDFBF6;border:1px solid #E0DACC;box-shadow:none}
+#setup-overlay .setup-card{width:min(600px,calc(100vw - 32px));max-width:600px;max-height:calc(100dvh - 32px);padding:28px 30px 24px;border-radius:2px!important;background:#FDFBF6;border:1px solid #E0DACC;box-shadow:none;overflow-y:auto;gap:0}
 #setup-overlay .setup-card{position:relative}
 #setup-overlay .setup-close{position:absolute;right:14px;top:10px;border:0;background:transparent;color:#8C8471;font-size:24px;line-height:1;cursor:pointer;padding:4px 8px}
 #setup-overlay .setup-multi-provider-fields{border-top:1px solid #EDE8DC;margin:0 0 10px;padding-top:8px}

@@ -80,6 +80,21 @@ def test_shelf_and_book_page_copy_and_click_signals_match_the_author_contract() 
     assert "text-align:center" in primary_rule
 
 
+def test_editor_session_controls_reuse_compact_book_page_styles() -> None:
+    book = (STATIC / "book.html").read_text(encoding="utf-8")
+
+    tools_rule = _rule(book, ".zebian-session-tools")
+    hidden_rule = _rule(book, ".zebian-session-tools[hidden]")
+    button_rule = _rule(book, ".zebian-session-tools button")
+    assert "grid-template-columns:minmax(0,1fr)auto" in tools_rule
+    assert "display:none" in hidden_rule
+    assert "white-space:nowrap" in button_rule
+    assert 'class="b2 bs"' in book
+    assert '>新对话</button>' in book
+    assert 'style="display:flex' not in book
+    assert "if (event.target !== event.currentTarget) return;" in book
+
+
 def test_disabled_backup_status_is_explicit_even_when_an_old_status_file_exists(
     tmp_path: Path,
     monkeypatch,

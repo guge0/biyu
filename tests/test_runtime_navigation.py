@@ -46,12 +46,31 @@ def test_production_top_navigation_keeps_shelf_and_workbench_contract() -> None:
 
 def test_workbench_keeps_contextual_memory_and_voiceprint_paths() -> None:
     html = (STATIC / "workbench.html").read_text(encoding="utf-8")
+    book = (STATIC / "book.html").read_text(encoding="utf-8")
     nav = re.search(r'<nav class="top-nav">.*?</nav>', html, re.DOTALL)
     assert nav is not None
     assert "/memory.html" not in nav.group(0)
     assert "/voiceprint.html" not in nav.group(0)
-    assert 'id="memory-link" href="/memory.html"' in html
-    assert 'id="voiceprint-link" href="/voiceprint.html"' in html
+    assert 'id="memory-link"' not in html
+    assert 'id="voiceprint-link"' not in html
+    assert 'href="/memory.html?book=' in book
+    assert 'href="/voiceprint.html?book=' in book
+    assert "本书记忆" in book
+    assert "本书声纹" in book
+
+
+def test_workbench_1280_identity_row_grows_before_chapter_actions() -> None:
+    css = (STATIC / "styles.css").read_text(encoding="utf-8")
+
+    responsive = re.search(r"@media \(max-width:1280px\)\{(?P<body>.*?)\n\}", css, re.DOTALL)
+    assert responsive is not None
+    identity = re.search(
+        r"\.workbench \.workbench-identity-row\{(?P<body>[^}]*)\}",
+        responsive.group("body"),
+    )
+    assert identity is not None
+    assert "height:auto" in identity.group("body")
+    assert "min-height:0" in identity.group("body")
 
 
 def test_shelf_create_book_is_two_fields_and_empty_state_is_local() -> None:
@@ -143,7 +162,13 @@ def test_shelf_version_badge_has_update_dot_and_release_label() -> None:
     script = (STATIC / "app.js").read_text(encoding="utf-8")
     css = (STATIC / "styles.css").read_text(encoding="utf-8")
     assert 'id="update-dot"' in html
-    assert 'id="update-label"' in html
+    assert 'id="version-details"' in html
+    assert 'id="version-current"' in html
+    assert 'id="version-latest"' in html
+    assert 'aria-expanded="false"' in html
+    assert 'version-details' in script
+    assert 'versionBadge' in script
     assert 'update.available' in script
     assert 'update-dot' in script
     assert ".update-dot" in css
+    assert ".update-dot[hidden]" in css
