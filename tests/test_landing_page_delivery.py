@@ -19,7 +19,16 @@ def test_c1_landing_page_is_delivered_in_repository() -> None:
 def test_c2_readme_links_landing_page_at_top() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     top = "\n".join(readme.splitlines()[:6])
-    assert "[了解笔驭](docs/index.html)" in top
+    assert "[了解笔驭](https://guge0.github.io/biyu/)" in top
+
+
+def test_readme_has_one_public_landing_entry_and_ends_with_group_invitation() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert readme.count("https://guge0.github.io/biyu/") == 1
+    assert "[`docs/index.html`](docs/index.html)" not in readme
+    assert "GitHub Issues" not in readme
+    assert 'src="docs/images/qq-group.jpg"' in readme
+    assert (ROOT / "docs" / "images" / "qq-group.jpg").is_file()
 
 
 def test_c4_product_first_screen_remains_shelf() -> None:

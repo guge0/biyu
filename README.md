@@ -1,10 +1,8 @@
 # 笔驭 BiYu
 
-[了解笔驭](docs/index.html)
+[了解笔驭](https://guge0.github.io/biyu/)
 
 笔驭是面向中文网文连载的本地 AI 创作工作台。它把书籍、设定、章节、声纹、责编讨论和生成流程放在同一个浏览器界面中；书稿保存在你的电脑上，不上传到源码仓库。
-
-这是一个正在持续完善的个人项目，欢迎通过 GitHub Issues 提交问题、建议和改进想法。
 
 ![书架](docs/images/shelf.png)
 
@@ -109,8 +107,8 @@ git pull --ff-only
 
 这是一份“源码公开但限制商业使用”的许可，不是 OSI 认可的标准开源许可证。若你需要真正意义上的开源（包括商业使用），请改用 MIT、Apache-2.0 等标准许可证。
 
-## 介绍页与交流
+## 交流
 
-项目介绍页位于 [`docs/index.html`](docs/index.html)，也可访问仓库的 GitHub Pages 站点（发布后链接会显示在仓库主页）。
+欢迎加入 QQ 群 `462502077` 交流。
 
-问题和功能建议优先提交到 GitHub Issues。中文用户也可以加入 QQ 群 `462502077` 交流；群内讨论不会替代公开 issue 的记录。
+<img src="docs/images/qq-group.jpg" alt="笔驭 QQ 交流群二维码" width="360">
