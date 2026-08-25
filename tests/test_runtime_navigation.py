@@ -60,18 +60,12 @@ def test_workbench_keeps_contextual_memory_and_voiceprint_paths() -> None:
     assert "本书声纹" in book
 
 
-def test_workbench_1280_identity_row_grows_before_chapter_actions() -> None:
+def test_workbench_command_row_only_wraps_below_desktop_width() -> None:
     css = (STATIC / "styles.css").read_text(encoding="utf-8")
-
-    responsive = re.search(r"@media \(max-width:1280px\)\{(?P<body>.*?)\n\}", css, re.DOTALL)
-    assert responsive is not None
-    identity = re.search(
-        r"\.workbench \.workbench-identity-row\{(?P<body>[^}]*)\}",
-        responsive.group("body"),
-    )
-    assert identity is not None
-    assert "height:auto" in identity.group("body")
-    assert "min-height:0" in identity.group("body")
+    desktop = re.search(r"\.workbench-command-row\{(?P<body>[^}]*)\}", css)
+    assert desktop is not None and "display:flex" in desktop.group("body")
+    narrow = css.split("@media (max-width:1000px)", 1)[1]
+    assert "flex-wrap:wrap" in narrow
 
 
 def test_shelf_create_book_is_two_fields_and_empty_state_is_local() -> None:

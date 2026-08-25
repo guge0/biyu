@@ -893,9 +893,9 @@ function resolveDirty() {
 }
 async function navigateChapter(chapter) {
   if(busy)return; const old=Number(current.chapter||$('chapter').value||1); if(chapter!==old&&!await resolveDirty()){$('chapter').value=old;return;}
-  const button=$('load');button.disabled=true;button.textContent='读取中…';$('chapter').value=Math.max(1,chapter);
+  const status=$('entry-status');status.hidden=false;status.textContent='正在读取本章…';$('chapter').disabled=true;$('chapter').value=Math.max(1,chapter);
   try{dirty.clear();syncDirtyUi();generationVoiceprintWorkspace=null;generationVoiceprintBook='';generationVoiceprintDirty=false;generationVoiceprintError=false;clearTransientStatus();await fetchSnapshot();syncWorkbenchLocation();await refreshActiveVoiceprint();if(current.axes.step==='outline'){const r=await api(`/books/${encodeURIComponent($('book').value)}/chapters/${current.chapter}/outline-template`);$('outline').value=(await r.json()).content;markDirty('outline');toggleView('outline-edit');render({preserveDirty:true});}}
-  catch(error){$('chapter').value=old;showError(error.message);}finally{button.disabled=false;button.textContent='读取此章';}
+  catch(error){$('chapter').value=old;showError(error.message);}finally{$('chapter').disabled=false;status.hidden=true;}
 }
 function appendLog(text) { if (!text) return; $('log').textContent += text + '\n'; $('log').scrollTop = $('log').scrollHeight; }
 async function stream(action, extra={}, confirmed=false, options={}) {
@@ -1115,12 +1115,14 @@ document.querySelectorAll('.selectable').forEach(el=>el.addEventListener('mouseu
 document.querySelectorAll('[data-feedback]').forEach(button=>button.onclick=()=>recordSelection(button.dataset.feedback));
 $('save-review').onclick=saveReview;
 $('undo-adopt').onclick=undoAdopt;
-$('save-chapter').onclick=saveChapter; $('load').onclick=load;
+$('save-chapter').onclick=saveChapter;
 $('copy-chapter').onclick=copyChapterText;
 $('save-confirm-planning').onclick=confirmPlanning;
 $('run-architect').onclick=runArchitect;
 $('previous-chapter').onclick=()=>navigateChapter(Number(current.chapter||1)-1);
 $('next-chapter').onclick=()=>navigateChapter(Number(current.chapter||1)+1);
+$('chapter').addEventListener('change',()=>navigateChapter(Number($('chapter').value||1)));
+$('chapter').addEventListener('keydown',event=>{if(event.key==='Enter'){$('chapter').blur();}});
 $('complete-chapter').onclick=()=>navigateChapter(Number(current.chapter||1)+1);
 $('submit-revision').onclick=submitRevision;
 $('diagnose-button').onclick=()=>stream('diagnose');

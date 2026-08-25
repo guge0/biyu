@@ -139,11 +139,11 @@ def test_b12_copy_chapter_inside_reading_title_row():
 
 
 def test_b13_button_tier_restructure():
-    """中枢顶部只把读取此章做实心；低频导入稿件收进更多。"""
+    """工作台不设多余读取动作；低频导入稿件收进更多。"""
     html = _read("src/biyu/ui/static/workbench.html")
-    # 阶段内部采用仍是确认动作；顶部唯一实心动作是读取此章。
     assert 'data-action="adopt" class="b1"' in html
-    assert 'id="load" class="b1"' in html
+    assert 'id="load"' not in html
+    assert "读取此章" not in html
     assert 'id="open-import" type="button" class="b3"' in html
     assert 'id="workbench-more-menu"' in html
     # 提交本轮修改保留描边层级。

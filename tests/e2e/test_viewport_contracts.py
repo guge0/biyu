@@ -43,10 +43,10 @@ def test_workbench_viewport_contracts(page) -> None:
             horizontal: rules.noHorizontalOverflow(),
             menu: menu ? rules.overlayWithinViewport(menu) : true,
             menuVisible: menu ? !menu.hidden : false,
-            actionRow: ['load', 'stage-bar', 'workbench-more-toggle']
+            actionRow: ['workbench-book-name', 'chapter', 'stage-bar', 'workbench-more-toggle']
               .map(id => document.getElementById(id).getBoundingClientRect().top)
               .reduce((ok, top, _index, tops) => ok && Math.max(...tops) - Math.min(...tops) < 8, true),
-            forbidden: ['中枢', '裁定', '读稿层', '工单号', '防手滑副本', '副本尚未设置', '备份']
+            forbidden: ['中枢', '裁定', '读稿层', '工单号', '防手滑副本', '副本尚未设置', '备份', '读取此章']
               .filter(word => document.body.innerText.includes(word)),
           }};
         }}""".format(checker=VIEWPORT_ASSERTIONS_JS),

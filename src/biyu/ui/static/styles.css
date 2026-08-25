@@ -1592,26 +1592,31 @@ button{font-family:inherit;cursor:default}
   .workbench .notice-banner .error-banner-icon,.workbench .notice-banner .error-banner-msg,.workbench .notice-banner .error-banner-close{color:var(--ink-soft)}
 }
 
-/* 中枢顶部两层：身份与本章操作。旧层级状态保留给辅助技术，不占视觉层。 */
-.workbench-identity-row{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:12px 0 10px;border-bottom:0}
-.workbench-identity-row .wb-title{display:flex;align-items:baseline;gap:8px;min-width:0;color:var(--ink)}
-.workbench-book-name{font-size:19px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(48vw,620px)}
+/* 工作台桌面命令行：身份、章节、阶段与低频操作保持一行。 */
+.workbench-command-row{display:flex;align-items:center;gap:18px;min-height:54px;padding:0;border-bottom:1px solid var(--line)}
+.workbench-command-row .wb-title{display:flex;align-items:baseline;gap:8px;min-width:160px;max-width:min(31vw,430px);color:var(--ink)}
+.workbench-book-name{font-size:17px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .workbench-title-separator{color:var(--ink-faint)}
-.workbench-identity-row .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.workbench-command-row .toolbar{display:flex;align-items:center;gap:6px;flex:none;flex-wrap:nowrap}
 .workbench-book-link{font-size:13px;color:var(--ink-soft);white-space:nowrap;text-decoration:none}
-.workbench-actions-row{display:flex;align-items:center;gap:18px;min-height:42px;padding:0 0 10px;border-bottom:1px solid var(--line)}
-.workbench-actions-row .stage-bar{flex:1;min-width:0;border-bottom:0;overflow-x:auto}
+.workbench-command-row .stage-bar{flex:1;min-width:390px;border-bottom:0;overflow-x:auto}
+.workbench-command-row .stage-button{white-space:nowrap}
 .workbench-more{position:relative;margin-left:auto;flex:none}
 .workbench-more-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:40;min-width:150px;max-width:calc(100vw - 24px);box-sizing:border-box;padding:5px 0;border:1px solid var(--line);border-radius:2px;background:var(--card);box-shadow:0 8px 24px rgb(55 44 25 / 12%)}
 .workbench-more-menu button{display:block;width:100%;height:34px;padding:0 14px;border:0;background:transparent;text-align:left;white-space:nowrap}
 .workbench-more-menu button:hover{background:rgb(55 44 25 / 5%)}
 .workbench-layer-status{display:none}
 @media (max-width:1280px){
-  .workbench .workbench-identity-row{height:auto;min-height:0;align-items:flex-start;flex-direction:column;gap:10px}
-  .workbench-identity-row .toolbar{width:100%;flex-wrap:wrap}
-  .workbench-actions-row{align-items:center;flex-direction:row;gap:10px}
-  .workbench-actions-row .stage-bar{width:auto;flex:1 1 auto}
-  .workbench-more{margin-left:auto}
+  .workbench-command-row{gap:10px}
+  .workbench-command-row .wb-title{max-width:270px}
+  .workbench-command-row .stage-bar{min-width:350px;gap:14px}
+  .workbench-book-link{font-size:12px}
+}
+@media (max-width:1000px){
+  .workbench .workbench-command-row{height:auto;align-items:center;flex-wrap:wrap;padding:8px 0;gap:8px 12px}
+  .workbench-command-row .wb-title{max-width:calc(100% - 230px);flex:1 1 360px}
+  .workbench-command-row .stage-bar{order:3;flex:1 1 calc(100% - 70px);min-width:0}
+  .workbench-more{order:4}
 }
 
 .sample-preview-item{display:grid;grid-template-columns:auto 1fr;gap:8px;padding:7px 0;border-top:1px solid var(--line)}

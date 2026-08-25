@@ -111,14 +111,14 @@ def test_workbench_entry_is_self_explanatory_and_has_a_visible_read_receipt() ->
     assert 'id="stage-bar"' in html
     assert 'id="stage-shell"' in html
     assert "书籍" in html
-    assert "读取此章" in html
+    assert "读取此章" not in html
     assert_workbench_js_src(html)
     for label in ("继续改现有候选稿", "归档候选稿，按新方案重写", "暂不确认"):
         assert label in html
     assert "细纲" in script
     assert "写作方案" in script
     assert "已读取第" in script
-    assert "读取中…" in script
+    assert "正在读取本章…" in script
 
 
 def test_snapshot_derives_a_single_next_step_from_files(tmp_path, monkeypatch) -> None:

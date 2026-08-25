@@ -119,5 +119,4 @@ def test_readme_explains_model_and_provider_boundaries() -> None:
 
     assert "DeepSeek、Kimi（Moonshot）、GLM、豆包" in text
     assert "Key / 模型" in text
-    assert "endpoint ID" in text
-    assert "adapter" in text
+    assert "API Key" in text

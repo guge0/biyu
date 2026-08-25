@@ -39,7 +39,7 @@ def test_header_height_budget():
     assert title_row
     assert 'id="entry-status"' in title_row.group("body")
     # W-1：工具条按目标结构改 .toolbar（原 chapter-picker 类名废止）
-    assert 'class="toolbar"' in title_row.group("body")
+    assert 'class="toolbar workbench-chapter-nav"' in title_row.group("body")
 
 
 def test_prose_visible_lines():
@@ -117,25 +117,22 @@ def test_no_overlap_in_right_pane():
 
 
 def test_book_chapter_controls_present():
-    title_row = re.search(
+    title_match = re.search(
         r'<header class="workbench-header workbench-title-row [^"]+">(?P<body>.*?)</header>',
         HTML,
         re.S,
-    ).group("body")
+    )
+    title_row = title_match.group("body")
     for element_id in ("book", "chapter", "previous-chapter", "next-chapter"):
         assert f'id="{element_id}"' in title_row
-    actions_row = HTML.split('<section class="workbench-actions-row"', 1)[1].split(
-        '<div id="failure-card"', 1,
-    )[0]
-    assert 'id="load" class="b1"' in actions_row
-    assert 'id="stage-bar"' in actions_row
-    assert 'id="workbench-more-toggle"' in actions_row
-    compact = CSS.split("@media (max-width:1280px)", 1)[1]
-    actions_rule = re.search(r"\.workbench-actions-row\{(?P<body>[^}]*)\}", compact).group("body")
-    assert "flex-direction:row" in actions_rule
-    assert "$('load').onclick=load" in JS
+    assert 'workbench-command-row' in title_match.group(0)
+    assert 'id="load"' not in title_row
+    assert 'id="stage-bar"' in title_row
+    assert 'id="workbench-more-toggle"' in title_row
+    assert "$('load').onclick" not in JS
     assert "$('previous-chapter').onclick" in JS
     assert "$('next-chapter').onclick" in JS
+    assert "$('chapter').addEventListener('change'" in JS
 
 
 def test_step_nav_disabled_reason_preserved():

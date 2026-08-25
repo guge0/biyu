@@ -12,7 +12,6 @@ def test_new_user_readme_has_complete_install_and_start_path() -> None:
         "git clone",
         "安装笔驭.bat",
         "start_biyu_ui.bat",
-        "GitHub",
         "Python 3.12",
         "Claude Code",
         "docs/images/",

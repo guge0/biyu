@@ -28,9 +28,10 @@ def test_workbench_and_settings_boundary_contracts_are_encoded() -> None:
     assert 'id="workbench-book-link"' in workbench
     assert "← 回到这本书" in workbench
     assert "bookLink.href=`/book.html?book=" in workbench_js
-    compact = styles.split("@media (max-width:1280px)", 1)[1]
-    actions_rule = re.search(r"\.workbench-actions-row\{(?P<body>[^}]*)\}", compact).group("body")
-    assert "flex-direction:row" in actions_rule
+    command_rule = re.search(r"\.workbench-command-row\{(?P<body>[^}]*)\}", styles).group("body")
+    assert "display:flex" in command_rule
+    assert "align-items:center" in command_rule
+    assert 'id="load"' not in workbench
     assert ":focus-visible{outline:2px solid var(--ink-solid)" in paper
     assert "outline:2px solid var(--mark-bg)" not in paper
     assert "input:focus-visible+.backup-switch-track{outline:2px solid var(--ink-solid)" in styles

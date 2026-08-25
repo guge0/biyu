@@ -17,23 +17,20 @@
     <div id="error-banner" class="error-banner" hidden></div>
     <div id="memory-banner" class="error-banner" role="status" hidden><div class="error-banner-row"><span class="error-banner-icon">!</span><span class="error-banner-msg">这一章的记忆还没更新；正文已经保留，不影响继续写。</span><button data-action="refresh_memory">重算记忆</button></div></div>
     <section id="setup-restore-notice" class="error-banner notice-banner" role="status" hidden><div class="error-banner-row"><span class="error-banner-icon">i</span><span id="setup-restore-message" class="error-banner-msg"></span><a id="setup-restore-link" href="/book.html">去书籍页查看和恢复</a><button id="setup-restore-ack" class="error-banner-close" type="button" aria-label="关闭提醒">×</button></div></section>
-    <header class="workbench-header workbench-title-row workbench-identity-row">
+    <header class="workbench-header workbench-title-row workbench-command-row">
       <div class="wb-title">
         <strong id="workbench-book-name" class="workbench-book-name">正在读取书名…</strong>
         <span class="workbench-title-separator">·</span>
         <span>第 <strong id="workbench-chapter-number">—</strong> 章</span>
         <span id="entry-status" class="status-text" role="status" hidden>正在读取本章…</span>
       </div>
-      <div class="toolbar">
+      <div class="toolbar workbench-chapter-nav">
         <select id="book" aria-label="当前书籍" hidden></select><a id="workbench-book-link" class="workbench-book-link" href="/book.html">← 回到这本书</a><span id="reading-readonly-tag" class="reading-readonly-tag" title="" hidden>只读</span>
         <span class="sep"></span>
         <button id="previous-chapter" class="b3">上一章</button>
         <label><span class="sr-only">章节</span><input id="chapter" class="chapter-num" type="number" min="1" value="1" aria-label="章节号"></label>
         <button id="next-chapter" class="b3">下一章</button>
       </div>
-    </header>
-    <section class="workbench-actions-row" aria-label="本章操作">
-      <button id="load" class="b1">读取此章</button>
       <section id="stage-bar" class="stage-bar" aria-label="写作阶段"></section>
       <div class="workbench-more">
         <button id="workbench-more-toggle" type="button" class="b3" aria-expanded="false" aria-controls="workbench-more-menu">更多 ▾</button>
@@ -41,7 +38,7 @@
           <button id="open-import" type="button" class="b3">导入稿件</button>
         </div>
       </div>
-    </section>
+    </header>
     <div id="failure-card" class="error-banner" role="alert" hidden><button id="failure-close" class="error-banner-close" type="button" aria-label="关闭失败提示">×</button><span class="fail-title">上次操作没有完成</span><p id="failure-reason"></p><p>正文和当前步骤都没有改变，可以直接重试或返回方案调整。</p></div>
     <button id="diagnosis-restore" hidden>回到刚才的候选稿</button>
     <section id="stage-shell" class="stage-shell">
