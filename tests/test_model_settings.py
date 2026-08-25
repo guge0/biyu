@@ -194,7 +194,7 @@ def test_readme_requires_recheck_and_taste_comparison_before_enabling_polish() -
     assert "润色默认关闭" in readme
     assert "润色后的正文重新跑一次核对" in readme
     assert "真实改前/改后对照" in readme
-    assert "由老板确认口味" in readme
+    assert "确认结果符合预期" in readme
 
 
 def test_setup_dialog_supports_multiple_provider_keys_and_can_close() -> None:

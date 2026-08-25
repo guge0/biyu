@@ -60,8 +60,35 @@ def test_a1_a2_a6_data_root_source_matrix(
 
     resolved = resolve_runtime_data_root("production", config_dir=config_dir, environ=environ)
     assert resolved.path == (override_root if environment else stored_root).resolve()
+    assert resolved.persistent_path == stored_root.resolve()
     assert resolved.source == expected_source
     assert resolved.temporary is environment
+
+
+def test_isolation_check_rejects_temporary_root_that_differs_from_persistent(
+    tmp_path: Path,
+) -> None:
+    from biyu.runtime_config import RuntimeConfigurationError, verify_runtime_data_root
+
+    config_dir = tmp_path / "user-config"
+    stored_root = tmp_path / "stored-books"
+    override_root = tmp_path / "override-books"
+    stored_root.mkdir()
+    override_root.mkdir()
+    _write_runtime_config(config_dir, "development", stored_root)
+
+    with pytest.raises(RuntimeConfigurationError, match="持久配置.*实际"):
+        verify_runtime_data_root(
+            "development",
+            override_root,
+            config_dir=config_dir,
+        )
+
+    assert verify_runtime_data_root(
+        "development",
+        stored_root,
+        config_dir=config_dir,
+    ) == stored_root.resolve()
 
 
 def test_a1_author_and_development_read_distinct_persistent_files(tmp_path: Path) -> None:
@@ -128,6 +155,25 @@ def test_a5_development_runtime_never_accepts_8080() -> None:
     assert "runtime-development.json" in launcher
     assert "BiyuTestData" in launcher
     assert "BIYU_TEST_DATA_ROOT" in launcher
+    assert "runtime_guard.py" in launcher
+    assert "owner.Path" not in launcher
+    assert "BIYU_DATA_ROOT))" not in launcher.split("runtime-development.json", 1)[0]
+
+
+def test_launchers_verify_persistent_root_and_print_identity() -> None:
+    production = (ROOT / "scripts/start_biyu_ui.ps1").read_text(encoding="utf-8")
+    development = (ROOT / "scripts/start_biyu_dev.ps1").read_text(encoding="utf-8")
+    installer = (ROOT / "scripts/install_biyu.ps1").read_text(encoding="utf-8-sig")
+
+    for launcher in (production, development):
+        assert "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8" in launcher
+        assert "verify --role" in launcher
+        assert "persistent_data_root" in launcher
+        assert "temporary override" in launcher
+        assert "persistent: $persistentRoot" in launcher
+        assert "actual:     $dataRoot" in launcher
+        assert "Biyu |" in launcher
+    assert "$env:BIYU_DATA_ROOT" not in installer.split("if (-not $OnlyIfNeeded)", 1)[0]
 
 
 @pytest.mark.parametrize("content", ["{broken", json.dumps({}), json.dumps({"data_root": 42})])
@@ -190,7 +236,7 @@ def test_a4_different_root_conflict_keeps_existing_process_alive(tmp_path: Path)
         )
         assert result.returncode != 0
         expected = (
-            f"8080 上已经有一个笔驭在跑，它用的是 {existing_root.resolve()}，"
+            f"端口 {port} 上已经有一个笔驭在跑，它用的是 {existing_root.resolve()}，"
             f"你这次要用的是 {requested_root.resolve()}。"
         )
         assert expected in result.stdout
@@ -198,6 +244,51 @@ def test_a4_different_root_conflict_keeps_existing_process_alive(tmp_path: Path)
 
         with socket.create_connection(("127.0.0.1", port), timeout=2):
             pass
+        assert thread.is_alive()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def test_unknown_listener_reports_both_roots_and_is_not_stopped(tmp_path: Path) -> None:
+    requested_root = tmp_path / "requested-books"
+    requested_root.mkdir()
+
+    class UnknownHandler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            body = b"not biyu"
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, format: str, *args: object) -> None:
+            return
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), UnknownHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    port = server.server_address[1]
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts/runtime_guard.py"),
+                "--port",
+                str(port),
+                "--data-root",
+                str(requested_root),
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
+        )
+        assert result.returncode == 2
+        assert "已有进程数据根：无法确定" in result.stdout
+        assert f"本次请求数据根：{requested_root.resolve()}" in result.stdout
         assert thread.is_alive()
     finally:
         server.shutdown()

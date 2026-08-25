@@ -102,7 +102,9 @@ def test_development_launcher_imports_current_checkout_source() -> None:
     launcher = (ROOT / "scripts" / "start_biyu_dev.ps1").read_text(encoding="utf-8")
     assert "$env:PYTHONPATH = (Join-Path $projectRoot 'src')" in launcher
     assert "Stopping the existing development service" in launcher
-    assert "Port $Port is occupied by another application" in launcher
+    assert "runtime_guard.py" in launcher
+    assert "$guardCode -eq 3" in launcher
+    assert "owner.Path" not in launcher
 
 
 def test_production_launcher_keeps_install_separate_and_uses_conflict_guard() -> None:

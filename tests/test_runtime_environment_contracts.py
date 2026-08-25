@@ -5,6 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from fastapi.testclient import TestClient
 from starlette.requests import Request
 
 
@@ -64,6 +65,33 @@ def test_runtime_binding_accepts_explicit_matching_roots(tmp_path: Path, monkeyp
     monkeypatch.setenv("BIYU_PRODUCTION_DATA_ROOT", str(production))
     assert validate_runtime_binding(role="test", data_root=project_data, project_root=tmp_path) == project_data.resolve()
     assert validate_runtime_binding(role="production", data_root=production, project_root=tmp_path) == production.resolve()
+
+
+def test_application_startup_rechecks_persistent_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from biyu.runtime_config import RuntimeConfigurationError
+    from biyu.ui import app as app_module
+
+    config_dir = tmp_path / "config"
+    persistent = tmp_path / "persistent"
+    wrong = tmp_path / "wrong"
+    persistent.mkdir()
+    wrong.mkdir()
+    config_dir.mkdir()
+    (config_dir / "runtime-development.json").write_text(
+        json.dumps({"data_root": str(persistent)}),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("BIYU_USER_CONFIG_DIR", str(config_dir))
+    monkeypatch.setenv("BIYU_RUNTIME_ROLE", "development")
+    monkeypatch.setenv("BIYU_DATA_ROOT", str(wrong))
+    monkeypatch.setenv("BIYU_TEST_DATA_ROOT", str(wrong))
+    monkeypatch.setenv("BIYU_PROJECT_ROOT", str(tmp_path / "checkout"))
+
+    with pytest.raises(RuntimeConfigurationError, match="持久配置.*实际"):
+        with TestClient(app_module.app):
+            pass
 
 
 def test_author_launcher_requires_persistent_data_root_configuration():

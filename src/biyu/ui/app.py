@@ -142,8 +142,12 @@ app = FastAPI(title="笔驭作者工作台", version="0.2.0")
 @app.on_event("startup")
 async def enforce_runtime_binding() -> None:
     from biyu.config import validate_runtime_binding
+    from biyu.runtime_config import verify_runtime_data_root
 
-    validate_runtime_binding()
+    actual = validate_runtime_binding()
+    role = os.environ.get("BIYU_RUNTIME_ROLE", "").strip().lower()
+    if role in {"production", "development"}:
+        verify_runtime_data_root(role, actual)
 
 
 @app.on_event("startup")

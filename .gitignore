@@ -39,3 +39,6 @@ Thumbs.db
 AGENTS.md
 .reasonix/
 _biyu交付记录/
+
+# Local development scaffolding (not product or delivery artifacts)
+docs/交接/

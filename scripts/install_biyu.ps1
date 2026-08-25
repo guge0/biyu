@@ -8,7 +8,7 @@ function Initialize-AuthorRuntimeConfig {
     $configRoot = if ([string]::IsNullOrWhiteSpace($env:BIYU_USER_CONFIG_DIR)) { Join-Path $HOME '.biyu' } else { [System.IO.Path]::GetFullPath($env:BIYU_USER_CONFIG_DIR) }
     $runtimeConfig = Join-Path $configRoot 'runtime-production.json'
     if (Test-Path -LiteralPath $runtimeConfig) { return }
-    $initialRoot = if ([string]::IsNullOrWhiteSpace($env:BIYU_DATA_ROOT)) { Join-Path $HOME 'BiyuData' } else { [System.IO.Path]::GetFullPath($env:BIYU_DATA_ROOT) }
+    $initialRoot = Join-Path $HOME 'BiyuData'
     New-Item -ItemType Directory -Path $initialRoot -Force | Out-Null
     New-Item -ItemType Directory -Path $configRoot -Force | Out-Null
     @{ data_root = $initialRoot } | ConvertTo-Json | Set-Content -LiteralPath $runtimeConfig -Encoding UTF8

@@ -34,6 +34,16 @@ def test_shared_launcher_refuses_conflicts_without_stopping_existing_service() -
     assert "-File (Join-Path $projectRoot 'scripts\\install_biyu.ps1') -SkipPull" in text
 
 
+def test_development_launcher_uses_runtime_identity_not_python_path() -> None:
+    text = (ROOT / "scripts" / "start_biyu_dev.ps1").read_text(encoding="utf-8")
+
+    assert "runtime_guard.py" in text
+    assert "owner.Path" not in text
+    assert "Get-Process" not in text
+    assert "Stop-Process -Id $listener.OwningProcess" in text
+    assert "$guardCode -eq 3" in text
+
+
 def test_version_endpoint_does_not_expose_internal_runtime_role(monkeypatch) -> None:
     import biyu.ui.app as app_module
 

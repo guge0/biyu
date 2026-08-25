@@ -1,6 +1,7 @@
 param([int]$Port = 8080)
 
 $ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location -LiteralPath $projectRoot
 
@@ -29,11 +30,22 @@ try {
 }
 
 $dataRoot = [System.IO.Path]::GetFullPath([string]$resolution.data_root)
+$persistentRoot = [System.IO.Path]::GetFullPath([string]$resolution.persistent_data_root)
+if ($resolution.temporary) {
+    Write-Host " data source: temporary override ($dataRoot)" -ForegroundColor Yellow
+}
+$verificationOutput = @(& '.venv\Scripts\python.exe' -m biyu.runtime_config verify --role production --actual-root $dataRoot)
+if ($LASTEXITCODE -ne 0) {
+    Write-Host '[X] Runtime data root does not match persistent configuration.' -ForegroundColor Red
+    Write-Host " persistent: $persistentRoot" -ForegroundColor Red
+    Write-Host " actual:     $dataRoot" -ForegroundColor Red
+    exit 2
+}
 $env:BIYU_ENV = 'prod'
 $env:BIYU_RUNTIME_ROLE = 'production'
 $env:BIYU_DATA_ROOT = $dataRoot
 $env:BIYU_DATA_ROOT_SOURCE = [string]$resolution.source
-$env:BIYU_PRODUCTION_DATA_ROOT = $dataRoot
+$env:BIYU_PRODUCTION_DATA_ROOT = $persistentRoot
 Remove-Item Env:BIYU_DATA_ROOT_2 -ErrorAction SilentlyContinue
 $env:BIYU_PROJECT_ROOT = $projectRoot
 $env:BIYU_CHECKOUT_NAME = Split-Path -Leaf $projectRoot
@@ -41,7 +53,6 @@ $env:BIYU_CHECKOUT_NAME = Split-Path -Leaf $projectRoot
 $url = "http://127.0.0.1:$Port"
 $listener = Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($listener) {
-    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
     $guardOutput = @(& '.venv\Scripts\python.exe' (Join-Path $projectRoot 'scripts\runtime_guard.py') --port $Port --data-root $dataRoot)
     $guardCode = $LASTEXITCODE
     $message = $guardOutput -join [Environment]::NewLine
@@ -62,7 +73,8 @@ $remoteUrl = (& git -C $projectRoot remote get-url origin 2>$null)
 $remoteSlug = if ($remoteUrl -match 'github\.com[:/]([^/]+/[^/]+?)(?:\.git)?$') { $Matches[1] } else { 'remote-unset' }
 $env:BIYU_SHORT_SHA = $shortSha
 $env:BIYU_REMOTE_SLUG = $remoteSlug
-$identity = "Biyu | $env:BIYU_CHECKOUT_NAME | $remoteSlug | $shortSha | $env:BIYU_DATA_ROOT"
+$sourceLabel = if ($resolution.temporary) { 'temporary override' } else { 'persistent' }
+$identity = "Biyu | $env:BIYU_CHECKOUT_NAME | $remoteSlug | $shortSha | $env:BIYU_DATA_ROOT | $sourceLabel"
 
 $host.UI.RawUI.WindowTitle = 'Biyu'
 Write-Host ''
