@@ -65,7 +65,7 @@ def test_a1_a2_a6_data_root_source_matrix(
     assert resolved.temporary is environment
 
 
-def test_isolation_check_rejects_temporary_root_that_differs_from_persistent(
+def test_isolation_check_accepts_resolved_temporary_root_without_rewriting_persistent(
     tmp_path: Path,
 ) -> None:
     from biyu.runtime_config import RuntimeConfigurationError, verify_runtime_data_root
@@ -75,20 +75,57 @@ def test_isolation_check_rejects_temporary_root_that_differs_from_persistent(
     override_root = tmp_path / "override-books"
     stored_root.mkdir()
     override_root.mkdir()
-    _write_runtime_config(config_dir, "development", stored_root)
-
-    with pytest.raises(RuntimeConfigurationError, match="持久配置.*实际"):
-        verify_runtime_data_root(
-            "development",
-            override_root,
-            config_dir=config_dir,
-        )
+    config_path = _write_runtime_config(config_dir, "development", stored_root)
+    before = config_path.read_bytes()
+    environ = {"BIYU_DATA_ROOT": str(override_root)}
 
     assert verify_runtime_data_root(
         "development",
-        stored_root,
+        override_root,
         config_dir=config_dir,
-    ) == stored_root.resolve()
+        environ=environ,
+    ) == override_root.resolve()
+    assert config_path.read_bytes() == before
+
+    with pytest.raises(RuntimeConfigurationError, match="解析结果.*实际"):
+        verify_runtime_data_root(
+            "development",
+            stored_root,
+            config_dir=config_dir,
+            environ=environ,
+        )
+
+
+def test_runtime_config_cli_failure_is_readable_utf8(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from biyu import runtime_config
+
+    config_dir = tmp_path / "user-config"
+    stored_root = tmp_path / "stored-books"
+    override_root = tmp_path / "override-books"
+    stored_root.mkdir()
+    override_root.mkdir()
+    _write_runtime_config(config_dir, "development", stored_root)
+    monkeypatch.setenv("BIYU_USER_CONFIG_DIR", str(config_dir))
+    monkeypatch.setenv("BIYU_DATA_ROOT", str(override_root))
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "biyu.runtime_config",
+            "verify",
+            "--role",
+            "development",
+            "--actual-root",
+            str(stored_root),
+        ],
+    )
+
+    assert runtime_config.main() == 2
+    assert "实际数据根与本次解析结果不一致" in capsys.readouterr().out
 
 
 def test_a1_author_and_development_read_distinct_persistent_files(tmp_path: Path) -> None:
@@ -170,7 +207,7 @@ def test_launchers_verify_persistent_root_and_print_identity() -> None:
         assert "verify --role" in launcher
         assert "persistent_data_root" in launcher
         assert "temporary override" in launcher
-        assert "persistent: $persistentRoot" in launcher
+        assert "resolved:   $dataRoot" in launcher
         assert "actual:     $dataRoot" in launcher
         assert "Biyu |" in launcher
     assert "$env:BIYU_DATA_ROOT" not in installer.split("if (-not $OnlyIfNeeded)", 1)[0]

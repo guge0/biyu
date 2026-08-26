@@ -36,8 +36,8 @@ if ($resolution.temporary) {
 }
 $verificationOutput = @(& '.venv\Scripts\python.exe' -m biyu.runtime_config verify --role production --actual-root $dataRoot)
 if ($LASTEXITCODE -ne 0) {
-    Write-Host '[X] Runtime data root does not match persistent configuration.' -ForegroundColor Red
-    Write-Host " persistent: $persistentRoot" -ForegroundColor Red
+    Write-Host '[X] Runtime data root does not match this run''s resolved location.' -ForegroundColor Red
+    Write-Host " resolved:   $dataRoot" -ForegroundColor Red
     Write-Host " actual:     $dataRoot" -ForegroundColor Red
     exit 2
 }

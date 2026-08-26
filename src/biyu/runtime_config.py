@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import json
 import os
 from pathlib import Path
+import sys
 from typing import Mapping
 
 from biyu.secure_config import user_config_dir
@@ -83,14 +84,15 @@ def verify_runtime_data_root(
     actual_root: Path,
     *,
     config_dir: Path | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> Path:
-    """Fail closed unless the actual root matches the role's persistent root."""
-    persistent = resolve_runtime_data_root(role, config_dir=config_dir, environ={})
+    """Fail closed unless the actual root matches this run's resolved root."""
+    selected = resolve_runtime_data_root(role, config_dir=config_dir, environ=environ)
     actual = Path(actual_root).expanduser().resolve()
-    if actual != persistent.persistent_path:
+    if actual != selected.path:
         raise RuntimeConfigurationError(
-            "数据根与持久配置不一致："
-            f"持久配置为 {persistent.persistent_path}，实际为 {actual}"
+            "实际数据根与本次解析结果不一致："
+            f"解析结果为 {selected.path}，实际为 {actual}"
         )
     return actual
 
@@ -134,6 +136,9 @@ def _verify_command(role: str, actual_root: str | None) -> int:
 
 
 def main() -> int:
+    reconfigure = getattr(sys.stdout, "reconfigure", None)
+    if reconfigure is not None:
+        reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=["resolve", "verify"])
     parser.add_argument("--role", required=True, choices=["production", "development"])

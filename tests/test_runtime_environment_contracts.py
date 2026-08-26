@@ -87,10 +87,37 @@ def test_runtime_binding_accepts_explicit_matching_roots(tmp_path: Path, monkeyp
     assert validate_runtime_binding(role="production", data_root=production, project_root=tmp_path) == production.resolve()
 
 
-def test_application_startup_rechecks_persistent_root(
+def test_runtime_binding_accepts_temporary_development_root_but_never_production(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    from biyu.config import validate_runtime_binding
+
+    persistent_test = tmp_path / "persistent-test"
+    temporary_test = tmp_path / "temporary-test"
+    production = tmp_path / "production"
+    for path in (persistent_test, temporary_test, production):
+        path.mkdir()
+    monkeypatch.setenv("BIYU_TEST_DATA_ROOT", str(persistent_test))
+    monkeypatch.setenv("BIYU_PRODUCTION_DATA_ROOT", str(production))
+    monkeypatch.setenv("BIYU_DATA_ROOT_SOURCE", "environment")
+
+    assert validate_runtime_binding(
+        role="development",
+        data_root=temporary_test,
+        project_root=tmp_path,
+    ) == temporary_test.resolve()
+    with pytest.raises(ValueError, match="临时 test 根不得使用生产数据根"):
+        validate_runtime_binding(
+            role="development",
+            data_root=production,
+            project_root=tmp_path,
+        )
+
+
+def test_application_startup_accepts_resolved_temporary_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from biyu.runtime_config import RuntimeConfigurationError
     from biyu.ui import app as app_module
 
     config_dir = tmp_path / "config"
@@ -109,9 +136,10 @@ def test_application_startup_rechecks_persistent_root(
     monkeypatch.setenv("BIYU_TEST_DATA_ROOT", str(wrong))
     monkeypatch.setenv("BIYU_PROJECT_ROOT", str(tmp_path / "checkout"))
 
-    with pytest.raises(RuntimeConfigurationError, match="持久配置.*实际"):
-        with TestClient(app_module.app):
-            pass
+    with TestClient(app_module.app) as client:
+        payload = client.get("/api/version").json()
+    assert payload["data_root"] == str(wrong.resolve())
+    assert payload["data_root_temporary"] is True
 
 
 def test_author_launcher_requires_persistent_data_root_configuration():

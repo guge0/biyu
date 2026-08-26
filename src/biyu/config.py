@@ -69,9 +69,15 @@ def validate_runtime_binding(
     project = (project_root or get_project_root()).resolve()
     test_expected = os.environ.get("BIYU_TEST_DATA_ROOT", "").strip()
     production_expected = os.environ.get("BIYU_PRODUCTION_DATA_ROOT", "").strip()
+    temporary = os.environ.get("BIYU_DATA_ROOT_SOURCE", "").strip().lower() == "environment"
     if selected_role in {"development", "test"}:
         expected = Path(test_expected).expanduser().resolve() if test_expected else (project / "data")
-        if resolved != expected:
+        production_roots = {Path.home().joinpath("BiyuData").resolve()}
+        if production_expected:
+            production_roots.add(Path(production_expected).expanduser().resolve())
+        if temporary and resolved in production_roots:
+            raise ValueError(f"运行角色与数据根不匹配：临时 test 根不得使用生产数据根 {resolved}")
+        if not temporary and resolved != expected:
             raise ValueError(f"运行角色与数据根不匹配：test 应使用 {expected}，实际为 {resolved}")
     else:
         if production_expected:
