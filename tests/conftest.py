@@ -18,8 +18,29 @@ D-83 选项比较:
 - **本选项(测试基础设施层 conftest)**:1 个新文件、7 行、公共 API、不动 src/。
 """
 import asyncio
+import os
+import shutil
+import tempfile
+from pathlib import Path
 
 import pytest
+
+
+_PYTEST_DATA_ROOT: Path | None = None
+
+
+def pytest_configure(config):
+    """Bind the whole test process before collection can import product modules."""
+    global _PYTEST_DATA_ROOT
+    _PYTEST_DATA_ROOT = Path(tempfile.mkdtemp(prefix="biyu-pytest-data-")).resolve()
+    os.environ["BIYU_DATA_ROOT"] = str(_PYTEST_DATA_ROOT)
+    os.environ["BIYU_TEST_DATA_ROOT"] = str(_PYTEST_DATA_ROOT)
+    os.environ["PIP_NO_CACHE_DIR"] = "1"
+
+
+def pytest_unconfigure(config):
+    if _PYTEST_DATA_ROOT is not None:
+        shutil.rmtree(_PYTEST_DATA_ROOT, ignore_errors=True)
 
 
 @pytest.fixture(autouse=True)

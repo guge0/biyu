@@ -39,6 +39,25 @@ def test_runtime_binding_requires_role_and_explicit_root(tmp_path: Path, monkeyp
         validate_runtime_binding(role="production", data_root=None, project_root=tmp_path)
 
 
+def test_data_root_never_falls_back_when_environment_is_cleared(monkeypatch: pytest.MonkeyPatch):
+    from biyu.config import get_data_root
+
+    monkeypatch.delenv("BIYU_DATA_ROOT", raising=False)
+    monkeypatch.delenv("BIYU_TEST_DATA_ROOT", raising=False)
+    monkeypatch.delenv("BIYU_PRODUCTION_DATA_ROOT", raising=False)
+    with pytest.raises(RuntimeError, match="找不到数据根，不启动"):
+        get_data_root()
+
+
+def test_pytest_process_rejects_production_data_root(monkeypatch: pytest.MonkeyPatch):
+    from biyu.config import get_data_root
+
+    production = Path.home() / "BiyuData"
+    monkeypatch.setenv("BIYU_DATA_ROOT", str(production))
+    with pytest.raises(RuntimeError, match="测试进程禁止使用生产数据根"):
+        get_data_root()
+
+
 @pytest.mark.parametrize(
     ("role", "root_kind"),
     [("production", "project"), ("test", "production")],
@@ -62,6 +81,7 @@ def test_runtime_binding_accepts_explicit_matching_roots(tmp_path: Path, monkeyp
     project_data.mkdir()
     production = tmp_path / "production-data"
     production.mkdir()
+    monkeypatch.setenv("BIYU_TEST_DATA_ROOT", str(project_data))
     monkeypatch.setenv("BIYU_PRODUCTION_DATA_ROOT", str(production))
     assert validate_runtime_binding(role="test", data_root=project_data, project_root=tmp_path) == project_data.resolve()
     assert validate_runtime_binding(role="production", data_root=production, project_root=tmp_path) == production.resolve()

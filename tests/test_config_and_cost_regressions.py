@@ -78,9 +78,9 @@ class TestPhaseTraceDir:
         from biyu.editor import multi_agent
 
         monkeypatch.setattr("biyu.config.get_data_root", lambda: tmp_path)
-        multi_agent._dump_phase_trace("phase1", {}, 1)
+        multi_agent._dump_phase_trace("phase1", {}, 1, book_dir=tmp_path / "book")
 
-        traces = list((tmp_path / "T-P3-D-2.2" / "phase_trace").glob("phase1_trace_*.json"))
+        traces = list((tmp_path / "book" / "phase_trace").glob("phase1_trace_*.json"))
         assert len(traces) == 1
         assert json.loads(traces[0].read_text(encoding="utf-8"))["chapter"] == 1
 
@@ -90,7 +90,7 @@ class TestPhaseTraceDir:
         from biyu.editor import multi_agent
 
         source = inspect.getsource(multi_agent._dump_phase_trace)
-        assert "get_data_root" in source
+        assert "book_dir" in source
         assert "parents[3] / \"data\"" not in source
 
 

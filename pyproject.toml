@@ -84,7 +84,7 @@ config = ["config/models.yaml.example", "config/published_version.json"]
 "Lib/assets/声纹库/内置" = ["assets/声纹库/内置/江南文风.json"]
 
 [tool.pytest.ini_options]
-norecursedirs = ["scratch", "build"]
+norecursedirs = ["scratch", "build", ".pytest_cache*", ".venv*"]
 # 编辑态装包位(quill-pipeline)与开发源(biyu/src)分离:
 # 测试优先吃本地 src/, 保证 TDD 看见刚写的代码, 不吃旧装包。
 pythonpath = ["src"]

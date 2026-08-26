@@ -18,7 +18,7 @@ def _git(*args: str, cwd: Path) -> str:
     return result.stdout.strip()
 
 
-def test_data_root_env_wins_and_default_is_user_owned(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_data_root_requires_an_explicit_environment_value(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     import biyu.config as config
 
     selected = tmp_path / "elsewhere"
@@ -27,7 +27,8 @@ def test_data_root_env_wins_and_default_is_user_owned(tmp_path: Path, monkeypatc
 
     monkeypatch.delenv("BIYU_DATA_ROOT")
     monkeypatch.setattr(config.Path, "home", classmethod(lambda cls: tmp_path))
-    assert config.get_data_root() == tmp_path / "BiyuData"
+    with pytest.raises(RuntimeError, match="找不到数据根，不启动"):
+        config.get_data_root()
 
 
 def test_create_book_builds_complete_local_repository(tmp_path: Path) -> None:
@@ -123,8 +124,8 @@ def test_runtime_diagnostics_follow_external_data_root(tmp_path: Path, monkeypat
 
     data_root = tmp_path / "BiyuData"
     monkeypatch.setattr(config, "get_data_root", lambda: data_root)
-    multi_agent._dump_phase_trace("phase1", {}, 1)
-    assert list((data_root / "T-P3-D-2.2/phase_trace").glob("phase1_trace_*.json"))
+    multi_agent._dump_phase_trace("phase1", {}, 1, book_dir=data_root / "book")
+    assert list((data_root / "book/phase_trace").glob("phase1_trace_*.json"))
 
     old_handler = editor._EDITOR_FILE_HANDLER
     editor._EDITOR_FILE_HANDLER = None

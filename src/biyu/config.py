@@ -31,9 +31,19 @@ def get_models_example_path() -> Path:
 
 
 def get_data_root() -> Path:
-    """Return the author-owned data root; an explicit environment value wins."""
+    """Return the explicitly selected data root without a production fallback."""
     configured = os.environ.get("BIYU_DATA_ROOT", "").strip()
-    return Path(configured).expanduser().resolve() if configured else Path.home() / "BiyuData"
+    if not configured:
+        raise RuntimeError("Data root not found; refusing to start (找不到数据根，不启动)")
+    resolved = Path(configured).expanduser().resolve()
+    if "pytest" in sys.modules:
+        production_roots = {Path.home().joinpath("BiyuData").resolve()}
+        explicit_production = os.environ.get("BIYU_PRODUCTION_DATA_ROOT", "").strip()
+        if explicit_production:
+            production_roots.add(Path(explicit_production).expanduser().resolve())
+        if resolved in production_roots:
+            raise RuntimeError(f"测试进程禁止使用生产数据根：{resolved}")
+    return resolved
 
 
 def validate_runtime_binding(
@@ -43,16 +53,15 @@ def validate_runtime_binding(
     project_root: Path | None = None,
 ) -> Path:
     """Require an explicit, existing data root whose location matches its role."""
-    selected_role = (role if role is not None else os.environ.get("BIYU_RUNTIME_ROLE", "")).strip().lower()
-    if selected_role not in {"production", "development", "test"}:
-        raise ValueError("运行角色缺失或非法，必须是 production、development 或 test")
-
     configured = data_root
     if configured is None:
         raw_root = os.environ.get("BIYU_DATA_ROOT", "").strip()
         if not raw_root:
-            raise ValueError("数据根缺失，必须显式设置 BIYU_DATA_ROOT")
+            raise ValueError("Data root not found; refusing to start (找不到数据根，不启动；必须显式设置 BIYU_DATA_ROOT)")
         configured = Path(raw_root).expanduser()
+    selected_role = (role if role is not None else os.environ.get("BIYU_RUNTIME_ROLE", "")).strip().lower()
+    if selected_role not in {"production", "development", "test"}:
+        raise ValueError("运行角色缺失或非法，必须是 production、development 或 test")
     resolved = Path(configured).resolve()
     if not resolved.is_dir():
         raise ValueError(f"数据根不存在或不是目录：{resolved}")

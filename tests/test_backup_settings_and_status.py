@@ -42,6 +42,8 @@ def test_backup_manifest_reports_completed_snapshot_truth(tmp_path: Path) -> Non
     destination = tmp_path / "backup"
     result = run_backup(source, destination, scope="test", reason="manual")
     manifest = json.loads((Path(result.root_path) / "_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["source_path"] == str(source.resolve())
+    manifest = json.loads((Path(result.root_path) / "_manifest.json").read_text(encoding="utf-8"))
     assert result.book_count == 2
     assert manifest["book_count"] == 2
     assert set(manifest["books"]) == {"one", "two"}

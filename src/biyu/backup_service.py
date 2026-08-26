@@ -322,6 +322,7 @@ def run_backup(
                 "backup_id": backup_id,
                 "scope": scope,
                 "reason": reason,
+                "source_path": str(source.resolve()),
                 "started_at": started.isoformat(),
                 "finished_at": finished_precise.replace(microsecond=0).isoformat(),
                 "book_count": len(verified_books),

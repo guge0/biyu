@@ -9,11 +9,13 @@ config/models.yaml
 
 # Python and build artifacts
 .venv/
+.venv*/
 venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.pytest_cache*/
 .mypy_cache/
 .ruff_cache/
 build/

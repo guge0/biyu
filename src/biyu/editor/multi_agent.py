@@ -458,8 +458,8 @@ async def review_chapter_multi_agent(
         v1_lists[aid] = issue_list
         total_cost += cost
 
-    # Phase 1 trace logging (T-P3-D-2.2 — 不改逻辑, 只加日志)
-    _dump_phase_trace("phase1", v1_lists, chapter_num)
+    # Phase 1 trace logging (diagnostic only)
+    _dump_phase_trace("phase1", v1_lists, chapter_num, book_dir=book_dir)
 
     # Phase 1 后成本检查
     if fallback_on_budget and total_cost > fallback_threshold:
@@ -490,8 +490,8 @@ async def review_chapter_multi_agent(
         v2_lists[aid] = issue_list
         total_cost += cost
 
-    # Phase 2 trace logging (T-P3-D-2.2 — 不改逻辑, 只加日志)
-    _dump_phase_trace("phase2", v2_lists, chapter_num)
+    # Phase 2 trace logging (diagnostic only)
+    _dump_phase_trace("phase2", v2_lists, chapter_num, book_dir=book_dir)
 
     # ---- Phase 3: Merge ----
     result = merge_issues(v2_lists)
@@ -500,7 +500,7 @@ async def review_chapter_multi_agent(
 
 
 # ---------------------------------------------------------------------------
-# Phase trace logging (T-P3-D-2.2 辅助函数, 不改任何逻辑)
+# Phase trace logging helper (diagnostic only)
 # ---------------------------------------------------------------------------
 
 logger = logging.getLogger(__name__)
@@ -509,11 +509,13 @@ def _dump_phase_trace(
     phase_name: str,
     agent_lists: dict[str, AgentIssueList],
     chapter_num: int,
+    *,
+    book_dir: Path,
 ) -> None:
-    """Dump per-agent issue counts and full JSON to phase_trace directory.
+    """Dump per-agent issue counts and full JSON under the owning book.
 
     This is a logging-only helper. It does not modify any state.
-    Output: <BIYU_DATA_ROOT>/T-P3-D-2.2/phase_trace/{phase_name}_trace_{timestamp}.json
+    Output: <book_dir>/phase_trace/{phase_name}_trace_{timestamp}.json
     """
     ts = time.strftime("%Y%m%d_%H%M%S")
     trace_data = {
@@ -536,9 +538,7 @@ def _dump_phase_trace(
     )
 
     try:
-        from biyu.config import get_data_root
-
-        phase_trace_dir = get_data_root() / "T-P3-D-2.2" / "phase_trace"
+        phase_trace_dir = Path(book_dir).resolve() / "phase_trace"
         phase_trace_dir.mkdir(parents=True, exist_ok=True)
         out_path = phase_trace_dir / f"{phase_name}_trace_{ts}.json"
         out_path.write_text(

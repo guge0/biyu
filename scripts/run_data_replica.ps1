@@ -104,6 +104,7 @@ function Get-RelativeHashMap([string]$Root) {
 try {
     $source = (Resolve-Path -LiteralPath $SourcePath).Path
     if (-not (Test-Path -LiteralPath $source -PathType Container)) { throw "Source data directory does not exist: $SourcePath" }
+    Write-Host "Biyu replica source: $source"
     New-Item -ItemType Directory -Force -Path $DestinationRoot | Out-Null
     $stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssZ")
     $staging = Join-Path $DestinationRoot ".staging-$stamp"

@@ -87,7 +87,8 @@ def test_settings_write_requires_runtime_endpoint_and_persistent_author_data_roo
     assert "PRODUCTION_SETTINGS_URL" not in bridge
     assert "BIYU_SETTINGS_EDITOR_URL" in bridge
     assert "BIYU_SETTINGS_DATA_ROOT" in bridge
-    assert 'Path.home() / "BiyuData"' in config
+    assert "找不到数据根，不启动" in config
+    assert 'Path.home() / "BiyuData"' not in config
     assert "Join-Path $HOME 'BiyuData'" not in launcher
     assert "biyu.runtime_config resolve --role production" in launcher
     assert "runtime-production.json" in (ROOT / "scripts" / "install_biyu.ps1").read_text(encoding="utf-8")
