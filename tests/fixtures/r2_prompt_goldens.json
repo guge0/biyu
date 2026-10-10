@@ -28,24 +28,24 @@
   },
   "current": {
     "writer_system": {
-      "chars": 973,
-      "utf8_bytes": 2503,
-      "sha256": "ae0c76c02b451234977a9e75be5e4e9761459a4241447424bf24bd9715369132"
+      "chars": 1098,
+      "utf8_bytes": 2796,
+      "sha256": "48a13f1d484c6e0f3d43fc3c81111134ce8fc017256db7a8a661e6bec5e5e284"
     },
     "writer_user_full": {
-      "chars": 2129,
-      "utf8_bytes": 4967,
-      "sha256": "4b8dcbaf4edf80d58fb23c005e5ba3b31d819275dbb3217ab45cd9163c49ec9c"
+      "chars": 2275,
+      "utf8_bytes": 5415,
+      "sha256": "02ea5da23b45c97e87e05c51ca0bf1e2d254123733e1f329207cb669fc2a7530"
     },
     "editor_system": {
-      "chars": 5351,
-      "utf8_bytes": 13731,
-      "sha256": "41ebbc1d4914f85161eb22c14b333b2f3d456850fe66f94a5330995be66ed7ab"
+      "chars": 5723,
+      "utf8_bytes": 14747,
+      "sha256": "03013e755196bedc541bbeeda12f09d317e9aaa53259412bcd54e789ec62b111"
     },
     "editor_system_without_planning": {
-      "chars": 4429,
-      "utf8_bytes": 11261,
-      "sha256": "9f73c8d5d759a3c07c74fe967602b0f20f4a5e400dec1c58fd4ae7a99593114b"
+      "chars": 4801,
+      "utf8_bytes": 12277,
+      "sha256": "81779ff2060df15551b6f831c55c1c9e2192f8c19b105b914b889e5d44f9617e"
     },
     "editor_user_full": {
       "chars": 105,
@@ -60,6 +60,8 @@
     "AD-04: E-01 软化词改为单章3次起提示",
     "AD-05: E-01 确认老板亲改审稿规程；逻辑常识示例为“人在水里正常说话”，删除【老板测试】（D-121）",
     "AD-06: 十号裁定：Writer 字数改为参考篇幅，情节自然收束时不为贴近数字硬扩写",
-    "AD-07: X-1 Writer 删除独立上一章末 500 字，并把角色卡改为在场/主角整卡、其余一行速查"
+    "AD-07: X-1 Writer 删除独立上一章末 500 字，并把角色卡改为在场/主角整卡、其余一行速查",
+    "AD-08: 2026-10 融合轮(老板授权导入外部写作提示词包):写手 system 重写为正向写作手艺(展示不告知/身体节拍分级/对白各有声音/顺序造因果/写厚不注水),负面清单细节下沉 Layer 3 与机器检查器",
+    "AD-09: 2026-10 融合轮:Layer 3 去除特定书示例(曹操/关羽/白色空间/命甲),句式约束改为字面反例并明示成稿后机器核对;编辑文风维度补每千字密度参考线、叙述者越位与扫描式穷举模式,认知边界补叙述者全知与角色全知之分"
   ]
 }

@@ -28,7 +28,7 @@ def init_command(
     console.print(f"[green]书 '{title}' 初始化完成[/green]")
     console.print(f"  目录: {book_dir}")
     console.print(f"  题材: {genre}")
-    console.print(f"  目标字数: 5000/章 (下限 4250)")
+    console.print(f"  目标字数: 3000/章 (下限 2550)")
 
     console.print(f"  数据库: {book_dir / 'book.db'}")
 

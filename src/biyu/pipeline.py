@@ -1488,8 +1488,8 @@ async def generate_chapter(
     overrides = model_overrides or {}
 
     genre = meta.get("genre", "xuanhuan")
-    target_words = meta.get("chapter_target_words", 5000)
-    min_words = meta.get("chapter_min_words", 4250)
+    target_words = meta.get("chapter_target_words", 3000)
+    min_words = meta.get("chapter_min_words", 2550)
     context_mode = meta.get("context_mode", "long_context")
 
     # Voiceprint is a stable Layer 2 input. The loader also normalizes the

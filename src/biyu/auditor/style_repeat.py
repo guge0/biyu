@@ -1,13 +1,15 @@
 """句式重复检查 — 统计本章 + 近 3 章的 AI 句式模板使用频率。
 
 30 章评审发现 AI 味浓是因为高频使用特定句式模板。
-本检查器统计 STYLE_BLACKLIST 中每个模板在当前章和近 3 章的出现次数。
+本检查器统计 STYLE_BLACKLIST 中每个模板在当前章和近 3 章的出现次数;
+并按 ai_patterns.DENSITY_GROUPS 对词族做每千字密度检查(章长变化阈值不变形)。
 """
 from __future__ import annotations
 
 import re
 from pathlib import Path
 
+from biyu.auditor.ai_patterns import DENSITY_GROUPS, count_group
 from biyu.auditor.base import AuditResult, BaseAuditor, Severity
 from biyu.auditor.config import get_checker_config
 
@@ -96,6 +98,29 @@ class StyleRepeatAuditor(BaseAuditor):
             if cnt > max_per_3chapters:
                 violations.append(f"'{pattern}' 在近 4 章共出现 {cnt} 次（限制 {max_per_3chapters}）")
 
+        # 词族密度检查(每千字归一,老板 2026-10 融合轮授权;阈值可被 density_limits 覆盖)
+        density_limits = checker_cfg.get("density_limits", {}) or {}
+        cjk_count = sum(1 for c in chapter_text if '一' <= c <= '鿿')
+        thousand_count = max(cjk_count / 1000, 1.0)
+        density_violations = []
+        density_details = {}
+        for group in DENSITY_GROUPS:
+            limit = float(density_limits.get(group.key, group.limit_per_kchar))
+            total = count_group(chapter_text, group)
+            per_k = total / thousand_count
+            density_details[group.key] = {
+                "count": total,
+                "per_kchar": round(per_k, 2),
+                "limit": limit,
+            }
+            if per_k > limit:
+                message = (
+                    f"『{group.label}』密度 {per_k:.1f}/千字"
+                    f"（本章共 {total} 处，参考上限 {limit:g}/千字）"
+                )
+                density_violations.append(message)
+                violations.append(message)
+
         if violations:
             return AuditResult(
                 checker=self.name, severity=Severity.WARN,
@@ -104,11 +129,18 @@ class StyleRepeatAuditor(BaseAuditor):
                     "current_counts": current_counts,
                     "recent_3ch_counts": recent_counts,
                     "violations": violations,
+                    "density": density_details,
+                    "density_violations": density_violations,
                 },
             )
 
         return AuditResult(
             checker=self.name, severity=Severity.PASS,
             message="句式重复检查通过",
-            details={"current_counts": current_counts, "recent_3ch_counts": recent_counts},
+            details={
+                "current_counts": current_counts,
+                "recent_3ch_counts": recent_counts,
+                "density": density_details,
+                "density_violations": density_violations,
+            },
         )

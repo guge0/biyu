@@ -134,10 +134,12 @@ def test_layer2_no_constraint_keywords():
 
 
 def test_layer3_contains_punctuation_rule():
-    """Layer 3 必须包含破折号约束。"""
-    result = build_layer3_constraints(target_words=5000)
+    """Layer 3 必须包含破折号约束与句式红线(2026-10 融合轮改口径)。"""
+    result = build_layer3_constraints(target_words=3000)
     assert "破折号" in result
-    assert "2 次/章" in result
+    assert "仅限对话戛然停顿" in result
+    assert "全章最多 2 处" in result
+    assert "不得为凑字数" in result
 
 
 def test_present_characters_injected_into_layer2():

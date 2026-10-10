@@ -94,11 +94,12 @@ def test_full_prompt_goldens_match_baseline_or_approved_differences():
         if baseline != GOLDEN_FIXTURE["current"][name]
     }
     assert changed == {
+        "writer_system",
         "writer_user_full",
         "editor_system",
         "editor_system_without_planning",
     }
-    assert len(GOLDEN_FIXTURE["approved_differences"]) == 7
+    assert len(GOLDEN_FIXTURE["approved_differences"]) == 9
 
 
 def test_author_editable_prompt_files_have_one_root_home():

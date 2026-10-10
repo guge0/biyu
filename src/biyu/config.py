@@ -201,11 +201,11 @@ class BookConfig:
 
     @property
     def chapter_target_words(self) -> int:
-        return self.load_meta().get("chapter_target_words", 5000)
+        return self.load_meta().get("chapter_target_words", 3000)
 
     @property
     def chapter_min_words(self) -> int:
-        return self.load_meta().get("chapter_min_words", 4250)
+        return self.load_meta().get("chapter_min_words", 2550)
 
 
 def load_characters_yaml(book_dir: Path) -> list[dict[str, Any]]:

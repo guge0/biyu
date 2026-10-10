@@ -60,8 +60,8 @@ def create_book(title: str, genre: str, *, data_root: Path | None = None) -> Cre
         "kind": "real",
         "created_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
         "biyu_version": "phase1-0.1",
-        "chapter_target_words": 5000,
-        "chapter_min_words": 4250,
+        "chapter_target_words": 3000,
+        "chapter_min_words": 2550,
         "context_mode": "long_context",
     }
     (book_dir / "book.json").write_text(

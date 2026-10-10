@@ -825,6 +825,15 @@ def _auditor_author_projection(result: dict[str, Any], chapter_text: str) -> dic
         if summaries:
             judgment = "\n".join(summaries)
             lines = sorted(set(all_lines))
+        else:
+            # 2026-10 融合轮: 词族密度超标没有行号定位,给作者看密度文案(纯中文,不含正则)
+            density_notes = [
+                str(value)
+                for value in details.get("density_violations", [])
+                if isinstance(value, str) and value
+            ]
+            if density_notes:
+                judgment = "\n".join(density_notes)
     elif checker == "dedup":
         chapter = details.get("similar_with_chapter")
         judgment = f"本章与第 {chapter} 章有较多重复内容，请检查是否需要改写。" if chapter else "本章与前文有较多重复内容，请检查是否需要改写。"

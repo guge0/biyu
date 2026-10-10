@@ -503,11 +503,11 @@ def _build_present_characters_block(
     return "\n".join(lines)
 
 
-def build_layer3_constraints(target_words: int = 5000) -> str:
+def build_layer3_constraints(target_words: int = 3000) -> str:
     """Layer 3 写作约束,数值化。"""
     return _LAYER3_TEMPLATE.format(
         target_words=target_words,
-        max_words=target_words + 1500,
+        max_words=int(target_words * 1.3),
     )
 
 
@@ -521,7 +521,7 @@ def build_writer_prompt_v4(
     context_block: str,
     outline: str,
     planning: str,
-    target_words: int = 5000,
+    target_words: int = 3000,
     present_characters: list[str] | None = None,
     previous_present_characters: list[str] | None = None,
     voiceprint_block: str = "",
