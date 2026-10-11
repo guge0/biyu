@@ -900,6 +900,7 @@ async function navigateChapter(chapter) {
 function appendLog(text) { if (!text) return; $('log').textContent += text + '\n'; $('log').scrollTop = $('log').scrollHeight; }
 async function stream(action, extra={}, confirmed=false, options={}) {
   if (busy) return; const rule = current.actions?.[action]; if (rule && !rule.enabled) { showError(rule.reason); return; }
+  if(action==='write'||action==='regenerate') extra = {min_words: window.__chapterLength || 3000, ...extra};
   const inline=options.inline===true;
   if(action==='diagnose')diagnosisClosedForSha='';
   if(action!=='rewrite'||!runStartedAt)runStartedAt=Date.now();
@@ -1107,6 +1108,15 @@ document.querySelectorAll('[data-action]').forEach(button=>{if(!['write','adopt'
 // v5.1 把低频件移出正文唯一滚动面；保留原 id 与行为，不复制组件。
 $('revision-list-shell').append($('diagnosis-card'));
 document.querySelector('[data-action="write"]').onclick=async()=>{if(await prepareFirstGenerationVoiceprint())await stream("write");};
+
+// 本章篇幅三档(2026-10 裁定):档位即本章下限,写进 write/regenerate 请求;换章回标准。
+window.__chapterLength=3000;
+document.querySelectorAll('.chapter-length-seg button').forEach(button=>{
+  button.onclick=()=>{
+    document.querySelectorAll('.chapter-length-seg button').forEach(x=>x.classList.toggle('current',x===button));
+    window.__chapterLength=Number(button.dataset.len);
+  };
+});
 $('adopt-button').onclick=requestAdopt;
 document.querySelector('[data-action="regenerate"]').onclick=requestRegenerate;
 document.querySelectorAll('[data-save]').forEach(button=>button.onclick=()=>save(button.dataset.save));

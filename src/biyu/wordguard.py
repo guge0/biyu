@@ -49,5 +49,5 @@ async def enforce_floor(
     return WordGuardResult(
         text=text,
         word_count=current_count,
-        warning=f"篇幅 {current_count} 字，低于参考篇幅 {floor} 字；内容完整则无需补写",
+        warning=f"篇幅 {current_count} 字，低于本章下限 {floor} 字；内容完整则无需补写",
     )

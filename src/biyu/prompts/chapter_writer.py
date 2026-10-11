@@ -503,12 +503,9 @@ def _build_present_characters_block(
     return "\n".join(lines)
 
 
-def build_layer3_constraints(target_words: int = 3000) -> str:
-    """Layer 3 写作约束,数值化。"""
-    return _LAYER3_TEMPLATE.format(
-        target_words=target_words,
-        max_words=int(target_words * 1.3),
-    )
+def build_layer3_constraints(min_words: int = 2000) -> str:
+    """Layer 3 写作约束,数值化。篇幅只设下限(2026-10 老板裁定),不设上限。"""
+    return _LAYER3_TEMPLATE.format(min_words=min_words)
 
 
 def build_writer_prompt_v4(
@@ -521,7 +518,7 @@ def build_writer_prompt_v4(
     context_block: str,
     outline: str,
     planning: str,
-    target_words: int = 3000,
+    min_words: int = 2000,
     present_characters: list[str] | None = None,
     previous_present_characters: list[str] | None = None,
     voiceprint_block: str = "",
@@ -558,7 +555,7 @@ def build_writer_prompt_v4(
         worldbook_catalog=worldbook_catalog,
         history_catalog=history_catalog,
     )
-    layer3 = build_layer3_constraints(target_words)
+    layer3 = build_layer3_constraints(min_words)
 
     user_prompt = (
         f"{layer1}\n\n"

@@ -18,3 +18,8 @@
 .reading-title-row{display:flex;justify-content:space-between;align-items:center;margin:2px 0 8px}
 .reading-title{font-size:13px;color:var(--ink-mute)}
 .chapter-tools{display:flex;gap:8px;align-items:center}
+
+/* 2026-10 本章篇幅三档:档位即本章下限(生成步,写进 write/regenerate 请求) */
+.chapter-length{margin:14px 0 4px;max-width:720px}
+.chapter-length-label{display:block;font-size:13px;color:var(--ink-mute);margin-bottom:6px}
+.chapter-length-hint{font-size:12px;color:var(--ink-faint);margin:6px 0 0;line-height:1.7}

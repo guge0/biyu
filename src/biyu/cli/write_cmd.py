@@ -19,6 +19,7 @@ def write_command(
     polisher: str = typer.Option(None, "--polisher", help="润色阶段模型别名(覆盖yaml配置)"),
     prompt_version: str = typer.Option("v4", "--prompt-version", help="v3=旧 prompt,v4=新三层 prompt"),
     replan: bool = typer.Option(False, "--replan", help="无视已有规划件,强制走内置 Architect 重出"),
+    min_words: int = typer.Option(None, "--min-words", help="本章篇幅下限覆盖(只设下限,上不设限);省略用 book.json 配置"),
     force_pending: bool = typer.Option(False, "--force-pending", hidden=True),
 ) -> None:
     """生成一章小说。可通过 --planner/--writer/--polisher 临时覆盖模型，仅影响当次调用。"""
@@ -47,6 +48,11 @@ def write_command(
     if model_overrides:
         console.print(f"  模型覆盖: {model_overrides}")
     console.print(f"  Prompt版本: {prompt_version}")
+    if min_words is not None:
+        if not (300 <= min_words <= 20000):
+            console.print(f"[red]--min-words 超出合理范围(300-20000): {min_words}[/red]")
+            raise typer.Exit(1)
+        console.print(f"  本章篇幅下限: {min_words} 字(上不设限)")
 
     from biyu.setup_asset_versions import SetupAssetYamlError
     try:
@@ -56,6 +62,7 @@ def write_command(
             prompt_version=prompt_version,
             replan=replan,
             force_pending=force_pending,
+            min_words_override=min_words,
         ))
     except SetupAssetYamlError as exc:
         console.print(f"[red]{exc}[/red]")

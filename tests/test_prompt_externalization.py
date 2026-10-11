@@ -65,7 +65,7 @@ def _assembled_prompts() -> dict[str, str]:
         context_block="历史章节样例",
         outline="创作者细纲样例",
         planning="导演规划样例",
-        target_words=4321,
+        min_words=4321,
         present_characters=["测试主角", "同伴"],
     )
     return {
@@ -99,7 +99,7 @@ def test_full_prompt_goldens_match_baseline_or_approved_differences():
         "editor_system",
         "editor_system_without_planning",
     }
-    assert len(GOLDEN_FIXTURE["approved_differences"]) == 9
+    assert len(GOLDEN_FIXTURE["approved_differences"]) == 10
 
 
 def test_author_editable_prompt_files_have_one_root_home():

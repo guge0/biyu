@@ -18,15 +18,18 @@ def test_short_complete_chapter_is_warning_only_and_never_continued() -> None:
     assert result.text == "故事在这里自然收束。"
     assert result.continued is False
     assert calls == 0
-    assert "参考篇幅" in result.warning
+    assert "本章下限" in result.warning
 
 
-def test_writer_prompt_treats_length_as_reference_not_hard_floor() -> None:
+def test_writer_prompt_uses_floor_only_length_contract() -> None:
+    """2026-10 老板裁定:篇幅只设下限、不设上限,档位即本章下限。"""
     text = open("prompts/writer/layer3.md", encoding="utf-8").read()
 
-    assert "参考篇幅为 {target_words}" in text
-    assert "允许短于参考篇幅" in text
+    assert "本章至少 {min_words}" in text
+    assert "上不设限" in text
     assert "不得为凑字数" in text
+    assert "max_words" not in text
+    assert "不超过" not in text
 
 
 def test_v3_prompt_no_longer_orders_padding_to_hit_a_number() -> None:

@@ -70,6 +70,10 @@ async def execute(action_id: str, *, book: str, chapter: int, confirmed: bool, e
         for flag in ("verdict", "positive", "negative", "content", "kind", "version", "anchor", "entry-id", "new-kind", "package"):
             if extra.get(flag):
                 argv.extend((f"--{flag}", extra[flag]))
+    if action_id in {"write", "regenerate"} and extra.get("min-words"):
+        # 2026-10 篇幅裁定: 生成步三档(2000/3000/4000)即本章下限,写进 run log 备查。
+        argv.extend(("--min-words", extra["min-words"]))
+    _append_run_log(run_log, "argv=" + " ".join(argv[3:]))
     env = os.environ.copy()
     env["BIYU_TRACK"] = "engineering"
     _RUNNING[key] = {

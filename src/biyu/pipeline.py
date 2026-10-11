@@ -1455,6 +1455,7 @@ async def generate_chapter(
     truth_filter_enabled: bool = False,
     replan: bool = False,
     force_pending: bool = False,
+    min_words_override: int | None = None,
 ) -> ChapterResult:
     """Generate a single chapter through the three-stage pipeline.
 
@@ -1469,6 +1470,8 @@ async def generate_chapter(
         truth_filter_enabled: P6-A1 实体过滤注入开关。False(默认)= 全量 truth
                          拼接(改造前基线, D-45 钉死); True = 按 outline 出场实体
                          只注入相关真值(改造后)。
+        min_words_override: 本章篇幅下限覆盖(网页生成步三档 2000/3000/4000)。
+               仅影响本次调用;None 时用 book.json 的 chapter_min_words。
         replan: If True, force rerun Architect even if planning.md exists.
                If False, use existing planning.md when status: 已批.
         force_pending: If True, always stage the generated draft in _pending/.
@@ -1490,6 +1493,10 @@ async def generate_chapter(
     genre = meta.get("genre", "xuanhuan")
     target_words = meta.get("chapter_target_words", 3000)
     min_words = meta.get("chapter_min_words", 2550)
+    if min_words_override:
+        # 2026-10 篇幅裁定:网页按章选档,档位即本章下限;上不设限。
+        min_words = int(min_words_override)
+        target_words = min_words
     context_mode = meta.get("context_mode", "long_context")
 
     # Voiceprint is a stable Layer 2 input. The loader also normalizes the
@@ -1803,7 +1810,7 @@ async def generate_chapter(
             context_block=context_block,
             outline=planning_text,     # P6-1A: Architect 细纲作为 outline 传入
             planning="",                # P6-1A: 不再有独立 planning,细纲已在 outline 中
-            target_words=target_words,
+            min_words=min_words,
             present_characters=present_characters,
             previous_present_characters=previous_present_characters,
             voiceprint_block=fingerprint_block,
@@ -1861,7 +1868,7 @@ async def generate_chapter(
                 "combined" if injection_v2 else "selected_full"
             ),
         )
-        layer3 = build_layer3_constraints(target_words)
+        layer3 = build_layer3_constraints(min_words)
         dynamic_content = (
             f"{layer1}\n\n"
             f"{variable_layer2}\n\n"

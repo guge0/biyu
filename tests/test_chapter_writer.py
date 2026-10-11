@@ -135,10 +135,11 @@ def test_layer2_no_constraint_keywords():
 
 def test_layer3_contains_punctuation_rule():
     """Layer 3 必须包含破折号约束与句式红线(2026-10 融合轮改口径)。"""
-    result = build_layer3_constraints(target_words=3000)
+    result = build_layer3_constraints(min_words=3000)
     assert "破折号" in result
     assert "仅限对话戛然停顿" in result
     assert "全章最多 2 处" in result
+    assert "本章至少 3000" in result
     assert "不得为凑字数" in result
 
 
@@ -197,7 +198,7 @@ def test_present_characters_flows_via_build_writer_prompt_v4():
         context_block="",
         outline="大纲",
         planning="",
-        target_words=5000,
+        min_words=5000,
         present_characters=["江叙白"],
     )
 
@@ -231,7 +232,7 @@ def test_full_prompt_layers_in_order():
         context_block="",
         outline="大纲",
         planning="规划",
-        target_words=5000,
+        min_words=5000,
     )
 
     # system prompt 是独立的
