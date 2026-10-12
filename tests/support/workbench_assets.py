@@ -1,4 +1,4 @@
-WORKBENCH_JS_SRC = 'src="/workbench.js?v=c2-2"'
+WORKBENCH_JS_SRC = 'src="/workbench.js?v=c2-3"'
 
 
 def assert_workbench_js_src(html: str) -> None:

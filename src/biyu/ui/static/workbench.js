@@ -985,6 +985,7 @@ function toggleView(target) {
   const readId=prefix==='chapter'?'chapter-read':`${prefix}-read`, editId=prefix==='chapter'?'chapter-edit':prefix;
   $(readId).hidden=edit; $(editId).hidden=!edit;
   if(!edit&&dirty.has(prefix))$(readId).innerHTML=md($(editId).value);
+  if(prefix==='planning')renderArchitectState(); // 2026-10 修复:切换时即时同步对照区,否则编辑框被旧对照区压到页面下方
   document.querySelectorAll(`[data-view^="${prefix}-"]`).forEach(b=>b.classList.toggle('current',b.dataset.view===target));
 }
 async function requestView(target) {
