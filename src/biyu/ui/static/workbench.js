@@ -807,6 +807,10 @@ function render({preserveDirty=false}={}) {
       readMeta.textContent = words ? `${words} 字` : '';
       $('reading-word-count').textContent=readMeta.textContent;
     }
+    // 2026-10 本章花费:读稿页小字,口径=本章管线全部调用(失败也计入)
+    const costSpan=$('reading-chapter-cost'),costDot=$('reading-cost-dot');
+    const chapterCost=Number(current.chapter_cost_cny||0);
+    if(costSpan&&costDot){if(chapterCost>0){costSpan.textContent=`本章共 ¥${chapterCost.toFixed(2).replace(/0+$/,'').replace(/\.$/,'')}`;costSpan.title='本章导演、生成、审校等全部调用合计';costSpan.hidden=false;costDot.hidden=false;}else{costSpan.hidden=true;costDot.hidden=true;}}
     $('official-chapter').innerHTML = md(current.official_text);
     const officialMode=$('reading-mode-official'),hasOfficial=shouldShowOfficialMode(current);
     officialMode.hidden=!hasOfficial;officialMode.title=hasOfficial?(current.official_lock_reason||'查看已经进书的正式稿'):'';

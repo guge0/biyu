@@ -1,5 +1,6 @@
 const $=id=>document.getElementById(id);
 let currentBook='';
+let currentMetrics={};
 let currentData=null;
 const selectedChapters=new Set();
 
@@ -125,7 +126,13 @@ function renderMetrics(metrics){
     metricCard('总字数',numberText(metrics.total_words)),
     metricCard('等你处理',numberText(metrics.waiting_chapters)),
   );
-  if(Object.hasOwn(metrics,'writing_cost')){
+  if(Object.hasOwn(metrics,'book_cost')){
+    root.append(metricCard(
+      '本书花费',
+      costText(metrics.book_cost),
+      metrics.book_cost_note||'含导演、生成、审校、记忆与起名对话等全部调用；失败调用也计入',
+    ));
+  }else if(Object.hasOwn(metrics,'writing_cost')){
     root.append(metricCard(
       '写作花费',
       costText(metrics.writing_cost),
@@ -187,6 +194,16 @@ function chapterRow(item,type){
   time.className='chapter-time';
   time.textContent=relativeTime(item.updated_at);
   link.append(number,title,rowInfo(item,type),time);
+  // 2026-10 单章花费:有台账记录的章在行尾给小字(等稿章也可能已有导演花费)
+  const chapterCosts=(currentMetrics&&currentMetrics.chapter_costs)||{};
+  const costValue=Number(chapterCosts[String(item.chapter)]||0);
+  if(costValue>0){
+    const cost=document.createElement('span');
+    cost.className='chapter-cost';
+    cost.textContent=costText(costValue);
+    cost.title='本章导演、生成、审校等全部调用合计';
+    link.append(cost);
+  }
   row.append(link);
   return row;
 }
@@ -233,6 +250,7 @@ function renderGroup(rootId,name,items,type,{collapsed=false}={}){
 
 function render(data){
   currentData=data;
+  currentMetrics=data.metrics||{};
   selectedChapters.clear();
   $('book-name').textContent=`《${data.book.display_name}》`;
   renderBreakpoint(data);

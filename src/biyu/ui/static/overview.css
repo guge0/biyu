@@ -63,3 +63,6 @@ body{overflow-x:hidden}
 @media(max-width:460px){
   .overview-metrics{grid-template-columns:1fr}
 }
+
+/* 2026-10 单章花费:行尾小字,弱化显示 */
+.chapter-cost{font-size:12px;color:var(--ink-faint,#a49a89);margin-left:auto;flex:none}

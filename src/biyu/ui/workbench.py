@@ -1159,6 +1159,19 @@ def _completed_checks(path: Path) -> list[dict[str, str]]:
     return completed
 
 
+def _chapter_cost_cny(book_dir: Path, chapter: int) -> float:
+    """本章管线花费(导演/生成/审校/记忆等,失败调用也计入;口径同概览)。"""
+    from biyu.ui.cost_log import read_chapter_costs
+
+    try:
+        by_chapter = read_chapter_costs(book_dir)
+    except ValueError:
+        return 0.0
+    if not by_chapter:
+        return 0.0
+    return round(float(by_chapter.get(chapter, 0.0)), 4)
+
+
 def chapter_snapshot(book_dir: Path, chapter: int, book_key: str | None = None) -> dict[str, Any]:
     from biyu.ui.workbench_state import has_diagnosis_return
     outline = book_dir / "outlines" / f"ch{chapter}.md"
@@ -1273,6 +1286,7 @@ def chapter_snapshot(book_dir: Path, chapter: int, book_key: str | None = None) 
         next_id, next_label, next_hint = "write", "按新方案生成候选稿", "正式正文不动，候选稿等待定夺。"
     return {
         "chapter": chapter,
+        "chapter_cost_cny": _chapter_cost_cny(book_dir, chapter),
         "replica_status": _replica_status(),
         "replica_notice": load_author_notice_state(),
         "setup_restore_notice": load_setup_restore_notice(book_dir),

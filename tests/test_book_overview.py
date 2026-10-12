@@ -213,6 +213,10 @@ def test_writing_cost_reads_only_positive_chapter_rows_and_skips_aggregate(
 
     assert result["metrics"]["writing_cost"] == pytest.approx(0.03)
     assert result["metrics"]["writing_cost_note"] == "只算生成正文，不含起名和对话"
+    # 2026-10 本书花费:单章聚合 + 全口径合计(测试无根级台账,extra=0)
+    assert result["metrics"]["chapter_costs"] == {"1": pytest.approx(0.03)}
+    assert result["metrics"]["book_cost"] == pytest.approx(0.03)
+    assert "全部调用" in result["metrics"]["book_cost_note"]
 
 
 def test_missing_single_book_cost_log_omits_cost_metric(tmp_path: Path) -> None:

@@ -123,35 +123,13 @@ def _problem_counts(book_dir: Path) -> dict[int, int]:
 
 
 def _writing_cost(book_dir: Path) -> float | None:
-    path = book_dir / "logs" / "cost_log.csv"
-    if not path.exists():
+    """管线各阶段合计(全章)。口径与 read_chapter_costs 一致。"""
+    from biyu.ui.cost_log import read_chapter_costs
+
+    by_chapter = read_chapter_costs(book_dir)
+    if by_chapter is None:
         return None
-    total = Decimal("0")
-    try:
-        with path.open("r", encoding="utf-8-sig", newline="") as handle:
-            reader = csv.DictReader(handle)
-            required = {"chapter", "stage", "cost_cny"}
-            if not reader.fieldnames or not required.issubset(reader.fieldnames):
-                raise ValueError("写作花费记录缺少必要列")
-            for line_no, row in enumerate(reader, 2):
-                try:
-                    chapter = int(str(row.get("chapter", "")).strip())
-                except ValueError:
-                    continue
-                if chapter < 1 or row.get("stage") == "editor_total":
-                    continue
-                try:
-                    cost = Decimal(str(row.get("cost_cny", "")).strip())
-                except InvalidOperation as exc:
-                    raise ValueError(
-                        f"写作花费记录第 {line_no} 行金额无效"
-                    ) from exc
-                if not cost.is_finite() or cost < 0:
-                    raise ValueError(f"写作花费记录第 {line_no} 行金额无效")
-                total += cost
-    except csv.Error as exc:
-        raise ValueError("写作花费记录无法读取") from exc
-    return float(total)
+    return float(sum(by_chapter.values()))
 
 
 def _chapter_status(
@@ -311,6 +289,16 @@ def build_overview(book_dir: Path, book_key: str) -> dict[str, Any]:
     if writing_cost is not None:
         metrics["writing_cost"] = writing_cost
         metrics["writing_cost_note"] = _COST_NOTE
+        # 2026-10 老板要求:本书全口径花费 + 单章花费(概览行内小字)。
+        from biyu.ui.cost_log import read_book_extra_cost, read_chapter_costs
+
+        by_chapter = read_chapter_costs(book_dir) or {}
+        metrics["chapter_costs"] = {
+            str(chapter): round(value, 4) for chapter, value in by_chapter.items()
+        }
+        extra = read_book_extra_cost(book_key)
+        metrics["book_cost"] = round(writing_cost + extra, 4)
+        metrics["book_cost_note"] = "含导演、生成、审校、记忆与起名对话等全部调用；失败调用也计入"
 
     breakpoint = None
     if latest is not None:

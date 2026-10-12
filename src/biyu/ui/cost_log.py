@@ -70,3 +70,68 @@ def write_cost_log(
         writer.writerow([ts, task, book, session, model_label, f"{cost:.6f}"])
 
     return log_path
+
+
+def read_chapter_costs(book_dir: Path) -> dict[int, float] | None:
+    """按章聚合管线成本(<书>/logs/cost_log.csv),返回 {章号: 合计}。
+
+    无文件返回 None。沿用 _writing_cost 的口径:章号非正或非数字的行跳过
+    (propose 等书级行),stage=editor_total 的聚合行跳过(避免双计),金额
+    无效则报错(台账是唯一可信源,坏了要喊)。
+    """
+    from decimal import Decimal, InvalidOperation
+
+    path = book_dir / "logs" / "cost_log.csv"
+    if not path.exists():
+        return None
+    by_chapter: dict[int, Decimal] = {}
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        required = {"chapter", "stage", "cost_cny"}
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            raise ValueError("成本记录缺少必要列")
+        for line_no, row in enumerate(reader, 2):
+            try:
+                chapter = int(str(row.get("chapter", "")).strip())
+            except ValueError:
+                continue
+            if chapter < 1 or row.get("stage") == "editor_total":
+                continue
+            try:
+                cost = Decimal(str(row.get("cost_cny", "")).strip())
+            except InvalidOperation as exc:
+                raise ValueError(f"成本记录第 {line_no} 行金额无效") from exc
+            if not cost.is_finite() or cost < 0:
+                raise ValueError(f"成本记录第 {line_no} 行金额无效")
+            by_chapter[chapter] = by_chapter.get(chapter, Decimal("0")) + cost
+    return {chapter: float(total) for chapter, total in by_chapter.items()}
+
+
+def read_book_extra_cost(book: str, data_root: Path | None = None) -> float:
+    """根级 cost_log.csv 里属于本书的起名/对话等书级调用合计。
+
+    无文件返回 0.0;单行损坏跳过(该文件是追加式历史件,不因一行阻断概览)。
+    """
+    from decimal import Decimal, InvalidOperation
+
+    if data_root is None:
+        data_root = get_data_root()
+    path = data_root / _COST_LOG_PATH
+    if not path.exists():
+        return 0.0
+    total = Decimal("0")
+    try:
+        with path.open("r", encoding="utf-8-sig", newline="") as handle:
+            reader = csv.DictReader(handle)
+            for row in reader:
+                if str(row.get("book", "")).strip() != book:
+                    continue
+                try:
+                    cost = Decimal(str(row.get("cost", "")).strip())
+                except InvalidOperation:
+                    continue
+                if cost.is_finite() and cost > 0:
+                    total += cost
+    except (csv.Error, OSError):
+        return 0.0
+    return float(total)
