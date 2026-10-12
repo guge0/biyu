@@ -775,11 +775,37 @@ function renderPersistedRunState(){
   $('run-surface-close').hidden=false;
   $('run-surface-close').textContent='在后台继续';
   $('run-result').hidden=true;
-  $('log-drawer').hidden=true;
-  if(!runStartedAt)runStartedAt=Date.now();
+  $('log-drawer').hidden=false;
+  $('log-drawer').open=true;
+  // 2026-10 等待体验:计时用服务端的运行起点(刷新不重置),并轮询运行日志渲染阶段
+  const serverStarted=Date.parse(current.run_info?.started_at||'');
+  if(!runStartedAt)runStartedAt=Number.isFinite(serverStarted)?serverStarted:Date.now();
   renderRunProgress(0,'正在恢复运行状态…');
   if(!runTimer)runTimer=setInterval(updateRunElapsed,1000);
+  startRunLogPolling();
 }
+let runLogTimer=0,runLogSeenTotal=0;
+async function pollRunLog(){
+  const book=$('book').value,chapter=$('chapter').value;
+  try{
+    const data=await(await api(`/books/${encodeURIComponent(book)}/chapters/${chapter}/run-log`)).json();
+    const total=Number(data.total||0);
+    if(total>runLogSeenTotal){
+      const fresh=(data.lines||[]).slice(-(total-runLogSeenTotal));
+      fresh.forEach(appendLog);
+      runLogSeenTotal=total;
+      for(let i=fresh.length-1;i>=0;i--){const stage=progressStageFromLog(fresh[i]);if(stage){renderRunProgress(0,stage);break;}}
+    }
+    if(!data.running){stopRunLogPolling();await fetchSnapshot();}
+  }catch(_e){/* 服务重启中,下轮再试 */}
+}
+function startRunLogPolling(){
+  runLogSeenTotal=0;$('log').textContent='';
+  if(runLogTimer)clearInterval(runLogTimer);
+  runLogTimer=setInterval(pollRunLog,2000);
+  pollRunLog();
+}
+function stopRunLogPolling(){if(runLogTimer){clearInterval(runLogTimer);runLogTimer=0;}}
 function render({preserveDirty=false}={}) {
   try {
     document.querySelectorAll('[data-panel]').forEach(panel => { panel.hidden = Number(panel.dataset.panel) !== shownStage; });

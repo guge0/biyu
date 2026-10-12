@@ -24,6 +24,36 @@ def running_action(book: str, chapter: int) -> str | None:
     return str(entry["action"]) if entry else None
 
 
+def running_run(book: str, chapter: int) -> dict[str, object] | None:
+    """当前运行的信息(供刷新后恢复:服务端时间起点+日志路径)。
+
+    键全部宽容取值:_RUNNING 也可能被测试或其他调用方塞入部分字段的项。
+    """
+    entry = _RUNNING.get((book, chapter))
+    if not entry:
+        return None
+    return {
+        "action": str(entry.get("action") or ""),
+        "run_id": str(entry.get("run_id") or ""),
+        "log_path": str(entry.get("log_path") or ""),
+        "started_at": str(entry.get("started_at") or ""),
+    }
+
+
+def latest_run_log(book_dir: Path, chapter: int) -> Path | None:
+    """本章最新的运行日志(刷新恢复时按它读阶段进度)。"""
+    import re as _re
+
+    runs_dir = book_dir / "logs" / f"ch{chapter}" / "runs"
+    if not runs_dir.is_dir():
+        return None
+    candidates = [
+        path for path in runs_dir.glob("*.log")
+        if _re.fullmatch(r"\d{8}T\d{6}_[0-9a-f]{8}", path.stem)
+    ]
+    return max(candidates, key=lambda path: path.stem) if candidates else None
+
+
 def _new_run_log(book_dir: Path, chapter: int, action_id: str) -> tuple[str, Path]:
     """Reserve a unique, append-only workbench run log."""
     now = datetime.now(timezone.utc)
@@ -65,7 +95,9 @@ async def execute(action_id: str, *, book: str, chapter: int, confirmed: bool, e
         write_workbench_step(book_dir, chapter, start_steps[action_id])
     run_id, run_log = _new_run_log(book_dir, chapter, action_id)
     # `biyu` is an entry point, not a runnable `python -m biyu.cli.main` module.
-    argv = [sys.executable, "-c", "from biyu.cli.main import app; app()", *action.argv]
+    # -u: 关闭子进程 stdout 缓冲——否则 print 的阶段提示攒够一块才到页面,
+    # 等待界面全程只见"正在启动"(2026-10 老板等待体验反馈的根源)。
+    argv = [sys.executable, "-u", "-c", "from biyu.cli.main import app; app()", *action.argv]
     if action_id in {"verdict", "adopt", "excerpt", "chapter_review", "archive_excerpt", "retag_excerpt", "rewrite"}:
         for flag in ("verdict", "positive", "negative", "content", "kind", "version", "anchor", "entry-id", "new-kind", "package"):
             if extra.get(flag):

@@ -1244,6 +1244,9 @@ def chapter_snapshot(book_dir: Path, chapter: int, book_key: str | None = None) 
     editor_base_sha = str(review_state.get("editor_base_sha") or "")
     review_stale = bool(report_json.exists() and editor_base_sha and editor_base_sha != visible_sha)
     running = running_action(book_key or book_dir.name, chapter)
+    from biyu.ui.cli_executor import running_run
+
+    run_info = running_run(book_key or book_dir.name, chapter)
     persisted_run, failure_card = persisted_run_state(book_dir, chapter)
     run = "busy" if running else persisted_run
     step = read_workbench_step(book_dir, chapter)
@@ -1356,6 +1359,7 @@ def chapter_snapshot(book_dir: Path, chapter: int, book_key: str | None = None) 
         "first_generation": first_generation,
         "stale": stale,
         "running_action": running,
+        "run_info": run_info,
         "failure_card": failure_card,
         "memory_dirty": memory_dirty,
         "revision_rounds": revision_rounds,
@@ -1441,6 +1445,47 @@ def books() -> dict[str, list[dict[str, str]]]:
 @router.get("/books/{book}/chapters/{chapter}")
 def get_chapter(book: str, chapter: int) -> dict[str, Any]:
     return chapter_snapshot(_book_dir(book), chapter, book)
+
+
+@router.get("/books/{book}/chapters/{chapter}/run-log")
+def chapter_run_log(book: str, chapter: int, run_id: str | None = None) -> dict[str, Any]:
+    """运行日志尾段(刷新恢复时前端轮询它渲染阶段进度)。
+
+    只暴露 logs/chN/runs/ 下的运行日志;run_id 白名单校验,不给任意文件读。
+    """
+    import re as _re
+
+    from biyu.ui.cli_executor import latest_run_log, running_run
+
+    book_dir = _book_dir(book)
+    if run_id is not None and not _re.fullmatch(r"\d{8}T\d{6}_[0-9a-f]{8}", run_id):
+        raise HTTPException(status_code=400, detail="运行标识无效。")
+    path = (
+        book_dir / "logs" / f"ch{chapter}" / "runs" / f"{run_id}.log"
+        if run_id
+        else latest_run_log(book_dir, chapter)
+    )
+    info = running_run(book_dir.name, chapter)
+    if not path or not path.is_file():
+        return {"running": bool(info), "run_id": (info or {}).get("run_id"), "started_at": (info or {}).get("started_at"), "lines": []}
+    text = path.read_text(encoding="utf-8", errors="replace")
+    meta: dict[str, str] = {}
+    body: list[str] = []
+    for line in text.splitlines():
+        if not body and re.fullmatch(r"\w+=.*", line) and not line.startswith("argv="):
+            key, _, value = line.partition("=")
+            meta[key] = value
+            continue
+        body.append(line)
+    status_done = "status=done" in text or "status=failed" in text
+    return {
+        "running": bool(info) and not status_done,
+        "run_id": meta.get("run_id") or run_id,
+        "action": meta.get("action"),
+        "started_at": meta.get("started_at"),
+        "total": len(body),
+        "lines": body[-40:],
+    }
 
 
 @router.post("/books/{book}/chapters/{chapter}/feedback")
