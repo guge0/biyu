@@ -472,6 +472,8 @@ function renderArchitectState(){
   $('architect-cost-line').hidden=state==='running';
   $('architect-cost-num').textContent=`¥${Number(current.web_architect?.estimate||0.1132).toFixed(2)}`;
   $('run-architect').textContent=hasPlan||state==='rejected'?'让导演重写':'让导演写方案';
+  const feedbackBox=$('planning-feedback');
+  if(feedbackBox)feedbackBox.hidden=!hasPlan||state==='running';
   const list=$('planning-missing-list');list.replaceChildren();
   (current.web_architect?.missing_labels||[]).forEach(label=>{const li=document.createElement('li');li.textContent=`缺「${label}」这一类`;list.append(li);});
 }
@@ -492,6 +494,23 @@ async function runArchitect(){
     const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',failed='';
     while(true){const {done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});const parts=buffer.split('\n\n');buffer=parts.pop();for(const part of parts){if(!part.startsWith('data: '))continue;const raw=part.slice(6);if(raw==='[DONE]')continue;const event=JSON.parse(raw);if(event.type==='error')failed=event.message||'导演没有写完，盘上方案未改变';}}
     if(failed)showError(failed);
+    await fetchSnapshot();
+  }catch(error){showError(error.message);}finally{clearInterval(timer);busy=false;applyActionState();}
+}
+async function runArchitectRevise(){
+  const input=$('planning-feedback-input'),status=$('planning-feedback-status');
+  if(busy)return;
+  const feedback=(input.value||'').trim();
+  if(!feedback){status.textContent='先写要改什么，再点按钮。';return;}
+  status.textContent='';
+  busy=true;applyActionState();
+  current.web_architect={...(current.web_architect||{}),state:'running'};renderArchitectState();
+  const started=Date.now(),timer=setInterval(()=>{$('planning-run-elapsed').textContent=`已用 ${runDuration(Date.now()-started)} · 页面可以离开，写完会留在这里`;},1000);
+  try{
+    const response=await api(`/books/${encodeURIComponent($('book').value)}/chapters/${$('chapter').value}/architect`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feedback})});
+    const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',failed='';
+    while(true){const {done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});const parts=buffer.split('\n\n');buffer=parts.pop();for(const part of parts){if(!part.startsWith('data: '))continue;const raw=part.slice(6);if(raw==='[DONE]')continue;const event=JSON.parse(raw);if(event.type==='error')failed=event.message||'导演没有改完，盘上方案未改变';}}
+    if(failed)showError(failed);else input.value='';
     await fetchSnapshot();
   }catch(error){showError(error.message);}finally{clearInterval(timer);busy=false;applyActionState();}
 }
@@ -1130,6 +1149,7 @@ $('save-chapter').onclick=saveChapter;
 $('copy-chapter').onclick=copyChapterText;
 $('save-confirm-planning').onclick=confirmPlanning;
 $('run-architect').onclick=runArchitect;
+$('run-architect-revise').onclick=runArchitectRevise;
 $('previous-chapter').onclick=()=>navigateChapter(Number(current.chapter||1)-1);
 $('next-chapter').onclick=()=>navigateChapter(Number(current.chapter||1)+1);
 $('chapter').addEventListener('change',()=>navigateChapter(Number($('chapter').value||1)));

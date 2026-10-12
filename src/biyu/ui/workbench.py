@@ -205,7 +205,7 @@ def _architect_estimate(book_dir: Path) -> float:
     return round(sum(costs) / len(costs), 4) if costs else 0.1132
 
 
-async def _call_web_architect(book_dir: Path, chapter: int) -> WebArchitectResult:
+async def _call_web_architect(book_dir: Path, chapter: int, feedback: str = "") -> WebArchitectResult:
     """Run only the existing pipeline Architect contract; never enter Writer."""
     from biyu.llm.base import LLMAdapter
     from biyu.pipeline import (
@@ -284,9 +284,30 @@ async def _call_web_architect(book_dir: Path, chapter: int) -> WebArchitectResul
         worldbook_catalog=worldbook_catalog,
         injection_v2=injection_v2,
     )
+    if feedback.strip():
+        original_planning = (book_dir / "logs" / f"ch{chapter}" / "planning.md")
+        original_text = original_planning.read_text(encoding="utf-8") if original_planning.exists() else ""
+        lines = original_text.splitlines()
+        while lines and (lines[0].startswith("status:") or lines[0].startswith("source:")):
+            lines.pop(0)
+        original_text = "\n".join(lines).strip()
+        if not original_text:
+            raise HTTPException(status_code=400, detail="还没有可修订的方案；先让导演写一版，或自己写一版再提意见。")
+        nl = "\n"
+        prompt = (
+            "【修订任务】这不是从零规划,而是按作者意见修订已有方案。" + nl + nl
+            + "## 作者意见(逐条落实)" + nl + feedback.strip() + nl + nl
+            + "## 原方案(修订基础)" + nl + original_text + nl + nl
+            + "修订规则:" + nl
+            + "1. 未被意见涉及的部分保持原方案,不要顺手重写。" + nl
+            + "2. 意见与本章细纲(sub-md)冲突时,以细纲为准,并把冲突写进「删减判断」说明,交作者定夺。" + nl
+            + "3. 输出修订后的完整创作者细纲(全量,不是差异清单),仍遵守下面的创作引导、输出格式与必检项规则。" + nl + nl
+        ) + prompt
     registry = get_registry()
     primary = registry.get_adapter_for_stage("planner")
-    fallback = registry.get_adapter("v3")
+    from biyu.pipeline import _degraded_fallback_adapter
+
+    fallback = _degraded_fallback_adapter(registry)
     billed: list[float] = []
     q1_cost = 0.0
     q1_cost_logged = False
@@ -310,7 +331,7 @@ async def _call_web_architect(book_dir: Path, chapter: int) -> WebArchitectResul
         response = await LLMAdapter.generate_guarded(
             _CostTrackingAdapter(primary, billed),
             [{"role": "user", "content": prompt}],
-            fallback_adapter=_CostTrackingAdapter(fallback, billed),
+            fallback_adapter=_CostTrackingAdapter(fallback, billed) if fallback is not None else None,
         )
         status = "degraded" if response.degraded else "ok"
         return WebArchitectResult(response.text, sum(billed), status)
@@ -374,7 +395,7 @@ def _read_architect_state(book_dir: Path, chapter: int) -> dict[str, Any]:
         return {"state": "idle", "missing_labels": []}
 
 
-async def generate_planning_with_architect(book: str, chapter: int) -> dict[str, Any]:
+async def generate_planning_with_architect(book: str, chapter: int, feedback: str = "") -> dict[str, Any]:
     """Validate fully in memory, then atomically replace planning.md once."""
     if not _web_architect_enabled():
         raise HTTPException(status_code=404, detail="网页导演功能尚未开启")
@@ -388,7 +409,7 @@ async def generate_planning_with_architect(book: str, chapter: int) -> dict[str,
     ) if injection_v2 else []
     path = book_dir / "logs" / f"ch{chapter}" / "planning.md"
     target = _planning_draft_path(book_dir, chapter) if _planning_status(_read(path)) == "已批" else path
-    result = await _call_web_architect(book_dir, chapter)
+    result = await _call_web_architect(book_dir, chapter, feedback=feedback)
     if result.status != "ok" or not result.text.strip():
         rejected = {"state": "rejected", "missing_labels": [], "reason": "本次产出不完整，盘上方案未改变"}
         rejected["notices"] = notices
@@ -402,7 +423,8 @@ async def generate_planning_with_architect(book: str, chapter: int) -> dict[str,
         return rejected
     target.parent.mkdir(parents=True, exist_ok=True)
     temp = target.with_name(f".{target.name}.n2.tmp")
-    temp.write_text(f"status: 待批\nsource: 导演产出\n{result.text}", encoding="utf-8")
+    source_label = "按作者意见修订" if feedback.strip() else "导演产出"
+    temp.write_text(f"status: 待批\nsource: {source_label}\n{result.text}", encoding="utf-8")
     temp.replace(target)
     _write_architect_state(
         book_dir, chapter,
@@ -1962,9 +1984,15 @@ def open_zebian(book: str, request: Request) -> dict[str, Any]:
 
 
 @router.post("/books/{book}/chapters/{chapter}/architect")
-async def run_web_architect(book: str, chapter: int) -> StreamingResponse:
-    """Run the in-pipeline Architect only; chapter Claude Code is retired."""
+async def run_web_architect(
+    book: str, chapter: int, payload: dict[str, Any] | None = None
+) -> StreamingResponse:
+    """Run the in-pipeline Architect only; chapter Claude Code is retired.
+
+    body 可选 {feedback}: 提供时进入「按作者意见修订」模式,基于已有方案修订。
+    """
     book_dir = _book_dir(book)
+    feedback = str((payload or {}).get("feedback") or "").strip()[:2000]
     key = (book_dir.name, chapter)
     if not _web_architect_enabled():
         raise HTTPException(status_code=404, detail="网页导演功能尚未开启")
@@ -1979,7 +2007,7 @@ async def run_web_architect(book: str, chapter: int) -> StreamingResponse:
         await queue.put({"type": "started", "message": "导演正在写这一章的方案"})
         await queue.put({"type": "progress", "message": "读细纲、世界观、人物卡"})
         try:
-            result = await generate_planning_with_architect(book, chapter)
+            result = await generate_planning_with_architect(book, chapter, feedback=feedback)
             if result["state"] == "rejected":
                 await queue.put({"type": "rejected", **result})
             else:

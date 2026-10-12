@@ -66,6 +66,12 @@
           <section class="planning-compare-pane"><h3>本章细纲 <span class="readonly-label">只读</span></h3><div id="planning-outline-read" class="markdown reading-pane"></div></section>
           <section class="planning-compare-pane"><h3>写作方案</h3><div id="planning-read" class="markdown reading-pane"></div></section>
         </div>
+        <section id="planning-feedback" class="planning-feedback" hidden>
+          <h3>按我的意见改</h3>
+          <p class="aside-hint">写清楚要改什么。导演会基于当前方案修订：没提到的地方保持不动，改完仍需你确认。</p>
+          <textarea id="planning-feedback-input" rows="3" placeholder="例如：戏核别用退婚，改成当众立威；结尾钩子换成具体威胁"></textarea>
+          <div class="action-row"><button id="run-architect-revise" type="button" class="b2">让导演按意见改</button><p class="disabled-reason" id="planning-feedback-status" role="status"></p></div>
+        </section>
         <textarea id="planning" class="editing-pane" hidden></textarea>
         <p id="architect-cost-line" class="architect-cost-line">让导演写一版，预估 <em id="architect-cost-num">¥—</em> · 超过 <em>¥0.60</em> 自动停</p>
         <div class="action-row planning-actions"><div><button id="run-architect" class="b1">让导演写方案</button><p data-reason="architect" class="disabled-reason"></p></div><div><button data-save="planning" class="b3">只保存</button><p data-reason="save_planning" class="disabled-reason"></p></div><div><button id="save-confirm-planning" class="b1">确认方案</button><p data-reason="approve_planning" class="disabled-reason"></p></div><div><button data-action="revoke_planning" class="b3">退回重写</button><p data-reason="revoke_planning" class="disabled-reason"></p></div></div>
@@ -152,6 +158,6 @@
     <div id="import-dialog" class="modal-overlay" hidden><div class="modal import-modal"><h3>导入稿件</h3><p>导入本身不花钱，也不会改动世界观和角色卡。</p><label>从第几章开始<input id="import-chapter" type="number" min="1" value="1"></label><div class="import-source"><label>粘贴正文<textarea id="import-text" placeholder="粘贴单章；多章请用“第N章”作为明确分隔"></textarea></label><label>或选择本地 .md / .txt<input id="import-files" type="file" accept=".md,.txt,text/plain,text/markdown" multiple></label></div><fieldset><legend>这批稿件是什么身份？（必须选择）</legend><label><input type="radio" name="import-identity" value="candidate">作为候选稿</label><p>进入待定夺，可继续审读、批注和返修。</p><label><input type="radio" name="import-identity" value="official">作为正式稿</label><p>直接存为定稿；不会自动建立记忆。</p></fieldset><div id="import-preview" class="import-preview" hidden></div><div class="modal-actions"><button id="import-cancel" class="b3">取消</button><button id="import-next" class="primary">预览落点</button><button id="import-confirm" class="primary" hidden>确认导入</button></div></div></div>
     <div id="memory-import-dialog" class="modal-overlay" hidden><div class="modal import-modal"><h3>要不要根据导入稿建立记忆？</h3><div id="memory-cost" class="import-cost"></div><div id="memory-preview" class="import-preview"></div><div class="modal-actions"><button id="memory-later" class="b3">先不建立</button><button id="memory-stop" class="b3" hidden>结果不对，停下</button><button id="memory-start" class="primary">先看首章结果</button><button id="memory-continue" class="primary" hidden>结果正确，继续其余章节</button></div></div></div>
   </main>
-  <script src="/mini-md.js?v=u1-1"></script><script src="/cn-num.js"></script><script src="/workbench.js?v=c2-3"></script>
+  <script src="/mini-md.js?v=u1-1"></script><script src="/cn-num.js"></script><script src="/workbench.js?v=c2-4"></script>
 </body>
 </html>

@@ -23,3 +23,9 @@
 .chapter-length{margin:14px 0 4px;max-width:720px}
 .chapter-length-label{display:block;font-size:13px;color:var(--ink-mute);margin-bottom:6px}
 .chapter-length-hint{font-size:12px;color:var(--ink-faint);margin:6px 0 0;line-height:1.7}
+
+/* 2026-10 按作者意见修订: 方案面板的意见输入区(有方案且不在运行中时显示) */
+.planning-feedback{margin:12px 0;padding:12px 14px;border:1px solid var(--line,#d8d2c4);border-radius:6px;background:var(--paper,#f8f5ee)}
+.planning-feedback h3{margin:0 0 2px;font-size:14px;font-weight:500}
+.planning-feedback .aside-hint{margin:0 0 4px}
+.planning-feedback textarea{width:100%;box-sizing:border-box;min-height:72px;margin:8px 0 2px;padding:10px;border:1px solid var(--rule);border-radius:5px;font:inherit;resize:vertical}
