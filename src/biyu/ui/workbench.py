@@ -413,12 +413,16 @@ async def generate_planning_with_architect(book: str, chapter: int, feedback: st
     if result.status != "ok" or not result.text.strip():
         rejected = {"state": "rejected", "missing_labels": [], "reason": "本次产出不完整，盘上方案未改变"}
         rejected["notices"] = notices
+        rejected["text"] = result.text
         _write_architect_state(book_dir, chapter, rejected)
         return rejected
     missing = _checklist_missing_labels(result.text)
     if missing:
         rejected = {"state": "rejected", "missing_labels": missing, "reason": "必检项不完整，盘上方案未改变"}
         rejected["notices"] = notices
+        # 2026-10 老板要求:拒收的版本也要能读、能在此基础上补——原文随状态落盘,
+        # 前端只读展示并可预填编辑器;盘上正式方案不受影响。
+        rejected["text"] = result.text
         _write_architect_state(book_dir, chapter, rejected)
         return rejected
     target.parent.mkdir(parents=True, exist_ok=True)

@@ -138,3 +138,25 @@ def test_no_feedback_keeps_original_source(plan_book: Path, monkeypatch: pytest.
     asyncio.run(workbench.generate_planning_with_architect("Book", 9))
     written = (plan_book / "logs" / "ch9" / "planning.md").read_text(encoding="utf-8")
     assert "source: 导演产出" in written
+
+
+def test_rejected_plan_keeps_text_readable(plan_book: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """2026-10 拒收版可读:必检项不全被拒时,原文随状态落盘供页面只读展示。"""
+    from biyu.ui import workbench
+
+    nl = chr(10)
+    incomplete = nl.join(
+        line for line in VALID_PLAN.splitlines() if "必须不发生" not in line
+    )
+
+    async def fake_call(book_dir, chapter, feedback=""):
+        return _FakeResult(incomplete)
+
+    monkeypatch.setattr(workbench, "_call_web_architect", fake_call)
+    result = asyncio.run(workbench.generate_planning_with_architect("Book", 9))
+    assert result["state"] == "rejected"
+    assert "必须不发生" in result["missing_labels"]
+    assert "姜聆当众复述登记簿结论" in result["text"]
+    state = workbench._read_architect_state(plan_book, 9)
+    assert state["state"] == "rejected"
+    assert "姜聆当众复述登记簿结论" in state["text"]

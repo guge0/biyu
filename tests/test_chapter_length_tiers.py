@@ -74,3 +74,72 @@ def test_workbench_write_registry_argv_unchanged() -> None:
     argv = action_for("write", book="书", chapter=1).argv
     assert "--force-pending" in argv
     assert "--min-words" not in argv
+
+
+def test_executor_forwards_min_words_flag(tmp_path, monkeypatch) -> None:
+    """2026-10 事故回归:前端键名必须是 min-words(执行器按连字符取),argv 要带上档位。"""
+    import asyncio
+
+    import biyu.ui.cli_executor as ex
+
+    book = tmp_path / "Book"
+    book.mkdir()
+    (book / "book.json").write_text("{}", encoding="utf-8")
+    captured: dict = {}
+
+    class FakeProcess:
+        stdout = asyncio.StreamReader()
+        stdin = None
+
+        def __init__(self) -> None:
+            self.stdout.feed_eof()
+
+        async def wait(self) -> int:
+            return 0
+
+    async def fake_create(*args, **kwargs):
+        captured["argv"] = list(args)
+        return FakeProcess()
+
+    monkeypatch.setattr(ex, "resolve_book_dir", lambda _book: book)
+    monkeypatch.setattr(ex.asyncio, "create_subprocess_exec", fake_create)
+
+    async def run() -> list:
+        return [event async for event in ex.execute(
+            "write", book="Book", chapter=1, confirmed=True,
+            extra={"min-words": "4000"},
+        )]
+
+    events = asyncio.run(run())
+    argv = captured["argv"]
+    assert "--min-words" in argv and argv[argv.index("--min-words") + 1] == "4000"
+    assert events[-1]["type"] == "done"
+
+
+def test_main_write_cli_accepts_min_words_without_optioninfo_crash(tmp_path) -> None:
+    """走真实 CLI 入口(biyu write):--min-words 可解析,失败应是干净的缺细纲错误
+    而不是 '<= not supported between int and OptionInfo'。"""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    book = tmp_path / "Book"
+    book.mkdir()
+    (book / "book.json").write_text('{"title":"Book","genre":"dushi"}', encoding="utf-8")
+    env = {
+        **os.environ,
+        "PYTHONPATH": "src",
+        "BIYU_DATA_ROOT": str(tmp_path),
+        "BIYU_DATA_ROOT_SOURCE": "environment",
+    }
+    result = subprocess.run(
+        [sys.executable, "-c", "from biyu.cli.main import app; app()",
+         "write", "-c", "1", "-b", "Book", "--force-pending", "--min-words", "3000"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        env=env, cwd=str(Path(__file__).resolve().parents[1]), timeout=120,
+    )
+    combined = result.stdout + result.stderr
+    assert "OptionInfo" not in combined
+    assert result.returncode != 0  # 没有细纲,应干净失败
+    assert "Outline not found" in combined or "细纲" in combined

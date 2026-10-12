@@ -467,7 +467,13 @@ function renderArchitectState(){
   $('planning-run').hidden=state!=='running';
   $('planning-reject').hidden=state!=='rejected';
   if(state==='running') $('planning-source').textContent='方案来源：导演正在写';
-  $('planning-read').hidden=state==='running'||state==='rejected'||!hasPlan||$('planning').hidden===false;
+  // 2026-10 拒收版可读:导演写完但必检项不全时,原文随状态落盘,这里只读展示
+  const rejectedText=state==='rejected'?String(current.web_architect?.text||'').trim():'';
+  const editing=$('planning').hidden===false;
+  $('planning-read').hidden=editing||state==='running'||(state==='rejected'?!rejectedText:!hasPlan);
+  if(!$('planning-read').hidden&&rejectedText){
+    $('planning-read').innerHTML='<p class="planning-rejected-note">这是导演刚写、系统没收下的一版（必检项不全）。原文只读保留在下面；点「编辑」可以在它基础上补齐。</p>'+md(rejectedText);
+  }
   $('planning-compare').hidden=$('planning-read').hidden;
   $('architect-cost-line').hidden=state==='running';
   $('architect-cost-num').textContent=`¥${Number(current.web_architect?.estimate||0.1132).toFixed(2)}`;
@@ -923,7 +929,7 @@ async function navigateChapter(chapter) {
 function appendLog(text) { if (!text) return; $('log').textContent += text + '\n'; $('log').scrollTop = $('log').scrollHeight; }
 async function stream(action, extra={}, confirmed=false, options={}) {
   if (busy) return; const rule = current.actions?.[action]; if (rule && !rule.enabled) { showError(rule.reason); return; }
-  if(action==='write'||action==='regenerate') extra = {min_words: window.__chapterLength || 3000, ...extra};
+  if(action==='write'||action==='regenerate') extra = {'min-words': window.__chapterLength || 3000, ...extra};
   const inline=options.inline===true;
   if(action==='diagnose')diagnosisClosedForSha='';
   if(action!=='rewrite'||!runStartedAt)runStartedAt=Date.now();
@@ -1008,7 +1014,14 @@ function toggleView(target) {
   const readId=prefix==='chapter'?'chapter-read':`${prefix}-read`, editId=prefix==='chapter'?'chapter-edit':prefix;
   $(readId).hidden=edit; $(editId).hidden=!edit;
   if(!edit&&dirty.has(prefix))$(readId).innerHTML=md($(editId).value);
-  if(prefix==='planning')renderArchitectState(); // 2026-10 修复:切换时即时同步对照区,否则编辑框被旧对照区压到页面下方
+  if(prefix==='planning'){
+    // 2026-10 拒收版可补:切到编辑且编辑器为空时,把拒收原文预填进去当底稿
+    const rejectedDraft=String(current.web_architect?.text||'').trim();
+    if(edit&&!$('planning').value.trim()&&!dirty.has('planning')&&rejectedDraft){
+      $('planning').value=rejectedDraft;markDirty('planning');
+    }
+    renderArchitectState(); // 切换时即时同步对照区,否则编辑框被旧对照区压到页面下方
+  }
   document.querySelectorAll(`[data-view^="${prefix}-"]`).forEach(b=>b.classList.toggle('current',b.dataset.view===target));
 }
 async function requestView(target) {

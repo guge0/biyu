@@ -60,6 +60,7 @@ def write(
     prompt_version: str = typer.Option("v4", "--prompt-version", help="v3=旧 prompt,v4=新三层 prompt"),
     replan: bool = typer.Option(False, "--replan", help="无视已有规划件,强制走内置 Architect 重出"),
     force_pending: bool = typer.Option(False, "--force-pending", hidden=True),
+    min_words: int = typer.Option(None, "--min-words", help="本章篇幅下限覆盖(只设下限,上不设限)"),
 ):
     """生成一章小说。可通过 --planner/--writer/--polisher 临时覆盖模型。"""
     from biyu.cli.write_cmd import write_command
@@ -72,6 +73,7 @@ def write(
         prompt_version=prompt_version,
         replan=replan,
         force_pending=force_pending,
+        min_words=min_words,
     )
 
 

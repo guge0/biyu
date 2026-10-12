@@ -25,6 +25,11 @@ def write_command(
     """生成一章小说。可通过 --planner/--writer/--polisher 临时覆盖模型，仅影响当次调用。"""
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
+    # 直接调用方(main.write 转发等)漏传参数时,typer.Option 的默认值是 OptionInfo
+    # 对象而非 None——归一掉,避免 '<= not supported between int and OptionInfo'(2026-10 事故)。
+    if min_words is not None and not isinstance(min_words, int):
+        min_words = None
+
     from biyu.config import resolve_book_dir
     from biyu.pipeline import generate_chapter
 
