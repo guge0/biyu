@@ -1446,6 +1446,26 @@ def _capture_generation_setup_versions(book_dir: Path) -> dict[str, int | None]:
     return versions
 
 
+def _degraded_fallback_adapter(registry):
+    """降级/核对备用适配器(E-1 契约:r1 推理链撞顶产出空/截断时兜底)。
+
+    2026-10 修复:原先写死 get_adapter("v3"),开源示例目录没有该别名,
+    全新安装第一次跑导演/必检项核对会直接 KeyError。现按
+    planner_fallback → writer 顺序解析;都解析不到时返回 None,
+    只跳过兜底,不阻断主路径。
+    """
+    pipeline_cfg = registry.get_pipeline_config()
+    for key in ("planner_fallback", "writer"):
+        alias = pipeline_cfg.get(key)
+        if not alias:
+            continue
+        try:
+            return registry.get_adapter(str(alias))
+        except (KeyError, ValueError):
+            continue
+    return None
+
+
 async def generate_chapter(
     book_dir: Path,
     chapter_num: int,
@@ -1666,7 +1686,7 @@ async def generate_chapter(
         if injection_v2:
             planning_resp = await _run_q1_tool_loop(
                 adapter=planner_adapter,
-                fallback_adapter=registry.get_adapter("v3") if registry.get_feature("planner_guard") else None,
+                fallback_adapter=_degraded_fallback_adapter(registry) if registry.get_feature("planner_guard") else None,
                 messages=planning_messages,
                 book_dir=book_dir,
                 chapter_num=chapter_num,
@@ -1708,7 +1728,7 @@ async def generate_chapter(
             try:
                 planning_resp = await planner_adapter.generate_guarded(
                     planning_messages,
-                    fallback_adapter=registry.get_adapter("v3"),
+                    fallback_adapter=_degraded_fallback_adapter(registry),
                 )
                 planning_text = planning_resp.text
                 planning_status = "degraded" if planning_resp.degraded else "ok"
@@ -2441,15 +2461,17 @@ async def generate_chapter(
     # ---- F-1~F-4: 必检项机器核对(只报不拦;H-1 后默认关,走配置开关) ----
     try:
         if registry.get_feature("checklist") and (use_existing_planning or planning_text.strip()):
-            _checklist_result, _cl_warnings = await _run_checklist_with_cost_log(
-                book=book,
-                book_dir=book_dir,
-                chapter_num=chapter_num,
-                planning_text=planning_text,
-                chapter_text=final_text,
-                adapter=registry.get_adapter("v3"),
-            )
-            warnings.extend(_cl_warnings)
+            _cl_adapter = _degraded_fallback_adapter(registry)
+            if _cl_adapter is not None:
+                _checklist_result, _cl_warnings = await _run_checklist_with_cost_log(
+                    book=book,
+                    book_dir=book_dir,
+                    chapter_num=chapter_num,
+                    planning_text=planning_text,
+                    chapter_text=final_text,
+                    adapter=_cl_adapter,
+                )
+                warnings.extend(_cl_warnings)
     except Exception as e:
         print(f"  [F-4] 必检项核对异常(warning): {e}")
 
