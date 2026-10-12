@@ -11,7 +11,15 @@ from biyu.llm import ModelRegistry
 
 
 def get_project_root() -> Path:
-    """Return the biyu project root directory."""
+    """Return the biyu project root directory.
+
+    2026-10 修复:优先读 BIYU_PROJECT_ROOT(作者启动器为安装运行包设置并指向
+    checkout),否则安装包按自身位置推算会落到 .venv/Lib,读不到 README 承诺的
+    私有 config/models.yaml 与 prompts 资产。未设置时回退源码树推断(开发/CLI 直跑)。
+    """
+    configured = os.environ.get("BIYU_PROJECT_ROOT", "").strip()
+    if configured:
+        return Path(configured).expanduser().resolve()
     return Path(__file__).resolve().parents[2]
 
 
