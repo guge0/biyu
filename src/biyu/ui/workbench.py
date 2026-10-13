@@ -1541,6 +1541,15 @@ def set_planning_mode(book: str, chapter: int, payload: dict[str, Any]) -> dict[
     if skipped and not (book_dir / "outlines" / f"ch{chapter}.md").exists():
         raise HTTPException(status_code=400, detail="先保存细纲，再启用「跳过导演」。细纲是本模式唯一的契约。")
     write_planning_skipped(book_dir, chapter, skipped)
+    # 2026-10 修复:跳过模式没有「确认方案」动作来推进阶段,开/关时同步推进/回退,
+    # 否则章节卡在写作方案阶段、生成按钮永远不放行。已进入读稿及之后的章不动。
+    from biyu.ui.workbench_state import read_workbench_step, write_workbench_step
+
+    step = read_workbench_step(book_dir, chapter)
+    if skipped and step == "planning":
+        write_workbench_step(book_dir, chapter, "generation")
+    elif not skipped and step == "generation":
+        write_workbench_step(book_dir, chapter, "planning")
     return chapter_snapshot(book_dir, chapter, book)
 
 

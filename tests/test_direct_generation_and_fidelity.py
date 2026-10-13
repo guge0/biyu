@@ -176,12 +176,16 @@ def test_planning_mode_route_requires_outline(tmp_path, monkeypatch) -> None:
 
 def test_planning_mode_persists_and_write_gate_opens(tmp_path, monkeypatch) -> None:
     from biyu.ui import workbench
-    from biyu.ui.workbench_state import read_planning_skipped
+    from biyu.ui.workbench_state import read_planning_skipped, read_workbench_step
 
     book = _book(tmp_path)
     monkeypatch.setattr(workbench, "_book_dir", lambda _b: book)
     workbench.set_planning_mode("Book", 9, {"skipped": True})
     assert read_planning_skipped(book, 9) is True
+    # 2026-10 修复:开跳过要推进阶段,否则卡在写作方案、生成钮不放行
+    assert read_workbench_step(book, 9) == "generation"
+    workbench.set_planning_mode("Book", 9, {"skipped": False})
+    assert read_workbench_step(book, 9) == "planning"
 
     actions = workbench._state_actions(
         "generation", "idle", stale=False, has_outline=True,
