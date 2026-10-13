@@ -754,7 +754,10 @@ def _state_actions(
         ),
         "revoke_planning": _action(has_planning and planning_status == "已批", "方案尚未确认，不需要退回"),
         "write": _action(
-            step == "generation" and (planning_status == "已批" or (planning_skipped and has_outline)),
+            has_outline and (
+                (planning_status == "已批" and step == "generation")
+                or (planning_skipped and step in {"planning", "generation"})
+            ),
             "先保存细纲，再生成正文" if planning_skipped else "先确认方案，再生成正文",
         ),
         "adopt": _action(

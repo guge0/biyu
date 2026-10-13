@@ -192,6 +192,12 @@ def test_planning_mode_persists_and_write_gate_opens(tmp_path, monkeypatch) -> N
         planning_status="无", planning_skipped=True,
     )
     assert actions["write"]["enabled"] is True
+    # 2026-10 自愈:修复前开启的章卡在 planning 阶段,跳过模式下同样放行
+    actions_stuck = workbench._state_actions(
+        "planning", "idle", stale=False, has_outline=True,
+        planning_status="无", planning_skipped=True,
+    )
+    assert actions_stuck["write"]["enabled"] is True
     actions_no_plan = workbench._state_actions(
         "generation", "idle", stale=False, has_outline=True, planning_status="无",
     )
