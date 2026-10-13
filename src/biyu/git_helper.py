@@ -29,9 +29,18 @@ def _repo_root(book_dir: Path | None = None) -> Path:
 def repo_root_for_book(book_dir: Path) -> Path:
     """Compatibility seam for callers/tests that previously patched zero-arg `_repo_root`."""
     try:
-        return _repo_root(book_dir)
+        root = _repo_root(book_dir)
     except TypeError:
         return _repo_root()
+    # 铁律⑧(书不进仓)守卫:数据根落在笔驭源码仓内时(开发试验态),
+    # 绝不允许把书稿提交进产品仓——改为落到数据根自己的仓。
+    root = Path(root).resolve()
+    if (root / "src" / "biyu" / "config.py").is_file() or (root / "pyproject.toml").is_file():
+        book_dir_resolved = Path(book_dir).resolve()
+        for parent in book_dir_resolved.parents:
+            if parent == root:
+                return ensure_local_repository(book_dir_resolved)
+    return root
 
 
 def ensure_local_repository(data_root: Path) -> Path:
