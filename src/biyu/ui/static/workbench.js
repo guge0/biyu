@@ -374,6 +374,8 @@ function showExcerptReceipt(kind){
   showNotice(kind==='note_problem'?'已记下问题，暂不修改本章；见右栏「本章记录」。':'已记为好句；见右栏「本章记录」。');
 }
 function canOpenStage(index) {
+  // 2026-10 跳过导演:细纲已存即放行到生成阶段(阶段位可能停在 planning)
+  if (current.planning_skipped && current.outline && index <= 2) return true;
   return index<=current.stage||(index===4&&((current.samples||[]).length>0||current.actions?.excerpt?.enabled));
 }
 function renderStageBar() {
@@ -461,6 +463,7 @@ function issueViewState(card){
   return {manual,feedbackStale,hasQuote,quoteAlive,anchor,position};
 }
 
+let skipNavigated=false;
 function renderArchitectState(){
   const state=current.web_architect?.state||'idle', hasPlan=Boolean((current.planning||'').trim());
   // 2026-10 跳过导演模式:方案面板整体切换为直生成态
@@ -474,6 +477,8 @@ function renderArchitectState(){
       toggle.disabled=busy||current.axes?.run==='busy';
     }
     $('planning-skip-active').hidden=!skipped;
+    // 2026-10 老板建议:勾选后直接带去生成阶段(有"去生成正文"按钮兜底)
+    if(skipped&&!skipNavigated){skipNavigated=true;setStage(2);}else if(!skipped){skipNavigated=false;}
   }
   const planningRow=$('planning-actions-row');
   if(planningRow)planningRow.hidden=skipped;
@@ -1221,6 +1226,7 @@ $('copy-chapter').onclick=copyChapterText;
 $('save-confirm-planning').onclick=confirmPlanning;
 $('run-architect').onclick=runArchitect;
 $('run-architect-revise').onclick=runArchitectRevise;
+$('skip-goto-generation').onclick=()=>setStage(2);
 $('planning-skip-toggle').onclick=async()=>{
   const toggle=$('planning-skip-toggle');
   toggle.disabled=true;
