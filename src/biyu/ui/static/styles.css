@@ -1593,7 +1593,7 @@ button{font-family:inherit;cursor:default}
 }
 
 /* 工作台桌面命令行：身份、章节、阶段与低频操作保持一行。 */
-.workbench-command-row{display:flex;align-items:center;gap:18px;min-height:54px;padding:0;border-bottom:1px solid var(--line)}
+.workbench-command-row{display:flex;align-items:center;gap:18px;min-height:54px;padding:0;border-bottom:1px solid var(--line);position:relative;z-index:20}
 .workbench-command-row .wb-title{display:flex;align-items:baseline;gap:8px;min-width:160px;max-width:min(31vw,430px);color:var(--ink)}
 .workbench-book-name{font-size:17px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .workbench-title-separator{color:var(--ink-faint)}
@@ -2382,3 +2382,8 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 @media (prefers-reduced-motion:reduce){
   .workbench .reading-layout .reading-actions,.workbench .reading-decision-head,.workbench:has(#reading-decision:not([hidden])) .stage-bar{transition:none!important}
 }
+
+/* 2026-10 意见直达按钮:读稿页标题栏,有意见时恒显 */
+.reading-review-entry{border:1px solid var(--btn-border);background:var(--surface);border-radius:3px;padding:5px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
+.reading-review-entry:hover{border-color:var(--ink-soft)}
+.reading-review-entry[hidden]{display:none}

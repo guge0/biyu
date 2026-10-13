@@ -332,8 +332,7 @@ def test_real_cli_accepts_skip_planning_flag(tmp_path, monkeypatch) -> None:
     book = tmp_path / "Book"
     book.mkdir()
     (book / "book.json").write_text('{"title":"B","genre":"dushi"}', encoding="utf-8")
-    (book / "outlines").mkdir()
-    (book / "outlines" / "ch1.md").write_text("第一章细纲", encoding="utf-8")
+    # 故意不给细纲:转发验证只需走到管线的干净失败,不真调写手(无 Key 会重试拖死)
     env = {
         **os.environ,
         "PYTHONPATH": "src",
@@ -348,5 +347,4 @@ def test_real_cli_accepts_skip_planning_flag(tmp_path, monkeypatch) -> None:
     )
     combined = result.stdout + result.stderr
     assert "No such option" not in combined
-    # 走到管线即算过转发层(后续失败应是业务原因,不是参数错误)
-    assert "skip" in combined.lower() or "跳过导演" in combined or result.returncode != 2
+    assert result.returncode == 1  # 干净业务失败(缺细纲),不是参数错误(退出码 2)

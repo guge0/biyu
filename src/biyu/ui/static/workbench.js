@@ -616,7 +616,7 @@ function renderReadingDecisionState(){
   const checkLine=current.check_state==='unchecked'?'这一章还没有做过检查':current.check_state==='checked_with_issues'?'':current.check_state==='checked_clean'?'这一版没有查出问题':'';
   $('reading-check-state').textContent=[checkLine,featureLine].filter(Boolean).join(' · ');
   const entry=$('review-entry'),issueCount=(current.issue_cards||[]).length;
-  entry.textContent=readingAsideOpen?`${issueCount} 项待处理`:`${issueCount} 处待看`;entry.disabled=readingAsideOpen;entry.hidden=current.check_state!=='checked_with_issues'||!issueCount;
+  entry.textContent=issueCount?(readingAsideOpen?`${issueCount} 项待处理`:`看意见 · ${issueCount} 处待看`):'';entry.disabled=readingAsideOpen;entry.hidden=!issueCount;
   const adopt=$('adopt-button'),reason=$('adopt-reason'),unhandled=unhandledCards().length;
   if(current.manuscript_state==='candidate'){
     adopt.textContent=current.check_state==='unchecked'||unhandled===0?'采 用':`采用（还有 ${unhandled} 处没处理）`;
