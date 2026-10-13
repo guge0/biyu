@@ -174,3 +174,28 @@ def persisted_run_state(book_dir: Path, chapter: int) -> tuple[str, dict[str, An
         "reason": fields.get("error", "操作没有完成，请重试"),
         "log_path": str(path.relative_to(book_dir)),
     }
+
+
+def read_planning_skipped(book_dir: Path, chapter: int) -> bool:
+    """本章是否选择了「跳过导演，按细纲直生成」(2026-10 老板要求的对照模式)。"""
+    path = _state_path(book_dir, chapter)
+    if not path.exists():
+        return False
+    try:
+        return json.loads(path.read_text(encoding="utf-8")).get("planning_skipped") is True
+    except (json.JSONDecodeError, OSError):
+        return False
+
+
+def write_planning_skipped(book_dir: Path, chapter: int, skipped: bool) -> None:
+    path = _state_path(book_dir, chapter)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    existing: dict[str, Any] = {}
+    if path.exists():
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            existing = {}
+    existing["planning_skipped"] = bool(skipped)
+    existing["updated_at"] = datetime.now(timezone.utc).isoformat()
+    path.write_text(json.dumps(existing, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

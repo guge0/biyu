@@ -410,21 +410,53 @@ async def generate_planning_with_architect(book: str, chapter: int, feedback: st
     path = book_dir / "logs" / f"ch{chapter}" / "planning.md"
     target = _planning_draft_path(book_dir, chapter) if _planning_status(_read(path)) == "已批" else path
     result = await _call_web_architect(book_dir, chapter, feedback=feedback)
+    outline_path = book_dir / "outlines" / f"ch{chapter}.md"
+    outline_text = outline_path.read_text(encoding="utf-8") if outline_path.exists() else ""
+
+    async def _validate(text: str) -> tuple[bool, list[str], list[str]]:
+        """返回 (通过, 必检项缺失, 保真问题)。判定环节任何异常按 fail-open 放行。"""
+        missing_labels = _checklist_missing_labels(text)
+        fidelity = _outline_hard_fact_issues(outline_text, text) if outline_text else []
+        try:
+            judge_issues, _judge_cost = (
+                await _judge_outline_coverage(outline_text, text, get_registry(), BookConfig(book_dir), chapter)
+                if outline_text else ([], 0.0)
+            )
+        except Exception:
+            judge_issues = []
+        return (not missing_labels and not fidelity and not judge_issues), missing_labels, fidelity + judge_issues
+
     if result.status != "ok" or not result.text.strip():
         rejected = {"state": "rejected", "missing_labels": [], "reason": "本次产出不完整，盘上方案未改变"}
         rejected["notices"] = notices
         rejected["text"] = result.text
         _write_architect_state(book_dir, chapter, rejected)
         return rejected
-    missing = _checklist_missing_labels(result.text)
-    if missing:
-        rejected = {"state": "rejected", "missing_labels": missing, "reason": "必检项不完整，盘上方案未改变"}
-        rejected["notices"] = notices
-        # 2026-10 老板要求:拒收的版本也要能读、能在此基础上补——原文随状态落盘,
-        # 前端只读展示并可预填编辑器;盘上正式方案不受影响。
-        rejected["text"] = result.text
-        _write_architect_state(book_dir, chapter, rejected)
-        return rejected
+    ok, missing, fidelity_issues = await _validate(result.text)
+    if not ok:
+        # 2026-10 保真闸(老板授权):偏离细纲→带具体罪状自动重试一次→仍败拒收。
+        violations = [f"缺「{label}」这一类" for label in missing] + fidelity_issues
+        retry = await _call_web_architect(
+            book_dir, chapter,
+            feedback="你上一版方案偏离了作者细纲，逐条修正后重新输出完整方案：\n" + "\n".join(f"- {item}" for item in violations),
+        )
+        if retry.status == "ok" and retry.text.strip():
+            ok2, missing2, fidelity2 = await _validate(retry.text)
+        else:
+            ok2, missing2, fidelity2 = False, [], ["重试产出不完整"]
+        if ok2:
+            result = retry
+        else:
+            rejected = {
+                "state": "rejected",
+                "missing_labels": missing2,
+                "reason": "方案偏离细纲(保真重试仍不合格)，盘上方案未改变",
+                "fidelity_issues": fidelity2,
+                "notices": notices,
+                "text": result.text,
+            }
+            _write_architect_state(book_dir, chapter, rejected)
+            return rejected
     target.parent.mkdir(parents=True, exist_ok=True)
     temp = target.with_name(f".{target.name}.n2.tmp")
     source_label = "按作者意见修订" if feedback.strip() else "导演产出"
@@ -705,6 +737,7 @@ def _state_actions(
     has_outline: bool = False, has_planning: bool = False, planning_status: str = "无",
     has_planning_draft: bool = False,
     memory_dirty: bool = False, revision_rounds: int = 0,
+    planning_skipped: bool = False,
 ) -> dict[str, dict[str, Any]]:
     in_reading = step in {"reading", "revision", "adoption"}
     actions = {
@@ -720,7 +753,10 @@ def _state_actions(
             "当前方案已经确认；修改文字或让导演重写后可再次确认" if planning_status == "已批" else "先保存细纲，再写方案",
         ),
         "revoke_planning": _action(has_planning and planning_status == "已批", "方案尚未确认，不需要退回"),
-        "write": _action(step == "generation" and planning_status == "已批", "先确认方案，再生成正文"),
+        "write": _action(
+            step == "generation" and (planning_status == "已批" or (planning_skipped and has_outline)),
+            "先保存细纲，再生成正文" if planning_skipped else "先确认方案，再生成正文",
+        ),
         "adopt": _action(
             in_reading and has_pending,
             "" if (in_reading and has_pending) else ("这一章已定稿" if has_official else "还没有正文，先去生成正文"),
@@ -728,7 +764,10 @@ def _state_actions(
         "edit_chapter": _action((in_reading and has_pending) or (step == "review" and has_official), "正文生成后才能自己修改"),
         "rewrite": _action(in_reading and has_pending, "先生成候选稿，再提交本轮修改"),
         "save_annotations": _action(in_reading and has_pending, "候选稿生成后才能批注"),
-        "regenerate": _action(in_reading and has_pending and planning_status == "已批", "先确认方案，再重新生成"),
+        "regenerate": _action(
+            in_reading and has_pending and (planning_status == "已批" or planning_skipped),
+            "先确认方案，再重新生成" if not planning_skipped else "候选稿生成后才能重新生成",
+        ),
         "excerpt": _action((in_reading and has_pending) or (step == "review" and has_official), "正文生成后才能摘句"),
         "chapter_review": _action(step == "review" and has_official, "采用为正式正文后才能保存章评"),
         "archive_excerpt": _action(step == "review" and has_official, "采用为正式正文后才能整理摘句"),
@@ -1245,8 +1284,10 @@ def chapter_snapshot(book_dir: Path, chapter: int, book_key: str | None = None) 
     review_stale = bool(report_json.exists() and editor_base_sha and editor_base_sha != visible_sha)
     running = running_action(book_key or book_dir.name, chapter)
     from biyu.ui.cli_executor import running_run
+    from biyu.ui.workbench_state import read_planning_skipped
 
     run_info = running_run(book_key or book_dir.name, chapter)
+    planning_skipped = read_planning_skipped(book_dir, chapter)
     persisted_run, failure_card = persisted_run_state(book_dir, chapter)
     run = "busy" if running else persisted_run
     step = read_workbench_step(book_dir, chapter)
@@ -1360,6 +1401,7 @@ def chapter_snapshot(book_dir: Path, chapter: int, book_key: str | None = None) 
         "stale": stale,
         "running_action": running,
         "run_info": run_info,
+        "planning_skipped": planning_skipped,
         "failure_card": failure_card,
         "memory_dirty": memory_dirty,
         "revision_rounds": revision_rounds,
@@ -1379,6 +1421,7 @@ def chapter_snapshot(book_dir: Path, chapter: int, book_key: str | None = None) 
             has_outline=has_outline, has_planning=planning.exists(), planning_status=planning_status,
             has_planning_draft=planning_draft.exists(),
             memory_dirty=memory_dirty, revision_rounds=revision_rounds,
+            planning_skipped=planning_skipped,
         ),
         "next_step": {"id": next_id, "label": next_label, "hint": next_hint},
         "positive_candidates": _read(positive),
@@ -1486,6 +1529,102 @@ def chapter_run_log(book: str, chapter: int, run_id: str | None = None) -> dict[
         "total": len(body),
         "lines": body[-40:],
     }
+
+
+@router.post("/books/{book}/chapters/{chapter}/planning-mode")
+def set_planning_mode(book: str, chapter: int, payload: dict[str, Any]) -> dict[str, Any]:
+    """2026-10 跳过导演模式开关:细纲直生成(老板要求的对照实验)。"""
+    from biyu.ui.workbench_state import write_planning_skipped
+
+    book_dir = _book_dir(book)
+    skipped = bool(payload.get("skipped"))
+    if skipped and not (book_dir / "outlines" / f"ch{chapter}.md").exists():
+        raise HTTPException(status_code=400, detail="先保存细纲，再启用「跳过导演」。细纲是本模式唯一的契约。")
+    write_planning_skipped(book_dir, chapter, skipped)
+    return chapter_snapshot(book_dir, chapter, book)
+
+
+def _outline_hard_fact_issues(outline: str, plan_text: str) -> list[str]:
+    """保真闸·机械层(零成本):细纲的数字与出场人名必须出现在方案中。
+
+    锚点块合同本就要求逐条照搬,缺失即锚点失效。判据经老板 2026-10 授权。
+    """
+    issues: list[str] = []
+    outline_body = re.sub(r"(?m)^(\s*)\d+[.、]", r"\1", outline)
+    numbers = sorted(
+        {token for token in re.findall(r"[0-9]+|[一二三四五六七八九十百千]{2,}", outline_body)},
+        key=len, reverse=True,
+    )
+    for token in numbers:
+        if token not in plan_text:
+            issues.append(f"细纲中的数字「{token}」没有出现在方案里(硬信息锚点应逐条照搬)")
+    cast = re.search(r"##?\s*出场人物\n([^\n#]+)", outline)
+    if cast:
+        for token in re.split(r"[、，,；;]", cast.group(1)):
+            name = token.strip().split("（")[0].strip()
+            if len(name) >= 2 and name not in plan_text:
+                issues.append(f"细纲出场人物「{name}」没有出现在方案里")
+    return issues
+
+
+_FIDELITY_JUDGE_PROMPT = """你是细纲保真审查员。下面给出一章的细纲(作者原话)与导演据此写的方案。逐条核对细纲的每个剧情要点在方案中的处理,只能判三类:承载(原样保留)/改动(改变了事件、顺序、人物行为或结果)/丢失(方案没有对应内容;若方案在「删减判断」中明确声明并给了理由,算已声明,不算问题)。
+另查三件事:1) 方案的人物名必须与细纲一致,不得改名、不得造新名;2) 不得新增细纲没有的关键事件、道具或系统概念;3) 细纲的章末钩子必须被保留。
+只输出一个 JSON 对象,不要 Markdown 围栏:
+{"issues":[{"type":"改名|新增|丢失|改动","detail":"一句话说清改了什么","outline_evidence":"细纲原句片段","plan_evidence":"方案原句片段"}]}
+没有问题输出 {"issues":[]}
+
+=== 细纲(作者原话) ===
+{outline}
+
+=== 导演方案 ===
+{plan}"""
+
+
+async def _judge_outline_coverage(
+    outline: str, plan_text: str, registry, book: "BookConfig", chapter: int,
+) -> tuple[list[str], float]:
+    """保真闸·剧情层:逐要点判定 承载/改动/丢失。判定失败按fail-open放行(附通知)。"""
+    import json as _json
+
+    from biyu.pipeline import _degraded_fallback_adapter, _log_cost
+
+    points = [line.strip() for line in outline.splitlines() if re.match(r"\s*\d+[.、]", line)]
+    if not points:
+        return [], 0.0  # 细纲没有编号剧情要点,机械层已兜底,语义判定跳过
+    adapter = _degraded_fallback_adapter(registry)
+    if adapter is None:
+        adapter = registry.get_adapter_for_stage("planner")
+    prompt = _FIDELITY_JUDGE_PROMPT.format(outline=outline, plan=plan_text)
+    started = time.time()
+    last_error = ""
+    for attempt in range(2):
+        try:
+            response = await adapter.generate(
+                messages=[{"role": "user", "content": prompt + (f"\n\n(上一次输出无法解析:{last_error};这一次只输出 JSON)" if attempt else "")}],
+                temperature=0.1, max_tokens=2000,
+            )
+        except Exception:
+            return [], 0.0  # 判定调用失败不放拦主流程
+        text = str(response.text).strip().strip("`")
+        if text.startswith("json"):
+            text = text[4:].strip()
+        try:
+            payload = _json.loads(text[text.index("{"):text.rindex("}") + 1])
+            raw_issues = payload.get("issues", [])
+            issues = []
+            for item in raw_issues:
+                if isinstance(item, dict) and str(item.get("detail") or "").strip():
+                    issues.append(
+                        f"[{item.get('type', '改动')}] {item['detail']}"
+                        + (f"(细纲:{item['outline_evidence']})" if item.get("outline_evidence") else "")
+                    )
+            cost = float(getattr(response, "cost", 0.0) or 0.0)
+            _log_cost(book, chapter, "fidelity_check", cost, time.time() - started)
+            return issues, cost
+        except (ValueError, KeyError, TypeError) as exc:
+            last_error = str(exc)[:60]
+            continue
+    return [], 0.0  # 两次解析失败,fail-open
 
 
 @router.post("/books/{book}/chapters/{chapter}/feedback")

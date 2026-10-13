@@ -20,6 +20,7 @@ def write_command(
     prompt_version: str = typer.Option("v4", "--prompt-version", help="v3=旧 prompt,v4=新三层 prompt"),
     replan: bool = typer.Option(False, "--replan", help="无视已有规划件,强制走内置 Architect 重出"),
     min_words: int = typer.Option(None, "--min-words", help="本章篇幅下限覆盖(只设下限,上不设限);省略用 book.json 配置"),
+    skip_planning: bool = typer.Option(False, "--skip-planning", help="跳过导演:细纲原文即契约,不产方案(细纲直生成模式)"),
     force_pending: bool = typer.Option(False, "--force-pending", hidden=True),
 ) -> None:
     """生成一章小说。可通过 --planner/--writer/--polisher 临时覆盖模型，仅影响当次调用。"""
@@ -53,6 +54,8 @@ def write_command(
     if model_overrides:
         console.print(f"  模型覆盖: {model_overrides}")
     console.print(f"  Prompt版本: {prompt_version}")
+    if skip_planning:
+        console.print("  模式: 跳过导演(细纲直生成)")
     if min_words is not None:
         if not (300 <= min_words <= 20000):
             console.print(f"[red]--min-words 超出合理范围(300-20000): {min_words}[/red]")
@@ -68,6 +71,7 @@ def write_command(
             replan=replan,
             force_pending=force_pending,
             min_words_override=min_words,
+            use_outline_contract=skip_planning,
         ))
     except SetupAssetYamlError as exc:
         console.print(f"[red]{exc}[/red]")

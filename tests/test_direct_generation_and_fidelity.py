@@ -1,0 +1,312 @@
+"""2026-10 三件套:保真闸 / 跳过导演 / 声纹取消。
+
+- 保真闸:机械层抓丢人名丢数字;LLM 剧情层判定;不合格带罪状重试一次,仍败拒收
+  (fidelity_issues 随拒收状态落盘);判定调用失败 fail-open 不拦主流程
+- 跳过导演:章节级开关→写闸放行→执行器带 --skip-planning→管线细纲直生成
+- 声纹取消:selection PUT null 合法,active 归 None
+"""
+from __future__ import annotations
+
+import asyncio
+import json
+from pathlib import Path
+
+import pytest
+
+
+VALID_PLAN = """# 第九章 创作者细纲
+
+## 必检项
+- **必须发生**：姜聆当众复述登记簿结论
+- **必须不发生**：不揭晓回溯原因
+- **结尾状态**：马文把封存刀放上验尸台
+- **信息层级**：先公开追问，再私下识刀
+"""
+
+
+def _book(tmp_path: Path, outline: str = "第九章细纲") -> Path:
+    book = tmp_path / "Book"
+    (book / "outlines").mkdir(parents=True)
+    (book / "logs" / "ch9").mkdir(parents=True)
+    (book / "book.json").write_text('{"id":"book","title":"Book","genre":"dushi"}', encoding="utf-8")
+    (book / "outlines" / "ch9.md").write_text(outline, encoding="utf-8")
+    return book
+
+
+class _FakeResult:
+    def __init__(self, text: str) -> None:
+        self.text = text
+        self.cost = 0.0
+        self.status = "ok"
+
+
+# ---------- 保真闸·机械层 ----------
+
+def test_hard_fact_layer_flags_missing_names_and_numbers() -> None:
+    from biyu.ui.workbench import _outline_hard_fact_issues
+
+    outline = "# 第九章\n## 出场人物\n姜聆（法医）、马文（队长）\n1. 当众复述结论,四十三份记录\n"
+    plan = "常野夜醒。"
+    issues = _outline_hard_fact_issues(outline, plan)
+    assert any("姜聆" in item for item in issues)
+    assert any("四十三" in item for item in issues)
+
+    full_plan = "姜聆当众复述,四十三份记录,马文在场。"
+    assert _outline_hard_fact_issues(outline, full_plan) == []
+
+
+# ---------- 保真闸·完整流程 ----------
+
+@pytest.fixture
+def fidelity_book(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    from biyu.ui import workbench
+
+    outline = (
+        "# 第九章\n## 出场人物\n姜聆（法医）\n"
+        "1. 姜聆当众复述登记簿结论\n2. 马文把封存刀放上验尸台\n"
+    )
+    book = _book(tmp_path, outline)
+    monkeypatch.setattr(workbench, "_book_dir", lambda _b: book)
+    monkeypatch.setattr(workbench, "_web_architect_enabled", lambda: True)
+    return book
+
+
+class _Registry:
+    def get_feature(self, _name: str) -> bool:
+        return False
+
+    def get_adapter_for_stage(self, stage: str):
+        class _P:
+            max_tokens = 8192
+
+        return _P()
+
+
+def test_fidelity_gate_retries_with_feedback_then_accepts(
+    fidelity_book: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """第一版丢人名→带罪状重试→第二版合格→落盘,流程不拒收。"""
+    from biyu.ui import workbench
+
+    good = VALID_PLAN + "\n姜聆当众复述登记簿结论。"
+    bad = "马文一个人忙了一整章。"
+    calls: list[str] = []
+
+    async def fake_call(book_dir, chapter, feedback=""):
+        calls.append(feedback)
+        return _FakeResult(bad if len(calls) == 1 else good)
+
+    async def fake_judge(outline, plan, registry, book, chapter):
+        return ([], 0.0)
+
+    monkeypatch.setattr(workbench, "_call_web_architect", fake_call)
+    monkeypatch.setattr(workbench, "_judge_outline_coverage", fake_judge)
+    monkeypatch.setattr(workbench, "get_registry", lambda: _Registry())
+
+    result = asyncio.run(workbench.generate_planning_with_architect("Book", 9))
+    assert result["state"] == "draft"
+    assert len(calls) == 2
+    assert "姜聆" in calls[1]  # 重试反馈带具体罪状
+    written = (fidelity_book / "logs" / "ch9" / "planning.md").read_text(encoding="utf-8")
+    assert "status: 待批" in written
+
+
+def test_fidelity_gate_rejects_after_failed_retry(
+    fidelity_book: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from biyu.ui import workbench
+
+    bad = "马文一个人忙了一整章。"
+
+    async def fake_call(book_dir, chapter, feedback=""):
+        return _FakeResult(bad)
+
+    async def fake_judge(outline, plan, registry, book, chapter):
+        return ([], 0.0)
+
+    monkeypatch.setattr(workbench, "_call_web_architect", fake_call)
+    monkeypatch.setattr(workbench, "_judge_outline_coverage", fake_judge)
+    monkeypatch.setattr(workbench, "get_registry", lambda: _Registry())
+
+    result = asyncio.run(workbench.generate_planning_with_architect("Book", 9))
+    assert result["state"] == "rejected"
+    assert any("姜聆" in item for item in result["fidelity_issues"])
+    # 拒收原文随状态落盘(拒收版可读)
+    state = workbench._read_architect_state(fidelity_book, 9)
+    assert state["state"] == "rejected"
+    assert state["text"] == bad
+
+
+def test_fidelity_gate_fail_open_on_judge_crash(
+    fidelity_book: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """判定模型崩了不能拦死创作:机械层放行即放行。"""
+    from biyu.ui import workbench
+
+    text = VALID_PLAN + "\n姜聆当众复述登记簿结论。"
+
+    async def fake_call(book_dir, chapter, feedback=""):
+        return _FakeResult(text)
+
+    async def boom(*_args, **_kwargs):
+        raise RuntimeError("judge down")
+
+    monkeypatch.setattr(workbench, "_call_web_architect", fake_call)
+    monkeypatch.setattr(workbench, "_judge_outline_coverage", boom)
+    monkeypatch.setattr(workbench, "get_registry", lambda: _Registry())
+
+    result = asyncio.run(workbench.generate_planning_with_architect("Book", 9))
+    assert result["state"] == "draft"
+
+
+# ---------- 跳过导演 ----------
+
+def test_planning_mode_route_requires_outline(tmp_path, monkeypatch) -> None:
+    from fastapi import HTTPException
+
+    from biyu.ui import workbench
+
+    book = _book(tmp_path)
+    (book / "outlines" / "ch9.md").unlink()
+    monkeypatch.setattr(workbench, "_book_dir", lambda _b: book)
+    with pytest.raises(HTTPException) as exc_info:
+        workbench.set_planning_mode("Book", 9, {"skipped": True})
+    assert exc_info.value.status_code == 400
+
+
+def test_planning_mode_persists_and_write_gate_opens(tmp_path, monkeypatch) -> None:
+    from biyu.ui import workbench
+    from biyu.ui.workbench_state import read_planning_skipped
+
+    book = _book(tmp_path)
+    monkeypatch.setattr(workbench, "_book_dir", lambda _b: book)
+    workbench.set_planning_mode("Book", 9, {"skipped": True})
+    assert read_planning_skipped(book, 9) is True
+
+    actions = workbench._state_actions(
+        "generation", "idle", stale=False, has_outline=True,
+        planning_status="无", planning_skipped=True,
+    )
+    assert actions["write"]["enabled"] is True
+    actions_no_plan = workbench._state_actions(
+        "generation", "idle", stale=False, has_outline=True, planning_status="无",
+    )
+    assert actions_no_plan["write"]["enabled"] is False
+
+
+def test_executor_appends_skip_planning_flag(tmp_path, monkeypatch) -> None:
+    import asyncio
+
+    import biyu.ui.cli_executor as ex
+
+    book = tmp_path / "Book"
+    book.mkdir()
+    (book / "book.json").write_text("{}", encoding="utf-8")
+    (book / "logs" / "ch1").mkdir(parents=True)
+    from biyu.ui.workbench_state import write_planning_skipped
+
+    write_planning_skipped(book, 1, True)
+    captured: dict = {}
+
+    class FakeProcess:
+        stdout = asyncio.StreamReader()
+        stdin = None
+
+        def __init__(self) -> None:
+            self.stdout.feed_eof()
+
+        async def wait(self) -> int:
+            return 0
+
+    async def fake_create(*args, **kwargs):
+        captured["argv"] = [str(a) for a in args]
+        return FakeProcess()
+
+    monkeypatch.setattr(ex, "resolve_book_dir", lambda _b: book)
+    monkeypatch.setattr(ex.asyncio, "create_subprocess_exec", fake_create)
+
+    async def run() -> list:
+        return [event async for event in ex.execute(
+            "write", book="Book", chapter=1, confirmed=True, extra={},
+        )]
+
+    asyncio.run(run())
+    assert "--skip-planning" in captured["argv"]
+
+
+def test_write_cmd_forwards_skip_planning(tmp_path, monkeypatch) -> None:
+    import biyu.config as config_mod
+    import biyu.pipeline as pipeline_mod
+
+    captured: dict = {}
+
+    class _FakeResult:
+        word_count = 100
+        cost_cny = 0.0
+        latency_seconds = 0.0
+        stage_latencies: dict = {}
+        warnings: list = []
+
+    async def fake_generate(book_dir, chapter_num, **kwargs):
+        captured.update(kwargs)
+        return _FakeResult()
+
+    monkeypatch.setattr(pipeline_mod, "generate_chapter", fake_generate)
+    (tmp_path / "book.json").write_text('{"title":"B","genre":"dushi"}', encoding="utf-8")
+    monkeypatch.setattr(config_mod, "resolve_book_dir", lambda book: tmp_path)
+
+    from biyu.cli.write_cmd import write_command
+
+    write_command(chapter=1, book=None, skip_planning=True)
+    assert captured["use_outline_contract"] is True
+
+
+# ---------- 声纹取消 ----------
+
+def test_selection_accepts_null_to_cancel(tmp_path, monkeypatch) -> None:
+    from biyu.ui import voiceprint as vp
+
+    book = tmp_path / "Book"
+    (book / "声纹").mkdir(parents=True)
+    (book / "book.json").write_text('{"id":"book","title":"Book"}', encoding="utf-8")
+    monkeypatch.setattr(vp, "_book_dir", lambda _b: book)
+
+    class _Body:
+        active = None
+
+    vp.update_selection("Book", _Body())
+    from biyu.fingerprint.profile_state import load_profile_state
+
+    state = load_profile_state(book)
+    assert state["saved"] is True and state["active"] is None
+
+
+def test_diagnosis_remaps_plan_layer_in_skip_mode(tmp_path, monkeypatch) -> None:
+    """跳过导演章被误判方案层 → 归入细纲层(老板要求的回归思考)。"""
+    import sys as _sys
+    from types import SimpleNamespace
+
+    from biyu.ui.diagnosis import diagnose_chapter
+    from biyu.ui.workbench_state import write_planning_skipped
+
+    book = tmp_path / "Book"
+    book.mkdir()
+    (book / "book.json").write_text('{"id":"b"}', encoding="utf-8")
+    rounds = book / "logs" / "ch1" / "revisions"
+    for number in (1, 2, 3):
+        round_dir = rounds / f"round_{number}"
+        round_dir.mkdir(parents=True)
+        (round_dir / "manifest.json").write_text('{"status": "complete"}', encoding="utf-8")
+        (round_dir / "comments.md").write_text("意见", encoding="utf-8")
+        (round_dir / "issues.json").write_text("[]", encoding="utf-8")
+        (round_dir / "candidate.md").write_text("正文", encoding="utf-8")
+    write_planning_skipped(book, 1, True)
+
+    class Adapter:
+        async def generate(self, messages, **kwargs):
+            assert any("不存在方案层" in str(message.get("content")) for message in messages)
+            return SimpleNamespace(text="方案层：某处要改", cost=0.001)
+
+    result = asyncio.run(diagnose_chapter(book, 1, adapter=Adapter()))
+    assert result["layer"] == "细纲层"
+    assert "无方案层" in result["reason"]

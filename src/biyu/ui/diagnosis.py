@@ -197,6 +197,13 @@ async def diagnose_chapter(
     log_cost_fn: Callable[[float, float], None] | None = None,
 ) -> dict[str, Any]:
     messages = build_diagnosis_messages(book_dir, chapter)
+    # 2026-10 跳过导演模式:无方案层,归因只许细纲层/执笔层,不许建议退回改方案
+    from biyu.ui.workbench_state import read_planning_skipped
+
+    skipped_mode = read_planning_skipped(book_dir, chapter)
+    if skipped_mode:
+        messages.append({"role": "user", "content": "补充约束：本章是「跳过导演、按细纲直生成」模式，不存在方案层。首要根因只能在 细纲层 / 执笔层 中选，禁止选 方案层，禁止建议退回改方案。"})
+
     if adapter is None:
         from biyu.config import get_registry
 
@@ -210,6 +217,10 @@ async def diagnose_chapter(
         log_cost_fn(float(getattr(response, "cost", 0.0)), latency)
     text = str(response.text).strip()
     layer, action, reason = _parse_result(text)
+    # 模式守卫:细纲直生成章被判成方案层 → 归为细纲层(同一根因的两处表述)
+    if layer == "方案层" and skipped_mode:
+        layer, action = "细纲层", LAYERS["细纲层"]
+        reason = f"(本章无方案层，原判方案层已归入细纲层){reason}"
     result = {
         "layer": layer,
         "reason": reason,

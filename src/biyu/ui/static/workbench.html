@@ -74,7 +74,12 @@
         </section>
         <textarea id="planning" class="editing-pane" hidden></textarea>
         <p id="architect-cost-line" class="architect-cost-line">让导演写一版，预估 <em id="architect-cost-num">¥—</em> · 超过 <em>¥0.60</em> 自动停</p>
-        <div class="action-row planning-actions"><div><button id="run-architect" class="b1">让导演写方案</button><p data-reason="architect" class="disabled-reason"></p></div><div><button data-save="planning" class="b3">只保存</button><p data-reason="save_planning" class="disabled-reason"></p></div><div><button id="save-confirm-planning" class="b1">确认方案</button><p data-reason="approve_planning" class="disabled-reason"></p></div><div><button data-action="revoke_planning" class="b3">退回重写</button><p data-reason="revoke_planning" class="disabled-reason"></p></div></div>
+        <section id="planning-skip" class="planning-skip" hidden>
+          <label><input type="checkbox" id="planning-skip-toggle"> 跳过导演，按细纲直生成</label>
+          <p class="aside-hint" id="planning-skip-hint">细纲即最终契约：生成正文直接按你的细纲写，不经导演转译。随时可切回。对照实验用，两种模式生成的候选稿都会记上来源标记。</p>
+          <p class="planning-skip-active" id="planning-skip-active" hidden>本模式跳过导演：细纲就是契约，直接去「生成正文」。写手看不到方案，也没有必检项核对。</p>
+        </section>
+        <div class="action-row planning-actions" id="planning-actions-row"><div><button id="run-architect" class="b1">让导演写方案</button><p data-reason="architect" class="disabled-reason"></p></div><div><button data-save="planning" class="b3">只保存</button><p data-reason="save_planning" class="disabled-reason"></p></div><div><button id="save-confirm-planning" class="b1">确认方案</button><p data-reason="approve_planning" class="disabled-reason"></p></div><div><button data-action="revoke_planning" class="b3">退回重写</button><p data-reason="revoke_planning" class="disabled-reason"></p></div></div>
         <section class="version-section"><h3>方案版本</h3><p class="aside-hint">每次确认会保存一版；可以查看或回到任意一版。</p><div id="plan-version-list"></div></section>
       </article>
       <article class="stage-panel" data-panel="2" hidden>
@@ -158,6 +163,6 @@
     <div id="import-dialog" class="modal-overlay" hidden><div class="modal import-modal"><h3>导入稿件</h3><p>导入本身不花钱，也不会改动世界观和角色卡。</p><label>从第几章开始<input id="import-chapter" type="number" min="1" value="1"></label><div class="import-source"><label>粘贴正文<textarea id="import-text" placeholder="粘贴单章；多章请用“第N章”作为明确分隔"></textarea></label><label>或选择本地 .md / .txt<input id="import-files" type="file" accept=".md,.txt,text/plain,text/markdown" multiple></label></div><fieldset><legend>这批稿件是什么身份？（必须选择）</legend><label><input type="radio" name="import-identity" value="candidate">作为候选稿</label><p>进入待定夺，可继续审读、批注和返修。</p><label><input type="radio" name="import-identity" value="official">作为正式稿</label><p>直接存为定稿；不会自动建立记忆。</p></fieldset><div id="import-preview" class="import-preview" hidden></div><div class="modal-actions"><button id="import-cancel" class="b3">取消</button><button id="import-next" class="primary">预览落点</button><button id="import-confirm" class="primary" hidden>确认导入</button></div></div></div>
     <div id="memory-import-dialog" class="modal-overlay" hidden><div class="modal import-modal"><h3>要不要根据导入稿建立记忆？</h3><div id="memory-cost" class="import-cost"></div><div id="memory-preview" class="import-preview"></div><div class="modal-actions"><button id="memory-later" class="b3">先不建立</button><button id="memory-stop" class="b3" hidden>结果不对，停下</button><button id="memory-start" class="primary">先看首章结果</button><button id="memory-continue" class="primary" hidden>结果正确，继续其余章节</button></div></div></div>
   </main>
-  <script src="/mini-md.js?v=u1-1"></script><script src="/cn-num.js"></script><script src="/workbench.js?v=c2-9"></script>
+  <script src="/mini-md.js?v=u1-1"></script><script src="/cn-num.js"></script><script src="/workbench.js?v=c2-10"></script>
 </body>
 </html>

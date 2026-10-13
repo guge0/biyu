@@ -1476,6 +1476,7 @@ async def generate_chapter(
     replan: bool = False,
     force_pending: bool = False,
     min_words_override: int | None = None,
+    use_outline_contract: bool = False,
 ) -> ChapterResult:
     """Generate a single chapter through the three-stage pipeline.
 
@@ -1492,6 +1493,8 @@ async def generate_chapter(
                          只注入相关真值(改造后)。
         min_words_override: 本章篇幅下限覆盖(网页生成步三档 2000/3000/4000)。
                仅影响本次调用;None 时用 book.json 的 chapter_min_words。
+        use_outline_contract: 跳过导演模式(2026-10 老板要求):细纲原文即写手契约,
+               不调用 Architect,不产生方案;必检项核对随之跳过(无合同)。
         replan: If True, force rerun Architect even if planning.md exists.
                If False, use existing planning.md when status: 已批.
         force_pending: If True, always stage the generated draft in _pending/.
@@ -1645,7 +1648,11 @@ async def generate_chapter(
     planner_alias = overrides.get("planner") or registry.get_pipeline_config().get("planner", "r1")
     planning_resp = LLMResponse(text="", model=planner_alias)
 
-    if not replan:
+    if use_outline_contract:
+        # 2026-10 跳过导演模式:作者细纲即写手契约,不产方案。
+        planning_text = outline
+        print("  [1/4] 跳过导演(细纲直生成)：按细纲原文生成,无方案与必检项")
+    elif not replan:
         status, content = _read_planning_status(planning_path)
         if status == "已批" and content:
             planning_text = content
@@ -2460,7 +2467,11 @@ async def generate_chapter(
 
     # ---- F-1~F-4: 必检项机器核对(只报不拦;H-1 后默认关,走配置开关) ----
     try:
-        if registry.get_feature("checklist") and (use_existing_planning or planning_text.strip()):
+        if (
+            registry.get_feature("checklist")
+            and not use_outline_contract
+            and (use_existing_planning or planning_text.strip())
+        ):
             _cl_adapter = _degraded_fallback_adapter(registry)
             if _cl_adapter is not None:
                 _checklist_result, _cl_warnings = await _run_checklist_with_cost_log(

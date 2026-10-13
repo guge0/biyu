@@ -303,6 +303,32 @@ function renderCatalog() {
     }
     root.append(row);
   });
+  // 2026-10 老板要求:声纹可取消——「不使用声纹」行,选中时写手不注入任何声纹
+  const noneActive = !state.active && state.profile_state?.saved === true;
+  if (state.active || noneActive) {
+    const noneRow = document.createElement('div');
+    noneRow.className = 'catalog-item';
+    const noneText = document.createElement('div');
+    const noneTitle = document.createElement('strong');
+    noneTitle.textContent = '不使用声纹';
+    const noneNote = document.createElement('small');
+    noneNote.textContent = noneActive ? '当前生效（写手不注入文风参照）' : '取消当前声纹，写手不再注入文风参照';
+    noneText.append(noneTitle, noneNote);
+    noneRow.append(noneText);
+    if (noneActive) {
+      const tag = document.createElement('span');
+      tag.className = 'status-text';
+      tag.textContent = '当前生效';
+      noneRow.append(tag);
+    } else {
+      const cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.textContent = '取消声纹';
+      cancel.onclick = () => activateProfile(null, cancel);
+      noneRow.append(cancel);
+    }
+    root.append(noneRow);
+  }
   renderCombineSources();
   renderActive();
 }
@@ -326,7 +352,7 @@ async function activateProfile(profileId, button) {
     await api('/selection', {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({active: profileId}),
+      body: JSON.stringify({active: profileId ? profileId : null}),
     });
     await load();
   } catch (error) {

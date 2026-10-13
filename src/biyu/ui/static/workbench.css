@@ -34,3 +34,9 @@
 
 /* 2026-10 拒收版可读:只读原文上方的说明小字 */
 .planning-rejected-note{font-size:12px;color:#8a6d3b;background:#fff8e8;border-left:3px solid #ba7517;padding:6px 10px;margin:0 0 10px}
+
+/* 2026-10 跳过导演模式:细纲直生成开关 */
+.planning-skip{margin:12px 0;padding:10px 14px;border:1px dashed var(--rule);border-radius:6px}
+.planning-skip label{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}
+.planning-skip .aside-hint{margin:6px 0 0}
+.planning-skip-active{margin:8px 0 0;font-size:13px;color:#8a6d3b;background:#fff8e8;border-left:3px solid #ba7517;padding:6px 10px}

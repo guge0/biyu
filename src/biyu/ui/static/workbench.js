@@ -463,6 +463,33 @@ function issueViewState(card){
 
 function renderArchitectState(){
   const state=current.web_architect?.state||'idle', hasPlan=Boolean((current.planning||'').trim());
+  // 2026-10 跳过导演模式:方案面板整体切换为直生成态
+  const skipped=Boolean(current.planning_skipped);
+  const skipSection=$('planning-skip');
+  if(skipSection){
+    skipSection.hidden=!current.outline;
+    const toggle=$('planning-skip-toggle');
+    if(toggle){
+      toggle.checked=skipped;
+      toggle.disabled=busy||current.axes?.run==='busy';
+    }
+    $('planning-skip-active').hidden=!skipped;
+  }
+  const planningRow=$('planning-actions-row');
+  if(planningRow)planningRow.hidden=skipped;
+  const costLine=$('architect-cost-line');
+  if(costLine)costLine.hidden=skipped||state==='running';
+  const feedback=$('planning-feedback');
+  if(feedback)feedback.hidden=skipped||!hasPlan||state==='running';
+  const empty=$('planning-empty');
+  if(empty)empty.hidden=skipped||hasPlan||state==='running'||state==='rejected';
+  if(skipped&&document.querySelector('[data-view="planning-read"]')?.classList.contains('current')){
+    const pane=$('planning-read');
+    pane.hidden=false;
+    pane.innerHTML='<p class="planning-rejected-note">跳过导演模式已开启：本页没有方案，你的细纲就是写手的契约。关闭开关可回到导演模式。</p>';
+    return;
+  }
+  $('planning-source').textContent='方案来源：导演正在写';
   $('planning-empty').hidden=hasPlan||state==='running'||state==='rejected';
   $('planning-run').hidden=state!=='running';
   $('planning-reject').hidden=state!=='rejected';
@@ -482,6 +509,7 @@ function renderArchitectState(){
   if(feedbackBox)feedbackBox.hidden=!hasPlan||state==='running';
   const list=$('planning-missing-list');list.replaceChildren();
   (current.web_architect?.missing_labels||[]).forEach(label=>{const li=document.createElement('li');li.textContent=`缺「${label}」这一类`;list.append(li);});
+  (current.web_architect?.fidelity_issues||[]).forEach(item=>{const li=document.createElement('li');li.textContent=item;list.append(li);});
 }
 function renderPlanningAssetNotice(){
   const prior=document.getElementById('planning-asset-notice');if(prior)prior.remove();
@@ -1193,6 +1221,16 @@ $('copy-chapter').onclick=copyChapterText;
 $('save-confirm-planning').onclick=confirmPlanning;
 $('run-architect').onclick=runArchitect;
 $('run-architect-revise').onclick=runArchitectRevise;
+$('planning-skip-toggle').onclick=async()=>{
+  const toggle=$('planning-skip-toggle');
+  toggle.disabled=true;
+  try{
+    current=await(await api(`/books/${encodeURIComponent($('book').value)}/chapters/${$('chapter').value}/planning-mode`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({skipped:toggle.checked})})).json();
+    clearDirty('planning');
+    render({preserveDirty:true});
+  }catch(error){showError(error.message);toggle.checked=!toggle.checked;}
+  finally{toggle.disabled=false;}
+};
 $('previous-chapter').onclick=()=>navigateChapter(Number(current.chapter||1)-1);
 $('next-chapter').onclick=()=>navigateChapter(Number(current.chapter||1)+1);
 $('chapter').addEventListener('change',()=>navigateChapter(Number($('chapter').value||1)));

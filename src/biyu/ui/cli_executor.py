@@ -105,6 +105,12 @@ async def execute(action_id: str, *, book: str, chapter: int, confirmed: bool, e
     if action_id in {"write", "regenerate"} and extra.get("min-words"):
         # 2026-10 篇幅裁定: 生成步三档(2000/3000/4000)即本章下限,写进 run log 备查。
         argv.extend(("--min-words", extra["min-words"]))
+    if action_id in {"write", "regenerate"}:
+        from biyu.ui.workbench_state import read_planning_skipped
+
+        if read_planning_skipped(book_dir, chapter):
+            # 2026-10 跳过导演模式:细纲直生成。
+            argv.append("--skip-planning")
     _append_run_log(run_log, "argv=" + " ".join(argv[3:]))
     env = os.environ.copy()
     env["BIYU_TRACK"] = "engineering"
