@@ -70,6 +70,26 @@ class TestPlanningStatus:
         assert status is None
         assert content is None
 
+
+def _planning_branch_lineno(tree):
+    """定位 Architect 分支:if not use_existing_planning(2026-10 起与跳过模式合判)。"""
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.If):
+            continue
+        test = node.test
+        names = set()
+        if isinstance(test, ast.UnaryOp) and isinstance(test.op, ast.Not) and isinstance(test.operand, ast.Name):
+            names.add(test.operand.id)
+        elif isinstance(test, ast.BoolOp):
+            for value in test.values:
+                if isinstance(value, ast.UnaryOp) and isinstance(value.op, ast.Not) and isinstance(value.operand, ast.Name):
+                    names.add(value.operand.id)
+        if "use_existing_planning" in names:
+            return node.lineno
+    raise StopIteration("Architect 分支未找到")
+
+
+class TestArchitectBranchContract:
     def test_planner_alias_bound_before_approved_planning_branch(self):
         """已批跳过 Architect 时，meta 所需 planner_alias 也必须已绑定。"""
         from biyu.pipeline import generate_chapter
@@ -84,17 +104,9 @@ class TestPlanningStatus:
                 for target in node.targets
             )
         )
-        planning_branch = next(
-            node
-            for node in ast.walk(tree)
-            if isinstance(node, ast.If)
-            and isinstance(node.test, ast.UnaryOp)
-            and isinstance(node.test.op, ast.Not)
-            and isinstance(node.test.operand, ast.Name)
-            and node.test.operand.id == "use_existing_planning"
-        )
+        planning_branch_lineno = _planning_branch_lineno(tree)
 
-        assert alias_assignment.lineno < planning_branch.lineno
+        assert alias_assignment.lineno < planning_branch_lineno
 
     def test_planning_response_bound_before_approved_planning_branch(self):
         """已批跳过 Architect 时，长跑统计所需 planning_resp 必须先绑定。"""
@@ -110,17 +122,9 @@ class TestPlanningStatus:
                 for target in node.targets
             )
         )
-        planning_branch = next(
-            node
-            for node in ast.walk(tree)
-            if isinstance(node, ast.If)
-            and isinstance(node.test, ast.UnaryOp)
-            and isinstance(node.test.op, ast.Not)
-            and isinstance(node.test.operand, ast.Name)
-            and node.test.operand.id == "use_existing_planning"
-        )
+        planning_branch_lineno = _planning_branch_lineno(tree)
 
-        assert response_assignment.lineno < planning_branch.lineno
+        assert response_assignment.lineno < planning_branch_lineno
 
 
 class TestPlanningConsumption:

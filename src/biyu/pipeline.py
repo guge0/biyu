@@ -1660,7 +1660,9 @@ async def generate_chapter(
             log_path_str = str(planning_path.relative_to(book_dir))
             print(f"  检测到已批规划件,跳过 Architect: {log_path_str}")
 
-    if not use_existing_planning:
+    # 2026-10 跳过导演模式:use_outline_contract 时不允许 Architect 运行——
+    # 否则它会覆盖细纲契约,写手拿到的仍是导演方案(保真闸上移前的老病复发)。
+    if not use_existing_planning and not use_outline_contract:
         console_output = f"  [1/4] Architect ({planner_alias} 规划)..."
         print(console_output)
         t0 = time.time()

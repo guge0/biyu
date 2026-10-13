@@ -348,3 +348,10 @@ def test_real_cli_accepts_skip_planning_flag(tmp_path, monkeypatch) -> None:
     combined = result.stdout + result.stderr
     assert "No such option" not in combined
     assert result.returncode == 1  # 干净业务失败(缺细纲),不是参数错误(退出码 2)
+
+
+def test_pipeline_skip_mode_never_invokes_architect_block() -> None:
+    """2026-10 事故回归:跳过模式只换 planning_text 不够,Architect 块必须整体跳过——
+    否则导演照跑并覆盖细纲契约(实测成本行出现 architect,写手拿回导演方案)。"""
+    src = Path("src/biyu/pipeline.py").read_text(encoding="utf-8")
+    assert "if not use_existing_planning and not use_outline_contract:" in src
