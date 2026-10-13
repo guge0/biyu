@@ -320,3 +320,33 @@ def test_diagnosis_remaps_plan_layer_in_skip_mode(tmp_path, monkeypatch) -> None
     result = asyncio.run(diagnose_chapter(book, 1, adapter=Adapter()))
     assert result["layer"] == "细纲层"
     assert "无方案层" in result["reason"]
+
+
+def test_real_cli_accepts_skip_planning_flag(tmp_path, monkeypatch) -> None:
+    """2026-10 事故回归(第二起转发层漏参):真实 CLI 全链必须认 --skip-planning。"""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path as _Path
+
+    book = tmp_path / "Book"
+    book.mkdir()
+    (book / "book.json").write_text('{"title":"B","genre":"dushi"}', encoding="utf-8")
+    (book / "outlines").mkdir()
+    (book / "outlines" / "ch1.md").write_text("第一章细纲", encoding="utf-8")
+    env = {
+        **os.environ,
+        "PYTHONPATH": "src",
+        "BIYU_DATA_ROOT": str(tmp_path),
+        "BIYU_DATA_ROOT_SOURCE": "environment",
+    }
+    result = subprocess.run(
+        [sys.executable, "-c", "from biyu.cli.main import app; app()",
+         "write", "-c", "1", "-b", "Book", "--force-pending", "--skip-planning"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+        env=env, cwd=str(_Path(__file__).resolve().parents[1]), timeout=120,
+    )
+    combined = result.stdout + result.stderr
+    assert "No such option" not in combined
+    # 走到管线即算过转发层(后续失败应是业务原因,不是参数错误)
+    assert "skip" in combined.lower() or "跳过导演" in combined or result.returncode != 2
