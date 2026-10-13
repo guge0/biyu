@@ -796,7 +796,7 @@ async function pollRunLog(){
       runLogSeenTotal=total;
       for(let i=fresh.length-1;i>=0;i--){const stage=progressStageFromLog(fresh[i]);if(stage){renderRunProgress(0,stage);break;}}
     }
-    if(!data.running){stopRunLogPolling();await fetchSnapshot();}
+    if(!data.running){stopRunLogPolling();await fetchSnapshot();if(!busy){$('run-surface').hidden=true;}}
   }catch(_e){/* 服务重启中,下轮再试 */}
 }
 function startRunLogPolling(){

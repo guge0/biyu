@@ -2213,8 +2213,11 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 .workbench .reading-layout.reading-pure .reading-prose-grid{padding-top:52px}
 .workbench .reading-decision-head{
   position:fixed;top:52px;right:20px;left:430px;z-index:14;min-width:0;height:44px;margin:0;padding:0;border:0;
+  background:var(--paper);
+  pointer-events:none; /* 2026-10 修复:透明底既叠字又拦右栏(全选)点击;交互元件单独恢复 */
   display:flex;align-items:center;gap:18px;font-family:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;
 }
+.workbench .reading-decision-head a,.workbench .reading-decision-head button,.workbench .reading-decision-head .segmented{pointer-events:auto}
 .workbench .reading-head-line{display:flex;align-items:center;gap:10px;flex:none}
 .workbench .reading-head-tools{margin:0;display:flex;align-items:center;gap:10px}
 .workbench .reading-meta-line{min-width:0;margin:0;display:flex;align-items:center;gap:9px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;font-size:12.5px}
