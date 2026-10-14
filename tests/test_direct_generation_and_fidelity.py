@@ -355,3 +355,22 @@ def test_pipeline_skip_mode_never_invokes_architect_block() -> None:
     否则导演照跑并覆盖细纲契约(实测成本行出现 architect,写手拿回导演方案)。"""
     src = Path("src/biyu/pipeline.py").read_text(encoding="utf-8")
     assert "if not use_existing_planning and not use_outline_contract:" in src
+
+
+def test_selection_empty_string_means_cancel(tmp_path, monkeypatch) -> None:
+    """2026-10 修复:生成步「不使用声纹」保存发空串 → 视为取消,不再 422。"""
+    from biyu.ui import voiceprint as vp
+
+    book = tmp_path / "Book"
+    book.mkdir()
+    (book / "book.json").write_text('{"id":"book","title":"Book"}', encoding="utf-8")
+    monkeypatch.setattr(vp, "_book_dir", lambda _b: book)
+
+    class _Body:
+        active = ""
+
+    vp.update_selection("Book", _Body())
+    from biyu.fingerprint.profile_state import load_profile_state
+
+    state = load_profile_state(book)
+    assert state["saved"] is True and state["active"] is None

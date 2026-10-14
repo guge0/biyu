@@ -186,7 +186,7 @@ async function saveGenerationVoiceprintSelection(){
   button.disabled=true;button.textContent='正在保存…';
   try{
     const chosen=document.querySelector('#generation-voiceprint-options input:checked');
-    const active=chosen?chosen.value:null;
+    const active=chosen&&chosen.value?chosen.value:null;
     const response=await fetch(`${generationVoiceprintUrl()}/selection`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({active})});
     if(!response.ok){const body=await response.json().catch(()=>({}));throw new Error(body.detail||`声纹保存失败（${response.status}）`);}
     const merged=await response.json();

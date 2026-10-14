@@ -177,7 +177,8 @@ def update_line(book: str, line_id: str, body: EditLineBody) -> dict:
 def update_selection(book: str, body: SelectionBody) -> dict:
     book_dir = _book_dir(book)
     catalog_ids = {profile["id"] for profile in load_catalog_with_status(book_dir)}
-    active = body.active
+    # 2026-10 修复:空串一律视为「不使用声纹」(取消),否则 422 声纹不存在
+    active = (body.active or "").strip() or None
     if active is not None and active not in catalog_ids:
         raise HTTPException(status_code=422, detail=f"声纹不存在: {active}")
     save_selection(book_dir, active)
