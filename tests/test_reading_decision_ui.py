@@ -316,7 +316,10 @@ def test_reading_chrome_collapses_only_for_idle_pure_reading() -> None:
 
     assert "--reading-actions-height:44px" in css
     assert re.search(r"\.reading-layout\.reading-pure\{[^}]*--reading-actions-height:40px", css)
-    assert re.search(r"reading-pure:not\(\[hidden\]\).*?\.stage-bar\{[^}]*position:fixed", css)
+    # 2026-10 终局修复:阶段条回归命令行,不再浮成第二条带(两条带同位互覆盖,
+    # 阶段标签/工具条按钮互吃点击)。反向守卫:纯读模式禁止 stage-bar 浮动。
+    assert "reading-pure:not([hidden])) .stage-bar{position:fixed" not in css
+    assert re.search(r"\.reading-layout\.reading-pure \.reading-prose-grid\{padding-top:96px\}", css)
     assert re.search(r"\.reading-chrome-hidden \.reading-actions\{[^}]*transform:translateY", css)
     assert ":has(#reading-decision.reading-chrome-hidden) .stage-bar" in css
     assert re.search(r"reading-chrome-hidden[^}]*\{[^}]*transform:translateY", css)

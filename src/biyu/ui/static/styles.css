@@ -2196,6 +2196,10 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
   .workbench:has(#reading-decision:not([hidden])) .workbench-title-row{position:fixed;top:0;right:180px;left:160px;z-index:100;height:52px;min-height:52px;border:0;background:transparent;pointer-events:none}
   .workbench:has(#reading-decision:not([hidden])) .workbench-title-row .wb-title{display:none}
   .workbench:has(#reading-decision:not([hidden])) .workbench-title-row .toolbar{margin-left:auto;pointer-events:auto}
+  /* 2026-10 修复:沉浸式把整条命令行设为点击穿透,但阶段标签/更多菜单/版本红点都在穿透区——
+     老板实测全部点不了。白名单补齐这三块。 */
+  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row .stage-bar,
+  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row .workbench-more{pointer-events:auto}
   .workbench:has(#reading-decision:not([hidden])) .stage-bar{height:44px;min-height:44px}
   .workbench:has(#reading-decision:not([hidden])) .stage-shell{padding-top:0}
 }
@@ -2208,13 +2212,13 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 }
 .workbench .reading-layout.reading-aside-open{grid-template-columns:minmax(0,1fr) var(--reading-review-width)}
 .workbench .reading-layout.reading-pure{--reading-actions-height:40px}
-.workbench:has(#reading-decision.reading-pure:not([hidden])) .stage-bar{position:fixed;top:52px;right:20px;left:20px;z-index:13;background:#fdfbf6}
-.workbench.reading-has-top-notice:has(#reading-decision.reading-pure:not([hidden])) .stage-bar{top:96px}
-.workbench .reading-layout.reading-pure .reading-prose-grid{padding-top:52px}
+/* 2026-10 终局修复:阶段条回归第一行命令行(它本就是 title-row 子元素),
+   不再单独浮成第二条带——两条带同位互相覆盖,阶段标签/工具条按钮互吃点击。 */
+.workbench .reading-layout.reading-pure .reading-prose-grid{padding-top:96px}
 .workbench .reading-decision-head{
-  position:fixed;top:52px;right:20px;left:430px;z-index:14;min-width:0;height:44px;margin:0;padding:0;border:0;
-  background:var(--paper);
-  pointer-events:none; /* 2026-10 修复:透明底既叠字又拦右栏(全选)点击;交互元件单独恢复 */
+  position:fixed;top:52px;right:20px;left:20px;z-index:14;min-width:0;height:44px;margin:0;padding:0 0 0 410px;border:0;
+  background:var(--paper); /* 2026-10:整条不透明带,左侧 x<430 区(原裸露)正文从此不再穿透 */
+  pointer-events:none; /* 透明区点击穿透旧病随整条底色一并消除;交互元件单独恢复 */
   display:flex;align-items:center;gap:18px;font-family:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;
 }
 .workbench .reading-decision-head a,.workbench .reading-decision-head button,.workbench .reading-decision-head .segmented{pointer-events:auto}
