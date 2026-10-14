@@ -305,6 +305,23 @@ function setReadingAside(open,focusIssueId=''){
   if(focusIssueId&&readingAsideOpen){requestAnimationFrame(()=>openIssueDetail(focusIssueId));}
 }
 function updateHeadSaveButton(){
+  // 2026-10 老板要求:读稿页直接切换候选版本(切换即设为当前)
+  const versionSelect=$('reading-version-select');
+  if(versionSelect){
+    const versions=current.candidate_versions||[];
+    versionSelect.hidden=versions.length<2;
+    if(versionSelect.options.length!==versions.length){
+      versionSelect.replaceChildren(...versions.map(item=>{
+        const option=document.createElement('option');
+        option.value=String(item.version);
+        const when=(new Date(item.created_at||'')).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false});
+        option.textContent=`第 ${item.version} 版 · ${when} · ${item.word_count} 字`;
+        return option;
+      }));
+    }
+    const currentItem=versions.find(item=>item.state==='current');
+    if(currentItem)versionSelect.value=String(currentItem.version);
+  }
   const headSave2=$('head-save-chapter');
   if(!headSave2)return;
   headSave2.hidden = typeof readingView==='undefined' || readingView!=='edit';
@@ -1247,6 +1264,11 @@ $('save-chapter').onclick=saveChapter;
 // 2026-10:编辑态顶部也给出保存入口(长章不必滚到底),与底部保存同一流程
 const headSave=$('head-save-chapter');
 if(headSave){headSave.onclick=saveChapter;}
+$('reading-version-select').onchange=async function(){
+  const version=Number(this.value);
+  if(!version)return;
+  await selectCandidate(version);
+};
 $('copy-chapter').onclick=copyChapterText;
 $('save-confirm-planning').onclick=confirmPlanning;
 $('run-architect').onclick=runArchitect;

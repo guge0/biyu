@@ -2412,3 +2412,7 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 .version-section #candidate-version-list .history-item p{margin:0;min-width:0}
 .version-section #candidate-version-list .history-item details{margin:0}
 .version-section #candidate-version-list .history-item summary{cursor:pointer;white-space:nowrap}
+
+/* 2026-10:正文展开时横跨整行,不再被版本列挤压成窄条 */
+.version-section #candidate-version-list .history-item details[open]{grid-column:1/-1;grid-row:2}
+.version-section #candidate-version-list .history-item details[open] pre{max-width:100%;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow-y:auto}
