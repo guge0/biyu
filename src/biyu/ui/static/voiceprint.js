@@ -298,25 +298,28 @@ function renderCatalog() {
     note.textContent = profile.sources_stale ? '来源已有变化，可重合并' : profile.id === state.active ? '当前生效' : '';
     text.append(title, note);
     row.append(text);
+    const controls = document.createElement('div');
+    controls.className = 'catalog-controls';
     // 2026-10 老板要求的使用逻辑:每份声纹可直接查看原句并修改,不必先设为当前
     const view = document.createElement('button');
     view.type = 'button';
     view.textContent = '查看原句';
     view.onclick = () => openLinesView(profile.id);
-    row.append(view);
+    controls.append(view);
     // W-2：能点必须有信号。当前生效=status-text 纯文字（不可点）；其余=「设为当前」按钮（可点）
     if (profile.id === state.active) {
       const activeTag = document.createElement('span');
       activeTag.className = 'status-text';
       activeTag.textContent = '当前生效';
-      row.append(activeTag);
+      controls.append(activeTag);
     } else {
       const activate = document.createElement('button');
       activate.type = 'button';
       activate.textContent = '设为当前';
       activate.onclick = () => activateProfile(profile.id, activate);
-      row.append(activate);
+      controls.append(activate);
     }
+    row.append(controls);
     root.append(row);
   });
   // 2026-10 老板要求:声纹可取消——「不使用声纹」行,选中时写手不注入任何声纹
@@ -331,18 +334,21 @@ function renderCatalog() {
     noneNote.textContent = noneActive ? '当前生效（写手不注入文风参照）' : '取消当前声纹，写手不再注入文风参照';
     noneText.append(noneTitle, noneNote);
     noneRow.append(noneText);
+    const noneControls = document.createElement('div');
+    noneControls.className = 'catalog-controls';
     if (noneActive) {
       const tag = document.createElement('span');
       tag.className = 'status-text';
       tag.textContent = '当前生效';
-      noneRow.append(tag);
+      noneControls.append(tag);
     } else {
       const cancel = document.createElement('button');
       cancel.type = 'button';
       cancel.textContent = '取消声纹';
       cancel.onclick = () => activateProfile(null, cancel);
-      noneRow.append(cancel);
+      noneControls.append(cancel);
     }
+    noneRow.append(noneControls);
     root.append(noneRow);
   }
   renderCombineSources();

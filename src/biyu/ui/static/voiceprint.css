@@ -46,3 +46,7 @@
 .merged-prompt-details[hidden]{display:none}
 
 .editable-profile:target{outline:2px solid #ba7517;outline-offset:4px}
+
+/* 2026-10:行内右侧控件组对齐(查看原句/设为当前/当前生效 同组贴右) */
+.catalog-controls{display:flex;align-items:center;gap:10px;margin-left:auto;flex:none;min-height:32px}
+.catalog-item{align-items:center}
