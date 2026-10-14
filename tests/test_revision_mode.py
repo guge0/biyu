@@ -114,7 +114,7 @@ def test_revision_ui_requires_explicit_mode() -> None:
 
 def test_signed_writer_and_planning_text_installed_verbatim() -> None:
     writer = Path("prompts/writer/revision.md").read_text(encoding="utf-8")
-    planning = Path("src/biyu/prompts/v3_opening.py").read_text(encoding="utf-8")
+    planning = Path("src/biyu/prompts/director_prompt.py").read_text(encoding="utf-8")
     assert "返修模式只有两种：" in writer
     assert "【深度重写】以作者整体意见统领重写" in writer
     assert "不得新增方案之外的重要事件、设定、人物决定或伏笔回收" in writer

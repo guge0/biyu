@@ -11,7 +11,7 @@ import asyncio
 from dataclasses import dataclass
 
 from biyu.llm import ModelRegistry
-from biyu.prompts.v3_opening import build_polish_prompt
+from biyu.prompts.writer_v3_legacy import build_polish_prompt
 
 
 @dataclass

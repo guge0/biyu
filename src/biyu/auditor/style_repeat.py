@@ -17,7 +17,7 @@ from biyu.auditor.config import get_checker_config
 # 复用 v3_opening 的 STYLE_BLACKLIST
 def _get_style_blacklist() -> list[str]:
     try:
-        from biyu.prompts.v3_opening import STYLE_BLACKLIST
+        from biyu.prompts.style_blacklist import STYLE_BLACKLIST
         return STYLE_BLACKLIST
     except ImportError:
         return [

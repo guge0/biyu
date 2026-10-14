@@ -33,7 +33,7 @@ def test_writer_prompt_uses_floor_only_length_contract() -> None:
 
 
 def test_v3_prompt_no_longer_orders_padding_to_hit_a_number() -> None:
-    from biyu.prompts.v3_opening import V3_OPENING_SYSTEM, build_writer_user_prompt
+    from biyu.prompts.writer_v3_legacy import V3_OPENING_SYSTEM, build_writer_user_prompt
 
     combined = V3_OPENING_SYSTEM + build_writer_user_prompt(
         planning="方案", outline="细纲", target_words=5000, genre="奇幻",

@@ -217,7 +217,7 @@ async def _call_web_architect(book_dir: Path, chapter: int, feedback: str = "") 
         _read_north_star,
         _run_q1_tool_loop,
     )
-    from biyu.prompts.v3_opening import build_planning_prompt
+    from biyu.prompts.director_prompt import build_planning_prompt
     from biyu.truth_files import read_all_truth_files
     from biyu.worldbook import build_worldbook_prompt, load_worldbook
 

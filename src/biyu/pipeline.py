@@ -21,7 +21,8 @@ from biyu.context_retriever import get_retriever
 from biyu.db import init_db, record_chapter, sync_characters_from_yaml
 from biyu.llm.base import GenerationError
 from biyu.polish import PolishResult, polish_chapter
-from biyu.prompts.v3_opening import build_planning_prompt, build_writer_user_prompt
+from biyu.prompts.director_prompt import build_planning_prompt
+from biyu.prompts.writer_v3_legacy import build_writer_user_prompt
 from biyu.truth_files import read_all_truth_files, read_truth_file
 from biyu.wordguard import WordGuardResult, count_cjk_chars, enforce_floor
 from biyu.worldbook import load_worldbook, build_worldbook_prompt
@@ -2572,5 +2573,5 @@ async def generate_chapter(
 
 def _get_v3_system_prompt() -> str:
     """Get the V3 system prompt."""
-    from biyu.prompts.v3_opening import V3_OPENING_SYSTEM
+    from biyu.prompts.writer_v3_legacy import V3_OPENING_SYSTEM
     return V3_OPENING_SYSTEM

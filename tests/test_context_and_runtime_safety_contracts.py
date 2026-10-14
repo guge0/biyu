@@ -14,7 +14,8 @@ from biyu.editor.prompts import build_editor_user_prompt
 from biyu.observer import update_truth_files
 from biyu.pipeline import _run_checklist_with_cost_log
 from biyu.prompts.chapter_writer import build_layer2_context
-from biyu.prompts.v3_opening import build_planning_prompt, build_writer_user_prompt
+from biyu.prompts.director_prompt import build_planning_prompt
+from biyu.prompts.writer_v3_legacy import build_writer_user_prompt
 
 
 def _request(port: int | None) -> Request:

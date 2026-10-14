@@ -8,7 +8,7 @@ import pytest
 
 from biyu.pipeline import _q1_worldbook_prompt, _run_q1_tool_loop
 from biyu.prompts.chapter_writer import build_layer2_context
-from biyu.prompts.v3_opening import build_planning_prompt
+from biyu.prompts.director_prompt import build_planning_prompt
 
 
 FIXED_TAIL_LABEL = "上一章结尾(若本章另起新场景,可不接续)"
