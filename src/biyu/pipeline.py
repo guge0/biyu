@@ -1466,6 +1466,59 @@ def _degraded_fallback_adapter(registry):
     return None
 
 
+_SENTENCE_ENDINGS = "。！？…”’」》】\"）"
+
+
+def _is_truncated(text: str) -> bool:
+    """句中被截断判定:去尾空白后最后一个字符不是句子/段落结束符。
+
+    引号/括号收尾视为完整;纯空白视为空(不判截断)。
+    """
+    tail = (text or "").rstrip()
+    if not tail:
+        return False
+    return tail[-1] not in _SENTENCE_ENDINGS
+
+
+async def _continue_if_truncated(
+    text: str, writer_adapter, book: "BookConfig", chapter_num: int,
+    max_rounds: int = 2,
+) -> tuple[str, tuple[int, float] | None]:
+    """截断续写兜底(2026-10 老板授权):细纲密、正文撞单次输出上限时自动接写。
+
+    判定:结尾不是句读 → 从尾段 1200 字续写至自然收束(含章末钩子)。
+    每轮费用计入 writer_continuation 台账;连续两轮仍截断则放行,
+    交编辑按既有"戛然而止"意见处理。
+    """
+    rounds = 0
+    cont_cost = 0.0
+    current = text
+    for _ in range(max_rounds):
+        if not _is_truncated(current):
+            break
+        cont_prompt = (
+            "你写的一章正文在句中被输出上限截断。以下是本章的结尾片段,请从断点处"
+            "自然续写,接完当前这句话并继续推进,直到本章自然收束(含章末钩子)。\n"
+            "保持原风格、视角与人物;只输出续写正文,不要重复已有内容,不要输出说明。\n\n"
+            f"=== 结尾片段 ===\n{current[-1200:]}"
+        )
+        t0 = time.time()
+        resp = await _call_with_retry(
+            writer_adapter,
+            [{"role": "user", "content": cont_prompt}],
+            temperature=0.8,
+            max_tokens=16384,
+        )
+        cont_cost += resp.cost
+        _log_cost(book, chapter_num, "writer_continuation", resp.cost, time.time() - t0)
+        addition = (resp.text or "").strip()
+        if not addition:
+            break
+        current = current.rstrip() + "\n\n" + addition
+        rounds += 1
+    return current, (rounds, cont_cost) if rounds else None
+
+
 async def generate_chapter(
     book_dir: Path,
     chapter_num: int,
@@ -1960,6 +2013,16 @@ async def generate_chapter(
     _log_cost(book, chapter_num, "writer", writer_resp.cost, stage_latencies["writer"])
     skeleton_count = count_cjk_chars(skeleton_text)
     print(f"  [2/4] OK - {stage_latencies['writer']:.1f}s, ¥{writer_resp.cost:.4f}, {skeleton_count}字")
+
+    # ---- 2026-10 截断续写兜底(老板授权):输出在句中被截断时自动续写 ----
+    # "戛然而止"= 撞单次输出上限,与"写短"不同;最多续 2 轮,费用计入 writer 台账。
+    skeleton_text, cont_rounds = await _continue_if_truncated(
+        skeleton_text, writer_adapter, book, chapter_num,
+    )
+    if cont_rounds:
+        total_cost += cont_rounds[1]
+        skeleton_count = count_cjk_chars(skeleton_text)
+        print(f"  [2.5/4] 检测到截断,已自动续写 {cont_rounds[0]} 轮(¥{cont_rounds[1]:.4f}),现 {skeleton_count} 字")
 
     # ---- CutA: 早闸回流闭环(P6-A2-CutA, 方案 b 事后修订)----
     # Stage 2 Writer 完成后, 对 skeleton_text 跑 anchor 检查,

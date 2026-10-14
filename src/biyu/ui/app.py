@@ -141,6 +141,37 @@ app = FastAPI(title="笔驭作者工作台", version="0.2.0")
 
 @app.on_event("startup")
 async def enforce_runtime_binding() -> None:
+    _start_behind_monitor()
+
+
+def _start_behind_monitor() -> None:
+    """后台线程每 10 分钟刷新一次版本差距缓存;/api/version 只读缓存,零网络等待。"""
+    import threading
+
+    from biyu.runtime_config import git_behind_count
+
+    def _loop() -> None:
+        import time
+
+        while True:
+            try:
+                git_behind_count(max_age_seconds=0)
+            except Exception:
+                pass
+            time.sleep(600)
+
+    threading.Thread(target=_loop, daemon=True, name="biyu-update-check").start()
+
+
+def _behind_count_cached() -> int | None:
+    from biyu.runtime_config import git_behind_count
+
+    return git_behind_count(max_age_seconds=float("inf"))
+
+
+@app.on_event("startup")
+async def enforce_runtime_binding() -> None:
+    _start_behind_monitor()
     from biyu.config import validate_runtime_binding
     from biyu.runtime_config import verify_runtime_data_root
 
@@ -242,8 +273,20 @@ def runtime_version() -> dict[str, object]:
         # version payload while the nested object carries release metadata.
         "update_available": update["available"],
         "latest_version": update["published"],
+        # 2026-10 版本差距红点:落后 origin/main 的提交数(None=暂时无法判断)
+        "behind_commits": _behind_count_cached(),
         **identity,
     }
+
+
+@app.post("/api/update/pull")
+def update_pull() -> dict:
+    """拉取最新(快进)。运行中的服务不换代码,拉完需重启笔驭生效。"""
+    from biyu.runtime_config import git_pull_ff
+
+    ok, message = git_pull_ff()
+    hint = "已拉取最新代码；请关闭笔驭并重新双击启动，更新才会生效。" if ok else message
+    return {"ok": ok, "message": message, "hint": hint}
 
 
 _ASSET_REF = re.compile(r'(?P<prefix>(?:src|href)="/(?P<name>[^"?]+))\?v=[^"]+(?P<suffix>")')

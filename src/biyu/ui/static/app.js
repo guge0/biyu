@@ -68,6 +68,33 @@
       updateDot.hidden = !hasUpdate;
       updateDot.title = hasUpdate ? `有新版本：${update.published || info.latest_version || "可用更新"}` : "暂无更新";
     }
+    // 2026-10 老板要求:落后 origin/main 标红点,点击拉取最新
+    const behind = Number(info.behind_commits || 0);
+    let behindDot = $("behind-dot");
+    if (behind > 0) {
+      if (!behindDot) {
+        behindDot = document.createElement("button");
+        behindDot.id = "behind-dot";
+        behindDot.className = "update-dot update-dot-behind";
+        behindDot.onclick = async () => {
+          behindDot.disabled = true;
+          behindDot.title = "正在拉取…";
+          try {
+            const result = await (await fetch("/api/update/pull", { method: "POST" })).json();
+            behindDot.title = result.ok ? result.hint : `拉取失败：${result.message}`;
+            if (result.ok) behindDot.classList.add("pulled");
+          } catch (_e) {
+            behindDot.title = "拉取失败：服务未响应";
+          } finally { behindDot.disabled = false; }
+        };
+        (updateDot && updateDot.parentElement ? updateDot.parentElement : label.parentElement).append(behindDot);
+      }
+      behindDot.hidden = false;
+      behindDot.setAttribute("aria-label", `落后 ${behind} 个提交`);
+      behindDot.title = `落后最新版本 ${behind} 个提交，点击拉取（拉取后重启笔驭生效）`;
+    } else if (behindDot) {
+      behindDot.hidden = true;
+    }
     const badge = $("version-badge");
     if (badge) badge.classList.toggle("has-update", hasUpdate);
     const current = $("version-current");

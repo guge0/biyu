@@ -2387,3 +2387,7 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 .reading-review-entry{border:1px solid var(--btn-border);background:var(--surface);border-radius:3px;padding:5px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
 .reading-review-entry:hover{border-color:var(--ink-soft)}
 .reading-review-entry[hidden]{display:none}
+
+/* 2026-10 版本差距红点:落后 origin/main 时显示,点击拉取最新 */
+.update-dot-behind{width:10px;height:10px;padding:0;border-radius:50%;border:2px solid #c0392b;background:transparent;cursor:pointer;flex:none}
+.update-dot-behind.pulled{border-color:#9aa48f}

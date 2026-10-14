@@ -151,3 +151,54 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+# ---------- 2026-10 版本差距红点:对比 HEAD 与 origin/main(老板要求) ----------
+_BEHIND_CACHE: dict = {"ts": 0.0, "count": None}
+
+
+def git_behind_count(project_root=None, max_age_seconds: float = 600.0) -> int | None:
+    """本地 checkout 落后 origin/main 的提交数;网络/凭据不可用时返回 None(不亮红点)。
+
+    带 10 分钟缓存:/api/version 高频轮询不得每次打网络。后台监控线程负责刷新。
+    """
+    import subprocess
+    import time
+
+    now = time.time()
+    if now - _BEHIND_CACHE["ts"] < max_age_seconds:
+        return _BEHIND_CACHE["count"]
+    count: int | None = None
+    try:
+        root = str(Path(project_root) if project_root else Path.cwd())
+        fetch = subprocess.run(
+            ["git", "fetch", "origin", "main"], cwd=root,
+            capture_output=True, text=True, timeout=25,
+        )
+        if fetch.returncode == 0:
+            rev = subprocess.run(
+                ["git", "rev-list", "--count", "HEAD..origin/main"], cwd=root,
+                capture_output=True, text=True, timeout=10,
+            )
+            if rev.returncode == 0:
+                count = int(rev.stdout.strip() or 0)
+    except Exception:
+        pass
+    _BEHIND_CACHE.update(ts=now, count=count)
+    return count
+
+
+def git_pull_ff(project_root=None) -> tuple[bool, str]:
+    """拉取最新(快进);服务进程不换代码,提示重启生效。"""
+    import subprocess
+
+    try:
+        root = str(Path(project_root) if project_root else Path.cwd())
+        result = subprocess.run(
+            ["git", "pull", "--ff-only"], cwd=root,
+            capture_output=True, text=True, timeout=90, encoding="utf-8", errors="replace",
+        )
+        output = (result.stdout + result.stderr).strip()
+        return result.returncode == 0, output or ("已拉取" if result.returncode == 0 else "拉取失败")
+    except Exception as exc:
+        return False, str(exc)
