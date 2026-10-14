@@ -2228,7 +2228,7 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
   pointer-events:none; /* 透明区点击穿透旧病随整条底色一并消除;交互元件单独恢复 */
   display:flex;align-items:center;gap:18px;font-family:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;
 }
-.workbench .reading-decision-head a,.workbench .reading-decision-head button,.workbench .reading-decision-head .segmented{pointer-events:auto}
+.workbench .reading-decision-head a,.workbench .reading-decision-head button,.workbench .reading-decision-head .segmented,.workbench .reading-decision-head select{pointer-events:auto}
 .workbench .reading-head-line{display:flex;align-items:center;gap:10px;flex:none}
 .workbench .reading-head-tools{margin:0;display:flex;align-items:center;gap:10px}
 .workbench .reading-meta-line{min-width:0;margin:0;display:flex;align-items:center;gap:9px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;font-size:12.5px}
@@ -2407,12 +2407,12 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 #head-save-chapter[hidden]{display:none}
 #head-save-chapter .dirty-mark{color:#c0392b}
 
-/* 2026-10:候选版本行网格化——标题/查看正文/技术详情/按钮 四列对齐 */
-.version-section #candidate-version-list .history-item{display:grid;grid-template-columns:minmax(0,1fr) 96px 96px 132px;gap:12px;align-items:center}
-.version-section #candidate-version-list .history-item p{margin:0;min-width:0}
-.version-section #candidate-version-list .history-item details{margin:0}
-.version-section #candidate-version-list .history-item summary{cursor:pointer;white-space:nowrap}
+/* 2026-10:候选版本行 = 内容主列(标题+查看正文+技术详情 纵排) + 右侧控件组 */
+.version-section #candidate-version-list .history-item{display:flex;align-items:flex-start;gap:12px}
+.version-section #candidate-version-list .version-main{flex:1 1 0;min-width:0}
+.version-section #candidate-version-list .version-main p{margin:0 0 6px}
+.version-section #candidate-version-list .version-main details{margin:0 0 4px}
+.version-section #candidate-version-list .version-main summary{cursor:pointer}
+.version-section #candidate-version-list .version-main pre{max-width:100%;max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-word}
+.version-section #candidate-version-list .catalog-controls{margin-left:auto}
 
-/* 2026-10:正文展开时横跨整行,不再被版本列挤压成窄条 */
-.version-section #candidate-version-list .history-item details[open]{grid-column:1/-1;grid-row:2}
-.version-section #candidate-version-list .history-item details[open] pre{max-width:100%;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow-y:auto}
