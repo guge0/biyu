@@ -31,20 +31,13 @@ class LongContextRetriever(ContextRetriever):
         self.chapters_dir = book_dir / "chapters"
 
     def retrieve(self, chapter_num: int) -> list[str]:
+        # 2026-10 老板裁定:历史细纲不进写手层——每次生成上下文保持纯净,
+        # 历史只保留上一章全文作衔接锚点;更早的事实由 truth_files 承载。
         chapters: list[str] = []
-        if not self.chapters_dir.exists():
+        if chapter_num <= 1 or not self.chapters_dir.exists():
             return chapters
-        outlines_dir = self.book_dir / "outlines"
-        # Writer needs the immediately preceding prose for continuity, while
-        # older chapters contribute only their compact author outlines.
-        for i in range(1, max(chapter_num - 1, 1)):
-            outline_path = outlines_dir / f"ch{i}.md"
-            if outline_path.exists():
-                chapters.append(outline_path.read_text(encoding="utf-8"))
-            else:
-                chapters.append("（无细纲）")
         previous = self.chapters_dir / f"ch{chapter_num - 1}.md"
-        if chapter_num > 1 and previous.exists():
+        if previous.exists():
             chapters.append(previous.read_text(encoding="utf-8"))
         return chapters
 

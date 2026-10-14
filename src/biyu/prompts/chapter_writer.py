@@ -220,9 +220,10 @@ def build_layer2_context(
         parts.append(sections["outline"])
         parts.append(outline)
 
-    # Q-1: Writer 同时读作者原始细纲与 Architect 方案。
-    if injection_v2 and original_outline:
-        parts.append("# 作者原始细纲")
+    # 2026-10 老板裁定:写手必须看到本章作者细纲,且与方案冲突时以细纲为准。
+    # (保真闸已保证方案≈细纲;双参照的冲突风险由闸兜底。)
+    if original_outline:
+        parts.append(_FRAGMENTS["sections"]["author_outline"])
         parts.append(original_outline)
 
     # 本章规划

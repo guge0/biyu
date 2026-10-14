@@ -26,7 +26,8 @@
     "prev_tail": "# 上一章末段(衔接锚点)",
     "history": "# 历史章节",
     "outline": "# 创作者细纲",
-    "planning": "# 本章规划"
+    "planning": "# 本章规划",
+    "author_outline": "# 本章作者细纲（作者原话；与导演方案不一致时，以本细纲为准）"
   },
   "tier_labels": {
     "protagonist": "主角",

@@ -142,7 +142,9 @@ def test_settings_bridge_root_mismatch_refuses_before_put(tmp_path: Path) -> Non
     assert methods == ["GET"]
 
 
-def test_writer_current_chapter_contract_does_not_gain_outline() -> None:
+def test_writer_current_chapter_contract_includes_author_outline_as_precedence() -> None:
+    """2026-10 老板裁定(推翻 08-15 一份真相):写手必须看到本章作者细纲,
+    且与导演方案冲突时以细纲为准;方案≈细纲由保真闸兜底。"""
     current = build_layer2_context(
         worldbook_prompt="",
         characters=[],
@@ -151,7 +153,7 @@ def test_writer_current_chapter_contract_does_not_gain_outline() -> None:
         context_block="",
         outline="SIGNED_CURRENT_PLAN",
         planning="",
-        original_outline="MUST_NOT_ADD_CURRENT_OUTLINE",
+        original_outline="AUTHOR_OUTLINE_ORIGINAL",
         injection_v2=False,
     )
     baseline = build_layer2_context(
@@ -164,12 +166,15 @@ def test_writer_current_chapter_contract_does_not_gain_outline() -> None:
         planning="",
         injection_v2=False,
     )
-    assert current == baseline
+    assert current != baseline
     assert "SIGNED_CURRENT_PLAN" in current
-    assert "MUST_NOT_ADD_CURRENT_OUTLINE" not in current
+    assert "AUTHOR_OUTLINE_ORIGINAL" in current
+    assert "以本细纲为准" in current
 
 
-def test_long_context_uses_previous_full_text_and_earlier_outlines(tmp_path: Path) -> None:
+def test_long_context_history_is_previous_full_text_only(tmp_path: Path) -> None:
+    """2026-10 老板裁定:历史细纲不进写手层——上下文保持纯净,
+    历史只保留上一章全文;更早事实由 truth_files 承载。"""
     chapters = tmp_path / "chapters"
     outlines = tmp_path / "outlines"
     plans = tmp_path / "logs"
@@ -185,10 +190,10 @@ def test_long_context_uses_previous_full_text_and_earlier_outlines(tmp_path: Pat
 
     history = "\n".join(LongContextRetriever(tmp_path).retrieve(4))
 
-    assert "FULL-3" in history
-    assert "OUTLINE-1" in history and "OUTLINE-2" in history
+    assert history == "FULL-3"
+    assert "OUTLINE-" not in history
     assert "FULL-1" not in history and "FULL-2" not in history
-    assert "PLAN-1" not in history and "PLAN-2" not in history
+    assert "PLAN-" not in history
 
 
 def test_writer_v4_and_v3_remove_separate_previous_tail() -> None:

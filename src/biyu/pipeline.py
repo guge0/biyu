@@ -603,8 +603,12 @@ def _build_context_block(
     # 2. 历史章节(通过 retriever 获取)
     retriever = get_retriever(book_dir, context_mode)
     history = retriever.retrieve(chapter_num)
-    for i, ch_text in enumerate(history, start=1):
-        parts.append(f"=== 第{i}章 ===\n{ch_text}")
+    if len(history) == 1:
+        # 2026-10 历史细纲出层后,历史只含上一章全文
+        parts.append(f"=== 上一章 ===\n{history[0]}")
+    else:
+        for i, ch_text in enumerate(history, start=1):
+            parts.append(f"=== 第{i}章 ===\n{ch_text}")
 
     return "\n\n".join(parts), retriever
 

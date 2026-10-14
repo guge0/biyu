@@ -157,7 +157,8 @@ def test_zebian_launch_rejects_venv_lib_as_project_root_and_uses_checkout(
     assert calls[0]["env"]["PATH"].split(os.pathsep)[0] == str(scripts)
 
 
-def test_long_context_middle_gap_keeps_real_chapter_numbers(tmp_path: Path) -> None:
+def test_long_context_history_is_previous_chapter_only(tmp_path: Path) -> None:
+    """2026-10 老板裁定:历史细纲不进写手层——每次生成上下文保持纯净。"""
     chapters = tmp_path / "chapters"
     outlines = tmp_path / "outlines"
     chapters.mkdir()
@@ -169,17 +170,14 @@ def test_long_context_middle_gap_keeps_real_chapter_numbers(tmp_path: Path) -> N
     (chapters / "ch4.md").write_text("FULL-4", encoding="utf-8")
 
     history = LongContextRetriever(tmp_path).retrieve(5)
-    labelled = "\n".join(
-        f"=== 第{chapter}章 ===\n{text}"
-        for chapter, text in enumerate(history, start=1)
-    )
 
-    assert "=== 第3章 ===\n（无细纲）" in labelled
-    assert "=== 第4章 ===\nFULL-4" in labelled
-    assert "=== 第3章 ===\nFULL-4" not in labelled
+    assert history == ["FULL-4"]
+    assert "OUTLINE-" not in "\\n".join(history)
+    assert "（无细纲）" not in "\\n".join(history)
 
 
-def test_context_block_middle_gap_keeps_real_chapter_numbers(tmp_path: Path) -> None:
+def test_context_block_history_is_previous_chapter_only(tmp_path: Path) -> None:
+    """2026-10 老板裁定:上下文块的历史段只有上一章全文,细纲不入层。"""
     chapters = tmp_path / "chapters"
     outlines = tmp_path / "outlines"
     chapters.mkdir()
@@ -192,11 +190,9 @@ def test_context_block_middle_gap_keeps_real_chapter_numbers(tmp_path: Path) -> 
 
     context, _retriever = _build_context_block(tmp_path, 5)
 
-    assert "=== 第1章 ===\nOUTLINE-1" in context
-    assert "=== 第2章 ===\nOUTLINE-2" in context
-    assert "=== 第3章 ===\n（无细纲）" in context
-    assert "=== 第4章 ===\nFULL-4" in context
-    assert "=== 第3章 ===\nFULL-4" not in context
+    assert "=== 上一章 ===\nFULL-4" in context
+    assert "OUTLINE-" not in context
+    assert "（无细纲）" not in context
 
 
 def test_writer_quick_projection_is_stable_across_present_characters() -> None:
