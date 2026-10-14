@@ -304,6 +304,13 @@ function setReadingAside(open,focusIssueId=''){
   syncReadingChromeMode();
   if(focusIssueId&&readingAsideOpen){requestAnimationFrame(()=>openIssueDetail(focusIssueId));}
 }
+function updateHeadSaveButton(){
+  const headSave2=$('head-save-chapter');
+  if(!headSave2)return;
+  headSave2.hidden = typeof readingView==='undefined' || readingView!=='edit';
+  headSave2.disabled = busy || readingView==='official' || !(current.actions?.edit_chapter?.enabled);
+  headSave2.innerHTML = dirty.has('chapter') ? '保存正文修改<span class="dirty-mark">●</span>' : '保存正文修改';
+}
 function setReadingView(view,focusIssueId=''){
   if(!['read','review','edit','official'].includes(view))return;
   if(view==='official'&&$('reading-mode-official').hidden)return;
@@ -325,6 +332,7 @@ function setReadingView(view,focusIssueId=''){
     if(readingAsideOpen&&!focusIssueId)activeIssueId='';
     setReadingAside(readingAsideOpen,focusIssueId);
   }
+  updateHeadSaveButton();
 }
 async function requestOfficialReadingView(){
   if($('reading-mode-official').hidden||readingView==='official')return;
@@ -626,6 +634,7 @@ function renderReadingDecisionState(){
   $('reading-check-state').textContent=[checkLine,featureLine].filter(Boolean).join(' · ');
   const entry=$('review-entry'),issueCount=(current.issue_cards||[]).length;
   entry.textContent=issueCount?(readingAsideOpen?`${issueCount} 项待处理`:`看意见 · ${issueCount} 处待看`):'';entry.disabled=readingAsideOpen;entry.hidden=!issueCount;
+  updateHeadSaveButton();
   const adopt=$('adopt-button'),reason=$('adopt-reason'),unhandled=unhandledCards().length;
   if(current.manuscript_state==='candidate'){
     adopt.textContent=current.check_state==='unchecked'||unhandled===0?'采 用':`采用（还有 ${unhandled} 处没处理）`;
@@ -1235,6 +1244,9 @@ document.querySelectorAll('[data-feedback]').forEach(button=>button.onclick=()=>
 $('save-review').onclick=saveReview;
 $('undo-adopt').onclick=undoAdopt;
 $('save-chapter').onclick=saveChapter;
+// 2026-10:编辑态顶部也给出保存入口(长章不必滚到底),与底部保存同一流程
+const headSave=$('head-save-chapter');
+if(headSave){headSave.onclick=saveChapter;}
 $('copy-chapter').onclick=copyChapterText;
 $('save-confirm-planning').onclick=confirmPlanning;
 $('run-architect').onclick=runArchitect;

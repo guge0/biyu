@@ -2220,6 +2220,8 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 /* 2026-10 终局修复:阶段条回归第一行命令行(它本就是 title-row 子元素),
    不再单独浮成第二条带——两条带同位互相覆盖,阶段标签/工具条按钮互吃点击。 */
 .workbench .reading-layout.reading-pure .reading-prose-grid{padding-top:96px}
+/* 2026-10:编辑/正式视图同样让位——固定顶栏在所有读稿视图常驻,排版必须一致 */
+.workbench:has(#reading-decision:not([hidden])) .reading-prose-grid{padding-top:96px}
 .workbench .reading-decision-head{
   position:fixed;top:52px;right:20px;left:20px;z-index:14;min-width:0;height:44px;margin:0;padding:0 0 0 410px;border:0;
   background:var(--paper); /* 2026-10:整条不透明带,左侧 x<430 区(原裸露)正文从此不再穿透 */
@@ -2400,3 +2402,7 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 /* 2026-10 版本差距红点:落后 origin/main 时显示,点击拉取最新 */
 .update-dot-behind{width:10px;height:10px;padding:0;border-radius:50%;border:2px solid #c0392b;background:transparent;cursor:pointer;flex:none}
 .update-dot-behind.pulled{border-color:#9aa48f}
+
+/* 2026-10:编辑态的顶部保存入口(与底部保存等价) */
+#head-save-chapter[hidden]{display:none}
+#head-save-chapter .dirty-mark{color:#c0392b}
