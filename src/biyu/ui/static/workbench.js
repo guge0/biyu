@@ -760,7 +760,7 @@ function formatCandidateLabel(item){
   // 2026-10 溯源:每版标明 导演方案/细纲直生成 + 用的哪份声纹(旧版候选无此字段则不显)
   let suffix='';
   if(item.generation_mode)suffix+=` · ${item.generation_mode}`;
-  if('voiceprint_id' in item)suffix+=` · 声纹:${item.voiceprint_name||'无'}`;
+  if(item.voiceprint_name)suffix+=` · 声纹:${item.voiceprint_name}`;
   return `第 ${item.version} 版 · ${time} · ${item.word_count} 字${suffix}`;
 }
 function sanitizeAuthorReport(text){

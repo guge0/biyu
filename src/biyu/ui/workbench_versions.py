@@ -187,18 +187,14 @@ def snapshot_candidate(book_dir: Path, chapter: int, *, run_id: str, action: str
     official_content = official.read_text(encoding="utf-8") if official.exists() else ""
     content_path.write_text(content, encoding="utf-8")
     # 2026-10 \u8001\u677f\u8981\u6c42:\u6bcf\u7248\u5019\u9009\u8bb0\u5f55\u6eaf\u6e90\u2014\u2014\u7528\u4e86\u4ec0\u4e48\u58f0\u7eb9\u3001\u8d70\u6ca1\u8d70\u5bfc\u6f14\u65b9\u6848\u3002
-    from biyu.fingerprint.profile_state import load_profile_state
+    # 声纹取自 load_merged_voiceprint(与写手注入完全同源,含未保存时的默认回退)。
+    from biyu.fingerprint.library import load_merged_voiceprint
 
-    profile_state = load_profile_state(book_dir)
-    voice_id = profile_state.get("active")
+    merged = load_merged_voiceprint(book_dir)
+    voice_id = merged.get("active_profile_id")
     voice_name = None
-    if voice_id:
-        from biyu.fingerprint.library import load_catalog
-
-        for profile in load_catalog(book_dir):
-            if profile.get("id") == voice_id:
-                voice_name = str(profile.get("name") or voice_id)
-                break
+    if merged.get("active_profile"):
+        voice_name = str(merged["active_profile"].get("name") or voice_id)
     planning_md = book_dir / "logs" / f"ch{chapter}" / "planning.md"
     from biyu.ui.workbench_state import read_planning_skipped
 
