@@ -1878,6 +1878,11 @@ label{min-height:0}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap}
 .modal-actions .b3{margin-right:auto}
 
+/* 2026-10 候选稿处理弹窗:三个动作改为等宽纵向决策列表,不再散排 */
+#candidate-dialog .modal-actions{flex-direction:column;align-items:stretch;gap:10px;margin-top:18px}
+#candidate-dialog .modal-actions button{width:100%;min-height:44px;margin:0}
+#candidate-dialog .modal-actions .b3{margin-right:0;color:var(--ink-mute)}
+
 /* ---------- Z-1 备份面板 ---------- */
 .backup-status-trigger{display:block;border:0;background:transparent;padding:0;margin:0 0 10px;color:var(--ink-mute);font:inherit;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;text-align:left}
 .backup-status-trigger.backup-status-failed{color:var(--mark)}
