@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "biyu"
-version = "0.1.0"
+version = "0.2.0"
 description = "笔驭 - 专为中文网文连载设计的AI创作伙伴"
 requires-python = ">=3.9"
 dependencies = [

@@ -87,8 +87,8 @@ def test_runtime_version_endpoint_and_visible_shelf_badge(monkeypatch) -> None:
     response = TestClient(app_module.app).get("/api/version")
     assert response.status_code == 200
     payload = response.json()
-    assert payload["version"] == "0.1.0"
-    assert payload["build"] == f"{date.today():%Y%m%d} · 00a7b752"
+    assert payload["version"] == "0.2.0"
+    assert payload["build"] == f"v0.2.0 · {date.today():%Y%m%d}"
     assert payload["runtime"] == "笔驭"
     assert payload["role"] == "笔驭"
     assert payload["checkout"] == "biyu-dev"
@@ -122,19 +122,19 @@ def test_production_version_reads_local_release_manifest_and_marks_update(
     import biyu.ui.app as app_module
 
     manifest = tmp_path / "published-version.json"
-    manifest.write_text(json.dumps({"version": "0.2.0", "build": "20260823"}), encoding="utf-8")
+    manifest.write_text(json.dumps({"version": "0.3.0", "build": "20261014"}), encoding="utf-8")
     monkeypatch.setenv("BIYU_RUNTIME_ROLE", "production")
     monkeypatch.setenv("BIYU_RELEASE_MANIFEST", str(manifest))
     monkeypatch.setattr(app_module.subprocess, "check_output", lambda *args, **kwargs: "00a7b752\n")
 
     payload = TestClient(app_module.app).get("/api/version").json()
     assert payload["update_available"] is True
-    assert payload["latest_version"] == "0.2.0"
+    assert payload["latest_version"] == "0.3.0"
     assert payload["update"] == {
         "available": True,
-        "current": "0.1.0",
-        "published": "0.2.0",
-        "published_build": "20260823",
+        "current": "0.2.0",
+        "published": "0.3.0",
+        "published_build": "20261014",
         "source": str(manifest),
     }
 

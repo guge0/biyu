@@ -59,8 +59,8 @@
   function renderVersion(info) {
     const label = $("version-label");
     if (!label) return;
-    label.textContent = `笔驭 ${info.version} · ${info.sha}`;
-    label.title = `笔驭 ${info.version}`;
+    label.textContent = `笔驭 ${info.version}`; el.title = `构建 ${info.build} · ${info.sha}`;
+    label.title = `构建 ${info.build} · ${info.sha}`;
     const update = info.update || {};
     const updateDot = $("update-dot");
     const hasUpdate = Boolean(update.available || info.update_available);

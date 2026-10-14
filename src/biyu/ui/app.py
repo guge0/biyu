@@ -266,7 +266,7 @@ def runtime_version() -> dict[str, object]:
     update = _release_update()
     return {
         "version": __version__,
-        "build": f"{BUILD_DATE} · {identity['sha']}",
+        "build": f"v{__version__} · {BUILD_DATE}",
         "runtime": _runtime_label(),
         "update": update,
         # Flat aliases keep simple clients compatible with the small original
