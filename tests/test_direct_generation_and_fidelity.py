@@ -374,3 +374,21 @@ def test_selection_empty_string_means_cancel(tmp_path, monkeypatch) -> None:
 
     state = load_profile_state(book)
     assert state["saved"] is True and state["active"] is None
+
+
+def test_skip_mode_write_enabled_from_any_stage(tmp_path) -> None:
+    """2026-10 老板反馈:换声纹后从读稿阶段直接重复生成,不该被阶段闸打回重走。"""
+    from biyu.ui import workbench
+
+    for step in ("planning", "generation", "reading", "review"):
+        actions = workbench._state_actions(
+            step, "idle", stale=False, has_outline=True,
+            planning_status="无", planning_skipped=True,
+        )
+        assert actions["write"]["enabled"] is True, step
+    # 非跳过模式维持原闸:reading 阶段不可 write(走 regenerate)
+    actions_normal = workbench._state_actions(
+        "reading", "idle", stale=False, has_outline=True,
+        planning_status="已批", planning_skipped=False,
+    )
+    assert actions_normal["write"]["enabled"] is False

@@ -756,7 +756,7 @@ def _state_actions(
         "write": _action(
             has_outline and (
                 (planning_status == "已批" and step == "generation")
-                or (planning_skipped and step in {"planning", "generation"})
+                or planning_skipped  # 2026-10:跳过模式下细纲即契约,任意阶段可重复生成(A/B 常态)
             ),
             "先保存细纲，再生成正文" if planning_skipped else "先确认方案，再生成正文",
         ),

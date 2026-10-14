@@ -197,6 +197,8 @@ async function saveGenerationVoiceprintSelection(){
   finally{button.textContent=original;button.disabled=false;}
 }
 async function prepareFirstGenerationVoiceprint(){
+  // 2026-10:常驻声纹选择后,换声纹未保存时点生成先自动保存,再按新声纹生成
+  if(generationVoiceprintDirty&&!(await saveGenerationVoiceprintSelection()))return false;
   if(!current.first_generation)return true;
   if((!generationVoiceprintWorkspace||generationVoiceprintBook!==$('book').value)&&!(await loadGenerationVoiceprint()))return false;
   if(generationVoiceprintDirty)return saveGenerationVoiceprintSelection();
