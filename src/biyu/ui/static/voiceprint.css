@@ -41,3 +41,8 @@
 .merged-prompt-details .markdown-body{max-width:30em;font-family:var(--serif);font-size:17px;line-height:1.95;color:var(--ink)}
 /* button[disabled] 唯一见 styles.css U-1 段（U-1.5 下），此处不重复 */
 @media(max-width:720px){.voice-page{padding:14px}.summary-grid,.import-cost-grid{grid-template-columns:1fr}.voice-header,.review-heading,.panel-heading{display:block}.book-picker select{width:100%}.catalog-item{align-items:flex-start}}
+
+/* 2026-10:无生效声纹时隐藏原文展开器 */
+.merged-prompt-details[hidden]{display:none}
+
+.editable-profile:target{outline:2px solid #ba7517;outline-offset:4px}

@@ -203,6 +203,7 @@ function renderLines() {
   profiles.forEach(profile => {
     const section = document.createElement('section');
     section.className = 'editable-profile';
+    section.id = `lines-profile-${profile.id}`;
     const title = document.createElement('h3');
     title.textContent = profile.name || '未命名声纹';
     const note = document.createElement('p');
@@ -234,6 +235,15 @@ function renderActive() {
   const meta = $('voice-active-meta');
   if (meta) meta.innerHTML = profile ? `当前<br>${profile.name}` : '当前<br>无';
   $('active-source-warning').hidden = !profile?.sources_stale;
+  // 2026-10 老板要求:没有生效声纹时,这两个控件是空操作,直接藏起来
+  const hasActiveLines = active.length > 0;
+  const openLinesBtn = $('open-lines');
+  if (openLinesBtn) openLinesBtn.hidden = !hasActiveLines;
+  const mergedDetails = document.querySelector('.merged-prompt-details');
+  if (mergedDetails) {
+    mergedDetails.hidden = !hasActiveLines;
+    if (!hasActiveLines) mergedDetails.open = false;
+  }
   const activeRoot = $('active-lines');
   if (activeRoot) {
     activeRoot.replaceChildren();
@@ -288,6 +298,12 @@ function renderCatalog() {
     note.textContent = profile.sources_stale ? '来源已有变化，可重合并' : profile.id === state.active ? '当前生效' : '';
     text.append(title, note);
     row.append(text);
+    // 2026-10 老板要求的使用逻辑:每份声纹可直接查看原句并修改,不必先设为当前
+    const view = document.createElement('button');
+    view.type = 'button';
+    view.textContent = '查看原句';
+    view.onclick = () => openLinesView(profile.id);
+    row.append(view);
     // W-2：能点必须有信号。当前生效=status-text 纯文字（不可点）；其余=「设为当前」按钮（可点）
     if (profile.id === state.active) {
       const activeTag = document.createElement('span');
@@ -662,12 +678,21 @@ function showSelectView() {
   window.scrollTo(0, selectScrollY);
 }
 
-function openLinesView() {
+function openLinesView(targetProfileId) {
   selectScrollY = window.scrollY;
   $('select-view').hidden = true;
   $('lines-view').hidden = false;
   $('create-view').hidden = true;
   window.scrollTo(0, 0);
+  renderLines();
+  if (targetProfileId) {
+    // 用 :target 高亮(页面合同禁计时器),浏览器自带定位
+    const anchor = document.getElementById(`lines-profile-${targetProfileId}`);
+    if (anchor) {
+      history.replaceState(null, '', `#lines-profile-${targetProfileId}`);
+      anchor.scrollIntoView({ block: 'start' });
+    }
+  }
 }
 
 function openCreateView(kind) {
