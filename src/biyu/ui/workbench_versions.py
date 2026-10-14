@@ -220,6 +220,22 @@ def snapshot_candidate(book_dir: Path, chapter: int, *, run_id: str, action: str
     return version
 
 
+def _run_log_mode(book_dir: Path, chapter: int, run_id: str | None) -> str | None:
+    """从运行日志 argv 反推生成模式(存量候选的懒回填,只读)。"""
+    if not run_id:
+        return None
+    log = book_dir / "logs" / f"ch{chapter}" / "runs" / f"{run_id}.log"
+    if not log.exists():
+        return None
+    try:
+        for line in log.read_text(encoding="utf-8", errors="replace").splitlines():
+            if line.startswith("argv="):
+                return "细纲直生成" if "--skip-planning" in line else "导演方案"
+    except OSError:
+        pass
+    return None
+
+
 def list_candidate_versions(book_dir: Path, chapter: int) -> list[dict[str, Any]]:
     chronological: list[dict[str, Any]] = []
     for meta_path in sorted(_candidates_dir(book_dir, chapter).glob("candidate_v*.json"), key=_number):
@@ -227,6 +243,8 @@ def list_candidate_versions(book_dir: Path, chapter: int) -> list[dict[str, Any]
         content_path = meta_path.with_suffix(".md")
         if not content_path.exists():
             continue
+        if "generation_mode" not in meta:
+            meta["generation_mode"] = _run_log_mode(book_dir, chapter, meta.get("run_id"))
         item = {**meta, "content": content_path.read_text(encoding="utf-8"), "compare": None}
         if chronological:
             base = chronological[-1]

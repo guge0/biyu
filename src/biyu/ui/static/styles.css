@@ -2406,3 +2406,9 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 /* 2026-10:编辑态的顶部保存入口(与底部保存等价) */
 #head-save-chapter[hidden]{display:none}
 #head-save-chapter .dirty-mark{color:#c0392b}
+
+/* 2026-10:候选版本行网格化——标题/查看正文/技术详情/按钮 四列对齐 */
+.version-section #candidate-version-list .history-item{display:grid;grid-template-columns:minmax(0,1fr) 96px 96px 132px;gap:12px;align-items:center}
+.version-section #candidate-version-list .history-item p{margin:0;min-width:0}
+.version-section #candidate-version-list .history-item details{margin:0}
+.version-section #candidate-version-list .history-item summary{cursor:pointer;white-space:nowrap}
