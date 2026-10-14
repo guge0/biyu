@@ -480,6 +480,8 @@ function renderArchitectState(){
     if(toggle){
       toggle.checked=skipped;
       toggle.disabled=busy||current.axes?.run==='busy';
+      // 2026-10 老板反馈:禁用要说明原因,不能无声点不动
+      toggle.title=toggle.disabled?(busy||current.axes?.run==='busy'?'本次生成正在进行，结束后才能切换模式':''):'';
     }
     $('planning-skip-active').hidden=!skipped;
     // 2026-10 老板建议:勾选后直接带去生成阶段(有"去生成正文"按钮兜底)
