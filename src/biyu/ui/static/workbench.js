@@ -322,6 +322,17 @@ function updateHeadSaveButton(){
     const currentItem=versions.find(item=>item.state==='current');
     if(currentItem)versionSelect.value=String(currentItem.version);
   }
+  // 2026-10 溯源显示:当前看的这版用了什么模式/声纹(旧版无记录则不显)
+  const provenance=$('reading-version-provenance');
+  if(provenance){
+    const versions=current.candidate_versions||[];
+    const viewed=versions.find(item=>item.state==='current')
+      || [...versions].reverse().find(item=>item.state==='adopted');
+    const bits=[viewed?.generation_mode, viewed?.voiceprint_name?`声纹:${viewed.voiceprint_name}`:(viewed&&'voiceprint_id' in viewed?'声纹:无':null)].filter(Boolean);
+    provenance.textContent=bits.join(' · ');
+    provenance.hidden=!bits.length;
+    provenance.title='这一版候选的生成方式与所用声纹';
+  }
   const headSave2=$('head-save-chapter');
   if(!headSave2)return;
   headSave2.hidden = typeof readingView==='undefined' || readingView!=='edit';

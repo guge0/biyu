@@ -130,7 +130,7 @@ def test_shared_workbench_cache_contract_is_red_on_mismatch_and_green_on_match()
     html = Path("src/biyu/ui/static/workbench.html").read_text(encoding="utf-8")
 
     with pytest.raises(AssertionError):
-        assert_workbench_js_src(html.replace("workbench.js?v=c2-19", "workbench.js?v=wrong"))
+        assert_workbench_js_src(html.replace("workbench.js?v=c2-21", "workbench.js?v=wrong"))
 
     assert_workbench_js_src(html)
 
