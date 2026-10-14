@@ -135,8 +135,8 @@ function generationVoiceprintUrl(){
 function renderGenerationVoiceprint(){
   const panel=$('generation-voiceprint');
   if(!panel)return;
-  panel.hidden=!current.first_generation;
-  if(!current.first_generation)return;
+  // 2026-10 老板要求:声纹选择常驻生成步,不再只限第一次生成
+  panel.hidden=false;
   const encoded=encodeURIComponent($('book').value);
   $('generation-voiceprint-link').href=`/voiceprint.html?book=${encoded}&chapter=${encodeURIComponent(current.chapter)}`;
   const root=$('generation-voiceprint-options');
@@ -152,6 +152,11 @@ function renderGenerationVoiceprint(){
   const activeProfile=catalog.find(item=>item.id===active);
   $('generation-voiceprint-current').textContent=`当前生效：${activeProfile?activeProfile.name:'未选择'}`;
   root.replaceChildren();
+  const noneLabel=document.createElement('label');noneLabel.className='generation-voiceprint-option';
+  const noneInput=document.createElement('input');noneInput.type='radio';noneInput.name='generation-active-voiceprint';noneInput.value='';noneInput.checked=!active;
+  noneInput.onchange=()=>{generationVoiceprintDirty=true;$('generation-voiceprint-status').textContent='选择尚未保存；点“生成正文”时也会先保存。';};
+  const noneText=document.createElement('span');noneText.textContent='不使用声纹（写手不注入文风参照）';
+  noneLabel.append(noneInput,noneText);root.append(noneLabel);
   catalog.forEach(profile=>{
     const label=document.createElement('label');label.className='generation-voiceprint-option';
     const input=document.createElement('input');input.type='radio';input.name='generation-active-voiceprint';input.value=profile.id;input.checked=active===profile.id;
@@ -163,7 +168,7 @@ function renderGenerationVoiceprint(){
   if(!catalog.length)$('generation-voiceprint-status').textContent='目前没有可选声纹；仍可不带声纹生成正文。';
 }
 async function loadGenerationVoiceprint(){
-  if(generationVoiceprintLoading||!current.first_generation)return false;
+  if(generationVoiceprintLoading)return false;
   generationVoiceprintLoading=true;generationVoiceprintError=false;
   try{
     const response=await fetch(generationVoiceprintUrl());

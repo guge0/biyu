@@ -13,8 +13,10 @@ def test_first_generation_voiceprint_ui_static_contract() -> None:
     js = Path("src/biyu/ui/static/workbench.js").read_text(encoding="utf-8")
 
     assert 'id="generation-voiceprint"' in html
-    assert "第一次生成正文前" in html
-    assert "first_generation" in js
+    # 2026-10 老板要求:声纹选择常驻生成步,不再只限第一次生成
+    assert "本章声纹" in html
+    assert "不使用声纹" in js
+    assert "panel.hidden=false" in js
     assert "/api/voiceprint/books/" in js
     assert "/selection" in js
     assert "prepareFirstGenerationVoiceprint" in js
