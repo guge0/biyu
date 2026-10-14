@@ -720,7 +720,11 @@ function versionButton(label, onclick, primary=false){const b=document.createEle
 function formatCandidateLabel(item){
   const parsed=new Date(item.created_at||'');
   const time=Number.isNaN(parsed.getTime())?'时间未知':parsed.toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false});
-  return `第 ${item.version} 版 · ${time} · ${item.word_count} 字`;
+  // 2026-10 溯源:每版标明 导演方案/细纲直生成 + 用的哪份声纹(旧版候选无此字段则不显)
+  let suffix='';
+  if(item.generation_mode)suffix+=` · ${item.generation_mode}`;
+  if('voiceprint_id' in item)suffix+=` · 声纹:${item.voiceprint_name||'无'}`;
+  return `第 ${item.version} 版 · ${time} · ${item.word_count} 字${suffix}`;
 }
 function sanitizeAuthorReport(text){
   const technical=/(?:^\s*(?:[$>]\s*)?biyu\s+|\s--[\w-]+|(?:[A-Za-z]:\\|(?:^|\s)(?:data|src|prompts|tests|logs|truth_files)\/)\S+)/i;

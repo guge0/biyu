@@ -392,3 +392,43 @@ def test_skip_mode_write_enabled_from_any_stage(tmp_path) -> None:
         planning_status="已批", planning_skipped=False,
     )
     assert actions_normal["write"]["enabled"] is False
+
+
+def test_candidate_meta_records_mode_and_voiceprint(tmp_path, monkeypatch) -> None:
+    """2026-10 溯源:每版候选记录 细纲直生成/导演方案 + 用的哪份声纹。"""
+    from biyu.ui.workbench_versions import snapshot_candidate
+    from biyu.fingerprint.profile_state import save_profile_state
+    from biyu.fingerprint import library as lib
+
+    book = tmp_path / "Book"
+    (book / "chapters" / "_pending").mkdir(parents=True)
+    (book / "book.json").write_text('{"id":"book","title":"Book"}', encoding="utf-8")
+    (book / "chapters" / "_pending" / "ch1.md").write_text("正文内容测试。", encoding="utf-8")
+    hand = book / "声纹" / "手写"
+    hand.mkdir(parents=True)
+    (hand / "pA.json").write_text(json.dumps({
+        "id": "pA", "name": "江南文风", "kind": "manual",
+        "lines": [{"dimension": "节奏", "text": "x", "why": "y"}],
+    }, ensure_ascii=False), encoding="utf-8")
+    save_profile_state(book, "pA")
+
+    version = snapshot_candidate(book, 1, run_id="r1", action="write")
+    meta = json.loads(
+        (book / "logs" / "ch1" / "candidates" / f"candidate_v{version}.json")
+        .read_text(encoding="utf-8")
+    )
+    assert meta["generation_mode"] == "细纲直生成"  # 无 planning.md
+    assert meta["voiceprint_name"] == "江南文风"
+    assert meta["voiceprint_id"] == "pA"
+
+    # 导演模式:有已批 planning.md → 导演方案
+    (book / "logs" / "ch1" / "planning.md").write_text(
+        "status: 已批\n方案内容", encoding="utf-8"
+    )
+    (book / "chapters" / "_pending" / "ch1.md").write_text("新版正文。", encoding="utf-8")
+    save_profile_state(book, None)
+    snapshot_candidate(book, 1, run_id="r2", action="regenerate")
+    metas = sorted((book / "logs" / "ch1" / "candidates").glob("candidate_v*.json"))
+    meta2 = json.loads(metas[-1].read_text(encoding="utf-8"))
+    assert meta2["generation_mode"] == "导演方案"
+    assert meta2["voiceprint_name"] is None

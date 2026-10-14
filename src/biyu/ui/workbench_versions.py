@@ -186,11 +186,32 @@ def snapshot_candidate(book_dir: Path, chapter: int, *, run_id: str, action: str
     official = book_dir / "chapters" / f"ch{chapter}.md"
     official_content = official.read_text(encoding="utf-8") if official.exists() else ""
     content_path.write_text(content, encoding="utf-8")
+    # 2026-10 \u8001\u677f\u8981\u6c42:\u6bcf\u7248\u5019\u9009\u8bb0\u5f55\u6eaf\u6e90\u2014\u2014\u7528\u4e86\u4ec0\u4e48\u58f0\u7eb9\u3001\u8d70\u6ca1\u8d70\u5bfc\u6f14\u65b9\u6848\u3002
+    from biyu.fingerprint.profile_state import load_profile_state
+
+    profile_state = load_profile_state(book_dir)
+    voice_id = profile_state.get("active")
+    voice_name = None
+    if voice_id:
+        from biyu.fingerprint.library import load_catalog
+
+        for profile in load_catalog(book_dir):
+            if profile.get("id") == voice_id:
+                voice_name = str(profile.get("name") or voice_id)
+                break
+    planning_md = book_dir / "logs" / f"ch{chapter}" / "planning.md"
+    from biyu.ui.workbench_state import read_planning_skipped
+
+    skipped = read_planning_skipped(book_dir, chapter)
+    mode = "\u7ec6\u7eb2\u76f4\u751f\u6210" if (skipped or not planning_md.exists()) else "\u5bfc\u6f14\u65b9\u6848"
     _write_json(meta_path, {
         "version": version,
         "run_id": run_id,
         "action": action,
         "from_plan": current_plan_version(book_dir, chapter),
+        "voiceprint_id": voice_id,
+        "voiceprint_name": voice_name,
+        "generation_mode": mode,
         "created_at": _now(),
         "word_count": sum(1 for char in content if "\u4e00" <= char <= "\u9fff"),
         "official_base_words": sum(1 for char in official_content if "\u4e00" <= char <= "\u9fff") if official.exists() else None,
