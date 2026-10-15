@@ -386,12 +386,20 @@ def test_skip_mode_write_enabled_from_any_stage(tmp_path) -> None:
             planning_status="无", planning_skipped=True,
         )
         assert actions["write"]["enabled"] is True, step
-    # 非跳过模式维持原闸:reading 阶段不可 write(走 regenerate)
+    # 2026-10 终局:导演模式同样不锁阶段——已批方案+细纲即可生成,
+    # 改细纲导致的方案变旧由「基于旧方案」徽标警告(死锁案例:已批+改细纲
+    # → 阶段回退 → 生成/确认双禁)。reading 阶段也放行。
     actions_normal = workbench._state_actions(
         "reading", "idle", stale=False, has_outline=True,
         planning_status="已批", planning_skipped=False,
     )
-    assert actions_normal["write"]["enabled"] is False
+    assert actions_normal["write"]["enabled"] is True
+    # 未批方案仍然禁(确认闸本身保留)
+    actions_unapproved = workbench._state_actions(
+        "reading", "idle", stale=False, has_outline=True,
+        planning_status="待批", planning_skipped=False,
+    )
+    assert actions_unapproved["write"]["enabled"] is False
 
 
 def test_candidate_meta_records_mode_and_voiceprint(tmp_path, monkeypatch) -> None:

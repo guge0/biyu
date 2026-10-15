@@ -754,10 +754,10 @@ def _state_actions(
         ),
         "revoke_planning": _action(has_planning and planning_status == "已批", "方案尚未确认，不需要退回"),
         "write": _action(
-            has_outline and (
-                (planning_status == "已批" and step == "generation")
-                or planning_skipped  # 2026-10:跳过模式下细纲即契约,任意阶段可重复生成(A/B 常态)
-            ),
+            # 2026-10 终局修复(老板第三次反馈同类死锁):生成不再锁阶段。
+            # 已批方案+细纲即可生成,任何阶段;改细纲导致方案变旧由
+            # 「基于旧方案」徽标警告,不由阶段闸锁死——阶段条只做导航。
+            has_outline and (planning_status == "已批" or planning_skipped),
             "先保存细纲，再生成正文" if planning_skipped else "先确认方案，再生成正文",
         ),
         "adopt": _action(
