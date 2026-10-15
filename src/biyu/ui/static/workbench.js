@@ -419,6 +419,9 @@ function showExcerptReceipt(kind){
 function canOpenStage(index) {
   // 2026-10 跳过导演:细纲已存即放行到生成阶段(阶段位可能停在 planning)
   if (current.planning_skipped && current.outline && index <= 2) return true;
+  // 2026-10 死锁终局修复:生成步的导航锁跟随写闸——方案已批+细纲在,
+  // 任何阶段位都能进生成面板(改细纲回退阶段位不再反锁导航)
+  if (index === 2 && current.actions?.write?.enabled) return true;
   return index<=current.stage||(index===4&&((current.samples||[]).length>0||current.actions?.excerpt?.enabled));
 }
 function renderStageBar() {
