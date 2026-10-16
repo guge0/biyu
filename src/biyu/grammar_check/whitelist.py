@@ -87,8 +87,10 @@ def load_whitelist(book_dir: Path) -> set[str]:
     return whitelist
 
 
-def _extract_nouns(text: str, out: set[str]) -> None:
+def _extract_nouns(text, out: set[str]) -> None:
     """从文本中提取中文专有名词（2-6字的连续中文字符串中的常见模式）。"""
+    if not isinstance(text, str):
+        return  # 2026-10:嵌套列表等非字符串条目跳过,不崩检查器
     if not text:
         return
     # 提取所有 2-8 字连续中文词
@@ -101,8 +103,10 @@ def _extract_nouns(text: str, out: set[str]) -> None:
             out.add(word)
 
 
-def _extract_oral_words(text: str, out: set[str]) -> None:
+def _extract_oral_words(text, out: set[str]) -> None:
     """从 voice_examples 中提取短口语词。"""
+    if not isinstance(text, str):
+        return  # 2026-10:非字符串条目跳过
     if not text:
         return
     # 匹配引号内的短句

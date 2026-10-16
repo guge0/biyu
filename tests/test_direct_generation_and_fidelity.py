@@ -440,3 +440,31 @@ def test_candidate_meta_records_mode_and_voiceprint(tmp_path, monkeypatch) -> No
     meta2 = json.loads(metas[-1].read_text(encoding="utf-8"))
     assert meta2["generation_mode"] == "导演方案"
     assert meta2["voiceprint_name"] is None
+
+
+def test_worldbook_nested_lists_flattened_for_all_consumers(tmp_path) -> None:
+    """2026-10 外部用户事故:worldbook.yaml 列表套列表 → 白名单检查器
+    TypeError 崩溃。加载时拍平,所有消费者(注入/白名单/Layer1)只见字符串。"""
+    from biyu.worldbook import load_worldbook, build_worldbook_prompt
+    from biyu.grammar_check.whitelist import load_whitelist
+
+    book = tmp_path / "Book"
+    book.mkdir()
+    (book / "worldbook.yaml").write_text(
+        "facts:\n"
+        "  - - 硬设定甲\n"
+        "    - 硬设定乙\n"
+        "  - 硬设定丙\n"
+        "forbidden:\n"
+        "  - - 禁止事项一\n"
+        "geography:\n"
+        "  - - 边地\n"
+        "power_system: 无\n",
+        encoding="utf-8",
+    )
+    wb = load_worldbook(book)
+    assert wb["facts"] == ["硬设定甲", "硬设定乙", "硬设定丙"]
+    prompt = build_worldbook_prompt(wb)
+    assert "硬设定甲" in prompt and "禁止事项一" in prompt and "边地" in prompt
+    whitelist = load_whitelist(book)
+    assert whitelist  # 不崩且提取到词条
