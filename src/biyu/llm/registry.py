@@ -20,6 +20,7 @@ _ADAPTER_MAP: dict[str, type[LLMAdapter]] = {
     "kimi": KimiAdapter,
     "moonshot": KimiAdapter,  # moonshot provider uses KimiAdapter
     "doubao": DoubaoAdapter,
+    "gemini": OpenAICompatibleAdapter,  # Google 官方 OpenAI 兼容层(/v1beta/openai)
     "openai_compatible": OpenAICompatibleAdapter,
 }
 
@@ -93,6 +94,10 @@ class ModelRegistry:
             # Merge base_url from provider if not in model
             if "base_url" not in model_cfg and "base_url" in provider_cfg:
                 model_cfg["base_url"] = resolve_env_vars(provider_cfg["base_url"])
+
+            # Merge per-provider proxy if not in model
+            if "proxy" not in model_cfg and "proxy" in provider_cfg:
+                model_cfg["proxy"] = resolve_env_vars(provider_cfg["proxy"])
 
             # Resolve api_key from provider
             if "api_key" not in model_cfg:

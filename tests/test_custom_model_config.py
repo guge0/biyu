@@ -27,6 +27,75 @@ def test_openai_compatible_normalizes_v1_and_returns_chat_text(monkeypatch) -> N
     assert seen["payload"]["model"] == "local"
 
 
+def test_openai_compatible_preserves_gemini_official_path(monkeypatch) -> None:
+    from biyu.llm.openai_compatible import OpenAICompatibleAdapter
+
+    seen = {}
+
+    async def handler(request: httpx.Request):
+        seen["url"] = str(request.url)
+        return httpx.Response(200, json={"choices": [{"message": {"content": "OK"}}]})
+
+    adapter = OpenAICompatibleAdapter(
+        model_name="gemini-4-argon",
+        api_key="secret",
+        base_url="https://generativelanguage.googleapis.com/v1beta/openai",
+    )
+    original_client = httpx.AsyncClient
+    monkeypatch.setattr(httpx, "AsyncClient", lambda **kwargs: original_client(transport=httpx.MockTransport(handler), **kwargs))
+
+    result = asyncio.run(adapter.generate([{"role": "user", "content": "hi"}], max_tokens=4))
+    assert result.text == "OK"
+    assert seen["url"] == "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+
+
+def test_openai_compatible_uses_provider_proxy(monkeypatch) -> None:
+    from biyu.llm.openai_compatible import OpenAICompatibleAdapter
+
+    async def handler(request: httpx.Request):
+        return httpx.Response(200, json={"choices": [{"message": {"content": "OK"}}]})
+
+    captured = {}
+
+    original_client = httpx.AsyncClient
+
+    def fake_client(**kwargs):
+        captured.update(kwargs)
+        kwargs.pop("proxy", None)
+        return original_client(transport=httpx.MockTransport(handler), **kwargs)
+
+    adapter = OpenAICompatibleAdapter(model_name="m", api_key="k", base_url="https://example.com", proxy="http://127.0.0.1:7890")
+    monkeypatch.setattr(httpx, "AsyncClient", fake_client)
+    asyncio.run(adapter.generate([{"role": "user", "content": "hi"}], max_tokens=4))
+    assert captured.get("proxy") == "http://127.0.0.1:7890"
+
+
+def test_registry_maps_gemini_provider_with_proxy(tmp_path: Path, monkeypatch) -> None:
+    from biyu.llm.registry import ModelRegistry
+
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    config = tmp_path / "models.yaml"
+    config.write_text(
+        "providers:\n"
+        "  gemini:\n"
+        "    base_url: https://generativelanguage.googleapis.com/v1beta/openai\n"
+        "    api_key_env: GEMINI_API_KEY\n"
+        "    proxy: http://127.0.0.1:7890\n"
+        "models:\n"
+        "  gemini-4-argon:\n"
+        "    provider: gemini\n"
+        "    model_id: gemini-4-argon\n"
+        "pipeline: {}\n",
+        encoding="utf-8",
+    )
+    registry = ModelRegistry(config)
+    adapter = registry.get_adapter("gemini-4-argon")
+    assert type(adapter).__name__ == "OpenAICompatibleAdapter"
+    assert adapter.base_url == "https://generativelanguage.googleapis.com/v1beta/openai"
+    assert adapter.proxy == "http://127.0.0.1:7890"
+    assert adapter.api_key == "test-key"
+
+
 def test_custom_setup_is_user_config_and_does_not_modify_yaml(tmp_path: Path, monkeypatch) -> None:
     import biyu.secure_config as secure
 

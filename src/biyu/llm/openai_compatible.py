@@ -11,11 +11,13 @@ class OpenAICompatibleAdapter(LLMAdapter):
     """Adapter for OpenAI-compatible chat completion endpoints."""
 
     def __init__(self, **kwargs):
+        self.proxy = kwargs.pop("proxy", None) or None
         super().__init__(**kwargs)
         url = (self.base_url or "").strip().rstrip("/")
         if url.endswith("/chat/completions"):
             url = url[: -len("/chat/completions")]
-        if not url.endswith("/v1"):
+        # /v1beta/openai(Gemini 官方 OpenAI 兼容层)等已带版本的路径不再拼 /v1
+        if not (url.endswith("/v1") or url.endswith("/openai")):
             url += "/v1"
         self.base_url = url
 
@@ -27,7 +29,10 @@ class OpenAICompatibleAdapter(LLMAdapter):
         if kwargs.get("temperature") is not None:
             payload["temperature"] = kwargs["temperature"]
         try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(connect=10, read=60, write=20, pool=10)) as client:
+            client_kwargs: dict = {"timeout": httpx.Timeout(connect=10, read=60, write=20, pool=10)}
+            if self.proxy:
+                client_kwargs["proxy"] = self.proxy
+            async with httpx.AsyncClient(**client_kwargs) as client:
                 response = await client.post(f"{self.base_url}/chat/completions", headers=self._headers(), json=payload)
         except httpx.HTTPError as exc:
             raise LLMError(0, f"连接失败：{exc}") from exc

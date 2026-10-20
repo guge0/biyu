@@ -4,6 +4,12 @@ providers:
   deepseek:
     base_url: https://api.deepseek.com/v1
     api_key_env: DEEPSEEK_API_KEY
+  # Google Gemini 官方 OpenAI 兼容层:国内直连不通,proxy 填本机代理端口(只对这家生效);
+  # Key 在 aistudio.google.com 创建,存系统钥匙串 gemini(或设 GEMINI_API_KEY)
+  gemini:
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai
+    api_key_env: GEMINI_API_KEY
+    # proxy: http://127.0.0.1:7890
   kimi:
     base_url: https://api.moonshot.cn/v1
     api_key_env: KIMI_API_KEY
