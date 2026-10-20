@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -52,74 +53,54 @@ LAYER3_BEGIN = _MARKERS["layer3_begin"]
 LAYER3_END = _MARKERS["layer3_end"]
 
 
-def build_layer1_hard_rules(chapter_num: int, worldbook: dict | None) -> str:
+def build_layer1_hard_rules(
+    chapter_num: int,
+    worldbook: dict | None,
+    characters: list[dict] | None = None,
+) -> str:
     """Layer 1 硬规则,200 字内。
 
     包含:
-    - 主角姓名(从 worldbook 显式 protagonist 字段提取,P7-6;缺失时降级字符串匹配)
-    - 已死亡角色禁令
-    - worldbook 中标记为 facts 的核心设定
     - 章节号
+    - 主角姓名:显式 worldbook.protagonist > characters.yaml tier=protagonist >
+      facts 里「主角姓名:」前缀条目。S6-2:绝不按"主角"子串猜名
+      (真书事故:「弓弩远程是主角天敌」曾被整条错当姓名);无可靠来源就不放姓名条目。
+    - worldbook 中标记为 facts 的核心设定(主角声明条目除外,已在姓名条体现)
+    - 已死亡角色禁令
     """
     layer1_fragments = _FRAGMENTS["layer1"]
-    rules = []
-    rules.append(layer1_fragments["chapter_rule"].format(chapter_num=chapter_num))
+    name_prefixes = ("主角姓名", "主角:", "主角：")
 
-    # 从 worldbook 提取主角姓名和核心设定
-    protagonist_name = None
+    protagonist_name: str | None = None
+    facts: list = []
     if worldbook and isinstance(worldbook, dict):
-        # P7-6: 优先用显式 protagonist 字段(顶层 YAML key)
-        protagonist_name = worldbook.get("protagonist")
-        facts = worldbook.get("facts", [])
-        # 降级:显式字段缺失时,按旧字符串匹配兜底(别崩)
-        if not protagonist_name:
-            for fact in facts:
-                if isinstance(fact, str):
-                    if "主角姓名" in fact or "主角" in fact:
-                        protagonist_name = fact
-                        break
-        # 添加核心设定(非主角声明条目)
+        protagonist_name = worldbook.get("protagonist") or None
+        facts = worldbook.get("facts", []) or []
+    if not protagonist_name:
         for fact in facts:
-            if isinstance(fact, str) and fact != protagonist_name:
-                # P7-6: 跳过其他 "主角姓名:X" / "主角:X" 形式的声明条目
-                # (它们已被 rule 2 体现,作为独立 rule 会冗余)
-                if (fact.startswith("主角姓名")
-                        or fact.startswith("主角:")
-                        or fact.startswith("主角：")):
-                    continue
-                idx = len(rules) + 1
-                rules.append(f"{idx}. {fact}")
+            if isinstance(fact, str) and fact.startswith(name_prefixes):
+                protagonist_name = re.split(r"[:：]", fact, 1)[1].strip()
+                break
+    if not protagonist_name and characters:
+        for card in characters:
+            if isinstance(card, dict) and card.get("tier") == "protagonist" and card.get("name"):
+                protagonist_name = str(card["name"]).strip()
+                break
 
+    rules: list[str] = [layer1_fragments["chapter_rule"].format(chapter_num=chapter_num)]
     if protagonist_name:
-        # 插入到第 2 条
-        rules.insert(
-            1,
-            layer1_fragments["protagonist_rule"].format(
-                protagonist_name=protagonist_name
-            ),
+        rules.append(
+            layer1_fragments["protagonist_rule"].format(protagonist_name=protagonist_name)
         )
-        # 重新编号
-        for i in range(len(rules)):
-            rule_text = rules[i]
-            # 去掉旧编号
-            if i + 1 > 1 and rule_text.startswith(f"{i + 1}."):
-                rule_text = rule_text[len(str(i + 1)) + 2:]
-            elif i + 1 > 1 and rule_text[0].isdigit() and "." in rule_text[:3]:
-                rule_text = rule_text[rule_text.index(".") + 2:]
-            if i == 0:
-                rules[i] = layer1_fragments["chapter_rule"].format(
-                    chapter_num=chapter_num
-                )
-            elif i == 1:
-                rules[i] = layer1_fragments["protagonist_rule"].format(
-                    protagonist_name=protagonist_name
-                )
-            else:
-                rules[i] = f"{i + 1}. {rule_text}"
-
-    # 添加通用硬规则
-    idx = len(rules) + 1
-    rules.append(layer1_fragments["death_rule"].format(index=idx))
+    for fact in facts:
+        if not isinstance(fact, str) or not fact.strip():
+            continue
+        if protagonist_name and fact == protagonist_name:
+            continue
+        if fact.startswith(name_prefixes):
+            continue
+        rules.append(f"{len(rules) + 1}. {fact}")
+    rules.append(layer1_fragments["death_rule"].format(index=len(rules) + 1))
 
     lines = [LAYER1_BEGIN] + rules + [LAYER1_END]
     return "\n".join(lines)

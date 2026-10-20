@@ -1935,7 +1935,7 @@ async def generate_chapter(
             build_layer1_hard_rules, build_layer3_constraints,
             LAYER1_BEGIN, LAYER1_END, LAYER3_BEGIN, LAYER3_END,
         )
-        layer1 = build_layer1_hard_rules(chapter_num, wb)
+        layer1 = build_layer1_hard_rules(chapter_num, wb, characters)
         variable_layer2 = build_layer2_context(
             worldbook_prompt=q1_worldbook_preload if injection_v2 else "",  # 旧态已在 prefix 中
             characters=q1_present_cards if injection_v2 else characters,

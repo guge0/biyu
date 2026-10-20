@@ -87,6 +87,37 @@ def test_layer1_skips_other_protagonist_declaration_facts():
     assert "主角金手指:测试" in result, "真设定 fact 必须保留"
 
 
+def test_layer1_never_guesses_name_from_protagonist_substring():
+    """S6-2: fact 中段含「主角」二字绝不能被当成主角姓名。
+
+    真书事故:new-book 的 facts 含「弓弩远程是主角天敌」,旧兜底按"含主角"子串
+    把整条战斗规则当成了「主角姓名」。
+    """
+    worldbook = {"facts": ["弓弩远程是主角天敌——增幅挡得住拳头，挡不住箭"]}
+    characters = [{"name": "常野", "tier": "protagonist"}]
+    result = build_layer1_hard_rules(chapter_num=1, worldbook=worldbook, characters=characters)
+    assert "主角姓名: 弓弩远程" not in result, "中段含主角的 fact 不能当姓名"
+    assert "主角姓名: 常野" in result, "姓名必须来自角色卡 tier=protagonist"
+    assert "弓弩远程是主角天敌" in result, "该 fact 本体必须仍作为规则保留"
+
+
+def test_layer1_no_name_entry_when_no_protagonist_source():
+    """S6-2: 显式字段/角色卡都没有时,不准硬凑姓名条目。"""
+    worldbook = {"facts": ["弓弩远程是主角天敌"]}
+    result = build_layer1_hard_rules(chapter_num=1, worldbook=worldbook, characters=[])
+    assert "主角姓名" not in result, "没有可靠来源时不准硬凑姓名"
+    assert "弓弩远程是主角天敌" in result, "fact 本体保留"
+
+
+def test_layer1_prefers_explicit_field_over_characters():
+    """显式 worldbook.protagonist 优先于角色卡(向后兼容)。"""
+    worldbook = {"protagonist": "显式名", "facts": []}
+    characters = [{"name": "角色卡名", "tier": "protagonist"}]
+    result = build_layer1_hard_rules(chapter_num=1, worldbook=worldbook, characters=characters)
+    assert "显式名" in result
+    assert "角色卡名" not in result
+
+
 def test_layer1_fallback_when_no_explicit_field():
     """P7-6: 无显式 protagonist 字段时,降级到旧字符串匹配(向后兼容,别崩)。"""
     worldbook = {
