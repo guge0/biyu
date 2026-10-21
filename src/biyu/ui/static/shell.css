@@ -1,0 +1,179 @@
+/* ==========================================================================
+   笔驭 · S-1 全局壳样式（V2 视觉规范 v2.0）
+   顶栏 / 二级胶囊 / 状态栏 / 背景图层 / 外观抽屉 / Toast
+   值照搬 reference_biyu_ai_v2.html；类名加 biyu- 前缀避免与页面旧类碰撞。
+   ========================================================================== */
+
+/* ---------- 背景壁纸层与可调纸感蒙层 ---------- */
+.biyu-shell-bg-wallpaper{
+  position:fixed;inset:0;z-index:-2;
+  background-image:var(--bg-image);
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  filter:blur(var(--bg-blur));
+  transform:scale(1.03);
+  transition:filter .25s ease,opacity .25s ease;
+}
+.biyu-shell-bg-overlay{
+  position:fixed;inset:0;z-index:-1;
+  background-color:var(--paper);
+  opacity:var(--bg-overlay-alpha);
+  transition:background-color .25s ease,opacity .2s ease;
+}
+
+/* ---------- 顶栏 ---------- */
+.biyu-titlebar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:10px 24px;background:var(--surface);
+  border-bottom:1px solid var(--rule);
+  user-select:none;min-height:56px;flex-wrap:wrap;
+  position:sticky;top:0;z-index:100;
+}
+.biyu-win-left{display:flex;align-items:center;gap:14px;min-width:0;flex-wrap:wrap}
+.biyu-brand{display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:none;background:none;padding:0;color:var(--ink)}
+.biyu-seal{
+  width:28px;height:28px;border-radius:7px;background:var(--accent);color:var(--accent-fg);
+  font-family:var(--serif);font-size:14px;font-weight:600;
+  display:inline-flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 5px rgba(0,0,0,.12);
+}
+.biyu-wordmark{font-family:var(--display-font);font-size:18px;font-weight:600;letter-spacing:.03em;color:var(--ink)}
+.biyu-brand-divider{width:1px;height:18px;background:var(--rule-strong)}
+.biyu-nav-links{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.biyu-nav-btn{
+  background:transparent;border:none;padding:6px 12px;border-radius:var(--r-md);
+  font-size:14px;font-weight:500;color:var(--ink-soft);cursor:pointer;
+  font-family:var(--sans);transition:all .15s ease;display:inline-flex;align-items:center;gap:6px;
+}
+.biyu-nav-btn:hover{background:var(--rule-soft);color:var(--ink)}
+.biyu-nav-btn.current{background:var(--rule-soft);color:var(--ink);font-weight:600}
+
+/* 书内二级工具胶囊组 */
+.biyu-secondary-pills{
+  display:inline-flex;align-items:center;gap:2px;background:var(--surface-subtle);
+  border:1px solid var(--rule);border-radius:var(--r-md);padding:3px;margin-left:6px;
+}
+.biyu-sub-pill{
+  background:transparent;border:none;padding:4px 10px;border-radius:6px;
+  font-size:12px;font-weight:500;color:var(--ink-mute);cursor:pointer;transition:all .15s ease;
+}
+.biyu-sub-pill:hover{color:var(--ink)}
+.biyu-sub-pill.current{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+
+/* 顶栏右侧 */
+.biyu-win-right{display:flex;align-items:center;gap:10px}
+.biyu-gacha-switch{
+  display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;
+  border:1px solid var(--btn-border);border-radius:var(--r-md);background:var(--surface-subtle);
+  cursor:pointer;font-size:13px;font-weight:500;color:var(--ink-soft);transition:all .15s ease;
+}
+.biyu-gacha-switch:hover{border-color:var(--ink-soft);color:var(--ink)}
+.biyu-gacha-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-faint)}
+.biyu-theme-trigger{
+  display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;
+  border:1px solid var(--btn-border);border-radius:var(--r-md);background:var(--surface-subtle);
+  color:var(--ink-soft);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s ease;
+}
+.biyu-theme-trigger:hover{border-color:var(--ink-soft);color:var(--ink)}
+.biyu-swatch-dot{
+  width:12px;height:12px;border-radius:50%;background:var(--paper);
+  border:2px solid var(--mark);display:inline-block;
+}
+.biyu-win-controls{
+  display:inline-flex;align-items:center;gap:4px;padding-left:8px;
+  border-left:1px solid var(--rule);visibility:hidden;
+}
+.biyu-win-ctrl-btn{
+  width:26px;height:26px;border:none;background:transparent;color:var(--ink-mute);
+  border-radius:6px;font-size:12px;display:inline-flex;align-items:center;justify-content:center;
+}
+/* 桌面客户端形态（S-5 Electron）启用窗口控制钮：
+   客户端 UA 注入 body.biyu-electron 时显示 */
+body.biyu-electron .biyu-win-controls{visibility:visible}
+
+/* ---------- 状态栏 ---------- */
+.biyu-statusbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:100;
+  background:var(--surface);border-top:1px solid var(--rule);
+  padding:8px 24px;font-size:12px;color:var(--ink-mute);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+}
+.biyu-sb-group{display:flex;align-items:center;gap:16px;flex-wrap:wrap;min-width:0}
+.biyu-sb-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;margin-right:6px;flex:0 0 7px}
+body.biyu-shell-active{padding-bottom:40px}
+
+/* ---------- 外观抽屉 ---------- */
+.biyu-theme-drawer{
+  position:fixed;top:92px;right:28px;width:400px;max-height:calc(100vh - 116px);
+  overflow-y:auto;background:var(--surface);border:1px solid var(--rule-strong);
+  border-radius:var(--r-xl);box-shadow:var(--shadow-float);padding:22px 24px;z-index:210;
+  display:none;animation:u1-pop .2s var(--ease);
+}
+.biyu-theme-drawer.open{display:block}
+.biyu-drawer-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.biyu-drawer-title{font-family:var(--display-font);font-size:17px;font-weight:600;color:var(--ink)}
+.biyu-drawer-close{
+  background:transparent;border:none;color:var(--ink-mute);font-size:12px;font-weight:500;
+  height:30px;padding:0 12px;border-radius:6px;cursor:pointer;font-family:var(--sans);
+}
+.biyu-drawer-close:hover{color:var(--ink);background:var(--rule-soft)}
+.biyu-drawer-intro{font-size:12px;color:var(--ink-mute);margin:0 0 12px;line-height:1.55}
+.biyu-eyebrow{
+  font-size:12px;font-weight:600;color:var(--ink-mute);letter-spacing:.08em;
+  margin:12px 0 6px;text-transform:uppercase;
+}
+.biyu-preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 4px}
+.biyu-preset-btn{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface-subtle);
+  border:1px solid var(--rule-strong);border-radius:var(--r-md);cursor:pointer;text-align:left;
+  color:var(--ink);font-size:12.5px;font-weight:500;font-family:var(--sans);transition:all .15s ease;
+}
+.biyu-preset-btn:hover{border-color:var(--ink-soft)}
+.biyu-preset-btn.active{border-color:var(--mark);background:var(--surface);font-weight:600;box-shadow:0 0 0 1px var(--mark)}
+.biyu-preset-circle{width:20px;height:20px;border-radius:50%;border:2px solid rgba(0,0,0,.15);flex:0 0 20px}
+.biyu-bg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:8px 0 12px}
+.biyu-bg-thumb{
+  height:48px;border-radius:var(--r-md);border:1px solid var(--rule-strong);
+  background-size:cover;background-position:center;cursor:pointer;position:relative;overflow:hidden;
+  display:flex;align-items:flex-end;padding:5px 8px;font-size:11.5px;font-weight:600;color:var(--ink);
+}
+.biyu-bg-thumb.active{border-color:var(--mark);box-shadow:0 0 0 1px var(--mark)}
+.biyu-bg-thumb-label{background:rgba(255,255,255,.86);padding:1px 6px;border-radius:4px;font-size:11px;color:#1F1C18}
+.biyu-upload-row{display:flex;gap:8px;margin-bottom:10px}
+.biyu-upload-row .biyu-b2{flex:1;justify-content:center}
+.biyu-b2,.biyu-b3{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans)}
+.biyu-b2{
+  background:var(--surface);border:1px solid var(--btn-border);color:var(--ink-soft);
+  height:30px;padding:0 12px;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;
+}
+.biyu-b2:hover{border-color:var(--ink-soft);color:var(--ink);background:var(--surface-subtle)}
+.biyu-b3{
+  background:transparent;border:none;color:var(--ink-mute);
+  height:30px;padding:0 12px;font-size:12px;font-weight:500;border-radius:6px;cursor:pointer;
+}
+.biyu-b3:hover{color:var(--ink);background:var(--rule-soft)}
+.biyu-slider-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;font-size:12.5px;color:var(--ink)}
+.biyu-slider-row input[type=range]{width:130px;accent-color:var(--mark)}
+.biyu-color-row{
+  display:flex;align-items:center;justify-content:space-between;padding:6px 0;
+  border-bottom:1px solid var(--rule);font-size:12.5px;color:var(--ink);
+}
+.biyu-color-row input[type=color]{
+  width:34px;height:24px;padding:0;border:1px solid var(--btn-border);border-radius:4px;
+  background:none;cursor:pointer;
+}
+.biyu-drawer-foot{display:flex;justify-content:flex-start;margin-top:14px}
+
+/* ---------- Toast ---------- */
+.biyu-toast{
+  position:fixed;bottom:48px;left:50%;transform:translateX(-50%);
+  background:var(--ink-solid);color:var(--accent-fg);padding:10px 22px;
+  border-radius:var(--r-md);box-shadow:var(--shadow-float);font-size:13px;font-weight:500;
+  z-index:250;display:none;animation:u1-fade-up .2s var(--ease);max-width:min(80vw,560px);
+}
+.biyu-toast.show{display:block}
+
+@media(max-width:760px){
+  .biyu-titlebar{padding:8px 12px}
+  .biyu-theme-drawer{right:8px;left:8px;width:auto;top:76px}
+  .biyu-statusbar{padding:6px 12px}
+}
