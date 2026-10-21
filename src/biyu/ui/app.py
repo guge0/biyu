@@ -35,6 +35,7 @@ from biyu.ui.voiceprint_import import router as _voiceprint_import_router
 from biyu.ui.overview import router as _overview_router
 from biyu.ui.good_sentences import router as _good_sentences_router
 from biyu.ui.settings import router as _settings_router
+from biyu.ui.appearance import router as _appearance_router
 from biyu.ui.backup import router as _backup_router
 from biyu.web.routes import router as _web_router
 from biyu import __version__
@@ -256,6 +257,7 @@ app.include_router(_overview_router)
 app.include_router(_good_sentences_router)
 app.include_router(_settings_router)
 app.include_router(_backup_router)
+app.include_router(_appearance_router)
 # M2 章节工作台 + 审读路由(books/chapters/characters/truth_files/cost/SSE/reviews)
 app.include_router(_web_router)
 
