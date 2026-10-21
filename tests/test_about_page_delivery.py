@@ -13,7 +13,9 @@ def test_shelf_keeps_about_entry_and_remains_homepage():
     html = (ROOT / "src" / "biyu" / "ui" / "static" / "index.html").read_text(encoding="utf-8")
     assert 'href="/about.html"' in html
     assert 'class="active"' in html and 'href="/"' in html
-    assert '<h1>书架</h1>' in html
+    # S-1 起 V2 书架页标题为「我的书架」（规范原型原文），仍位于首页首屏
+    assert "我的书架" in html
+    assert "page-title" in html
 
 
 def test_about_route_serves_the_repository_landing_file_without_copy():

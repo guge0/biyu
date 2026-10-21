@@ -59,7 +59,7 @@
   function renderVersion(info) {
     const label = $("version-label");
     if (!label) return;
-    label.textContent = `笔驭 ${info.version}`; el.title = `构建 ${info.build} · ${info.sha}`;
+    label.textContent = `笔驭 ${info.version}`; label.title = `构建 ${info.build} · ${info.sha}`;
     label.title = `构建 ${info.build} · ${info.sha}`;
     const update = info.update || {};
     const updateDot = $("update-dot");
@@ -174,7 +174,7 @@
     // S-1 留白栏：本数（中文数字）
     const countEl = $("shelf-count");
     if (countEl) {
-      countEl.textContent = String(realBooks.length);
+      countEl.textContent = window.cnNum ? cnNum(realBooks.length) : String(realBooks.length);
     }
 
     // 折叠区:测试/归档书
@@ -257,9 +257,11 @@
 
   function renderBookCard(book) {
     const card = document.createElement("div");
-    card.className = "book-card";
+    card.className = "card book-card";
     // R1 slug ID:data 属性 + URL 用 book.id(无 id 时 /api/books 回退目录名)
     card.dataset.bookId = book.id || book.name;
+
+    const title = book.display_name || book.title || book.name;
 
     // Keep real books on their established detail route. Test and archived
     // books are still existing books: resume them in the workbench instead
@@ -273,19 +275,73 @@
     link.style.color = "inherit";
     card.appendChild(link);
 
-    const title = document.createElement("h3");
-    title.className = "book-title";
-    title.textContent = book.display_name || book.title || book.name;
-    link.appendChild(title);
-
-    const meta = document.createElement("div");
-    meta.className = "book-meta";
-    const progress = book.last_chapter != null
-      ? `已写到第 ${book.last_chapter} 章 · 其中 ${book.finalized_count || 0} 章已定稿`
+    const top = document.createElement("div");
+    top.className = "book-card-top";
+    const head = document.createElement("div");
+    const titleEl = document.createElement("p");
+    titleEl.className = "card-title";
+    titleEl.textContent = title;
+    const meta = document.createElement("p");
+    meta.className = "card-meta";
+    meta.style.marginBottom = "10px";
+    meta.textContent = book.last_chapter != null
+      ? `写到第 ${book.last_chapter} 章 · 其中 ${book.finalized_count || 0} 章已定稿`
       : "立项完成，未开写";
+    head.appendChild(titleEl);
+    head.appendChild(meta);
+    const coverChar = document.createElement("div");
+    coverChar.className = "book-cover-char";
+    coverChar.textContent = String(title || "书").trim().charAt(0) || "书";
+    top.appendChild(head);
+    top.appendChild(coverChar);
+    link.appendChild(top);
+
+    // V2 书卡徽章行：只展示接口真实存在的字段；字数/花费/更新时间暂缺，整体隐藏
+    const badges = document.createElement("div");
+    badges.className = "row";
+    badges.style.gap = "6px";
+    badges.style.marginBottom = "16px";
     const genreLabel = window.genreLabel ? window.genreLabel(book.genre) : book.genre;
-    meta.textContent = genreLabel ? `${progress} · ${genreLabel}` : progress;
-    link.appendChild(meta);
+    if (genreLabel) {
+      const genreBadge = document.createElement("span");
+      genreBadge.className = "badge";
+      genreBadge.textContent = genreLabel;
+      badges.appendChild(genreBadge);
+    }
+    const settingBadge = document.createElement("span");
+    settingBadge.className = book.settings_ready ? "badge ok" : "badge need";
+    settingBadge.textContent = book.settings_ready ? "设定就绪" : "设定待填";
+    badges.appendChild(settingBadge);
+    card.appendChild(badges);
+
+    const footRow = document.createElement("div");
+    footRow.className = "row";
+    footRow.style.gap = "8px";
+
+    // S-1 规范：卡片主按钮（沿用 continue-book-btn 契约类，V2 描边强调形态）
+    const nextBtn = document.createElement("a");
+    nextBtn.className = "b2 bs continue-book-btn";
+    if (book.last_chapter != null) {
+      nextBtn.href = "/workbench.html?book=" + encodeURIComponent(book.id || book.name) +
+        "&chapter=" + encodeURIComponent(book.last_chapter);
+      nextBtn.textContent = "接着写";
+    } else if (book.settings_ready) {
+      nextBtn.href = "/workbench.html?book=" + encodeURIComponent(book.id || book.name) +
+        "&chapter=1";
+      nextBtn.textContent = "开始第 1 章";
+    } else {
+      nextBtn.href = "/settings.html?book=" + encodeURIComponent(book.id || book.name);
+      nextBtn.textContent = "去填设定";
+    }
+    nextBtn.style.textDecoration = "none";
+    footRow.appendChild(nextBtn);
+
+    const overviewBtn = document.createElement("a");
+    overviewBtn.className = "b3 bs";
+    overviewBtn.href = "/overview.html?book=" + encodeURIComponent(book.id || book.name);
+    overviewBtn.textContent = "全书概览";
+    overviewBtn.style.textDecoration = "none";
+    footRow.appendChild(overviewBtn);
 
     const more = document.createElement("div");
     more.className = "book-more reading-more";
@@ -347,26 +403,9 @@
       }
     });
     moreMenu.appendChild(trashBtn);
-    card.appendChild(more);
+    footRow.appendChild(more);
 
-    // S-1 规范：卡片唯一实心主动作
-    const nextBtn = document.createElement("a");
-    nextBtn.className = "btn-primary continue-book-btn";
-    if (book.last_chapter != null) {
-      nextBtn.href = "/workbench.html?book=" + encodeURIComponent(book.id || book.name) +
-        "&chapter=" + encodeURIComponent(book.last_chapter);
-      nextBtn.textContent = "接着写";
-    } else if (book.settings_ready) {
-      nextBtn.href = "/workbench.html?book=" + encodeURIComponent(book.id || book.name) +
-        "&chapter=1";
-      nextBtn.textContent = "开始第 1 章";
-    } else {
-      nextBtn.href = "/settings.html?book=" + encodeURIComponent(book.id || book.name);
-      nextBtn.textContent = "去填设定";
-    }
-    nextBtn.style.textDecoration = "none";
-    card.appendChild(nextBtn);
-
+    card.appendChild(footRow);
     return card;
   }
 

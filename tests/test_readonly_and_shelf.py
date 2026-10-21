@@ -224,9 +224,11 @@ def test_shelf_ui_contracts_are_explicit_and_not_browser_native() -> None:
     assert '"&chapter=1"' in app_js
 
     nav_links = index.split('<div class="nav-links">', 1)[1].split("</div>", 1)[0]
-    nav_badges = index.split('<div class="nav-badges">', 1)[1].split("</div>", 1)[0]
+    # S-1 起 Key/模型与备份入口从顶栏迁入内容区 settings-entry 工具行（V2 壳接管导航）
+    entry_row = index.split('id="settings-entry"', 1)[1].split("</div>", 1)[0]
     assert 'id="connection-settings-button"' not in nav_links
-    assert 'id="connection-settings-button"' in nav_badges
+    assert 'id="connection-settings-button"' in entry_row
+    assert 'id="backup-settings-button"' in entry_row
 
     assert ".continue-book-btn:visited" in styles
     visited_rule = styles.split(".continue-book-btn:visited", 1)[1].split("}", 1)[0]

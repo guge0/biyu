@@ -4,96 +4,94 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>笔驭作者工作台 · 书架</title>
-  <link rel="stylesheet" href="/styles.css?v=model-config-v2">
-<link rel="stylesheet" href="/biyu-paper.css?v=w1-3"></head>
+  <link rel="stylesheet" href="/styles.css?v=a1f1bf55">
+  <link rel="stylesheet" href="/biyu-paper.css?v=ecdbc72d">
+  <link rel="stylesheet" href="/shell.css?v=f47278a2">
+</head>
 <body>
-  <!-- 顶部 nav(T2 首页)-->
+  <!-- 旧版顶部导航：S-1 起由 shell.js 接管渲染；此块保留导航契约锚点，运行时隐藏 -->
   <nav class="top-nav">
     <a href="/" class="nav-brand">笔驭</a>
     <div class="nav-links">
       <a href="/" class="active">书架</a>
       <a href="/workbench.html">工作台</a>
+      <a href="/about.html">介绍</a>
     </div>
-    <div class="nav-badges">
-      <button id="connection-settings-button" class="nav-command" type="button" aria-label="Key 与模型设置">Key / 模型</button>
-      <button id="backup-settings-button" class="nav-command" type="button">备份</button>
-      <a href="/about.html" class="nav-command">介绍</a>
-      <button id="version-badge" class="env-badge env-test" type="button" title="当前运行版本" aria-expanded="false" aria-controls="version-details">
-        <span class="env-dot"></span>
-        <span id="version-label">版本检测中…</span>
-        <span id="update-dot" class="update-dot" hidden aria-label="有新版本"></span><button id="behind-dot" class="update-dot update-dot-behind" hidden aria-label="落后最新版本"></button>
-      </button>
-      <section id="version-details" class="version-details" hidden aria-label="版本详情">
-        <strong>版本信息</strong>
-        <p id="version-current"></p>
-        <p id="version-latest" hidden></p>
-        <span id="version-update-link" hidden>查看更新</span>
-      </section>
-      <!-- 峰谷时段徽标(T7-3,D-81) -->
-<!-- 环境章 -->
-</div>
+    <div class="nav-badges"></div>
   </nav>
 
-  <main class="container home-container">
+  <main class="page">
     <div class="spread">
       <div class="margin-col">
         <div class="num" id="shelf-count">0</div>
         <div class="unit">本</div>
-        <div class="meta">本次累计<br>¥0.00</div>
+        <div class="meta">本地书库<br>本机保存</div>
       </div>
       <div class="main-col">
-        <header class="page-header">
-          <h1>书架</h1>
-          <p class="subtitle">接着写，或者新建一本。</p>
-          <p id="data-root-location" class="data-root-location">你的书存在：正在确认…</p>
-        </header>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <h1 class="page-title">我的书架</h1>
+            <p class="page-sub" style="margin-bottom:10px">接着写，或者新建一部作品。所有设定、细纲契约与正文全部保存在本机文件里。</p>
+          </div>
+          <button class="b1" id="create-book-button" type="button">+ 新建作品</button>
+        </div>
 
-        <!-- 顶部快捷(P8-M2.5 T2 spec line 10)-->
-        <section class="quick-actions" id="quick-actions" hidden>
-          <a id="continue-link" class="btn-secondary continue-btn" href="#">
+        <p id="data-root-location" class="status-text" style="margin:0 0 12px">你的书存在：正在确认…</p>
+
+        <div class="row" id="settings-entry" style="margin:0 0 14px">
+          <button id="connection-settings-button" class="b2 bs" type="button" aria-label="Key 与模型设置">Key / 模型</button>
+          <button id="backup-settings-button" class="b2 bs" type="button">备份</button>
+          <button id="version-badge" class="env-badge env-test" type="button" title="当前运行版本" aria-expanded="false" aria-controls="version-details">
+            <span class="env-dot"></span>
+            <span id="version-label">版本检测中…</span>
+            <span id="update-dot" class="update-dot" hidden aria-label="有新版本"></span><button id="behind-dot" class="update-dot update-dot-behind" hidden aria-label="落后最新版本"></button>
+          </button>
+          <section id="version-details" class="version-details" hidden aria-label="版本详情">
+            <strong>版本信息</strong>
+            <p id="version-current"></p>
+            <p id="version-latest" hidden></p>
+            <span id="version-update-link" hidden>查看更新</span>
+          </section>
+          <a href="/about.html" class="b3 bs">介绍</a>
+        </div>
+
+        <section class="row" id="quick-actions" hidden style="margin:0 0 14px">
+          <a id="continue-link" class="b2 continue-btn" href="#">
             继续：<span id="continue-book">最近的书</span> · 上次审到第 <span id="continue-chapter">N</span> 章
           </a>
-          <button class="btn-primary" id="create-book-button" type="button">新建书</button>
-        </section>
-
-        <!-- 无最近书时显示独立建书入口 -->
-        <section class="quick-actions" id="quick-actions-empty">
-          <button class="btn-primary" id="create-book-empty-button" type="button">新建第一本书</button>
         </section>
 
         <!-- 会话成本（W-1：纯文字说明，不套盒子）-->
-        <p id="session-cost-card" class="status-text" hidden><span class="cost-label">本次会话累计：</span> <span class="money" id="cumulative-cost">¥0.00</span><span class="peak-hint" id="peak-hint"></span></p>
+        <p id="session-cost-card" class="status-text" hidden style="margin:0 0 6px"><span class="cost-label">本次会话累计：</span> <span class="money" id="cumulative-cost">¥0.00</span><span class="peak-hint" id="peak-hint"></span></p>
         <button id="backup-status" class="backup-status-trigger" type="button">备份状态读取中…</button>
-        <p class="status-text"><a href="/trash.html">打开回收站</a></p>
+        <p class="status-text" style="margin:6px 0 0"><a class="quiet" href="/trash.html">打开回收站</a></p>
 
         <!-- 书架 -->
-        <section class="book-shelf">
-          <h2 class="shelf-title">我的书</h2>
-          <div id="book-list" class="book-grid">
+        <section class="book-shelf" style="margin-top:22px">
+          <p class="eyebrow">我的书</p>
+          <div id="book-list" class="grid grid-3">
             <!-- JS 渲染书卡 -->
             <div class="loading-placeholder">书架加载中…</div>
           </div>
 
-          <!-- 空态(spec line 10:"空态是邀请,不是空白")-->
-          <div id="empty-shelf" class="empty-shelf" hidden>
-            <div class="empty-illustration">📚</div>
-            <h3>书架是空的</h3>
-            <p class="empty-hint">
-              还没有书。取个名字，选个题材，就可以开始。
-            </p>
+          <!-- 空态：空态是邀请，不是空白 -->
+          <div id="empty-shelf" class="empty-state" hidden style="margin-top:12px">
+            <p class="et">还没有书。说出一句话想法，60 秒内开写第一章。</p>
+            <p class="ed">所有书籍设定、细纲契约与正文均保存在本机落盘目录（见上方路径），不绑云端、随时拷走。</p>
+            <button type="button" class="b1" id="create-book-empty-button">+ 新建第一部作品</button>
           </div>
 
-          <!-- P8-M3-pre T0.1:测试/归档折叠区(mock/验证/旧数据不占主视觉) -->
-          <section id="archived-section" class="archived-section" hidden>
+          <!-- 测试/归档折叠区(mock/验证/旧数据不占主视觉) -->
+          <section id="archived-section" class="archived-section" hidden style="margin-top:18px">
             <details>
               <summary>测试/归档 (<span id="archived-count">0</span>)</summary>
-              <div id="archived-book-list" class="book-grid"></div>
+              <div id="archived-book-list" class="grid grid-3" style="margin-top:12px"></div>
             </details>
           </section>
         </section>
 
         <!-- 错误提示 -->
-        <section id="error-banner" class="error-banner" hidden></section>
+        <section id="error-banner" class="error-banner" hidden style="margin-top:16px"></section>
       </div>
     </div>
   </main>
@@ -185,6 +183,7 @@
   <script src="/cn-num.js"></script>
   <script src="/setup.js?v=model-config-v2"></script>
   <script src="/backup-panel.js?v=z1-1"></script>
-  <script src="/app.js?v=shelf-close-2"></script>
+  <script src="/app.js?v=b0c99bae"></script>
+  <script src="/shell.js?v=4c7eddac" defer></script>
 </body>
 </html>
