@@ -1,4 +1,7 @@
 """Tests for chapter_writer.py v4 prompt."""
+import tempfile
+from pathlib import Path
+
 from biyu.prompts.chapter_writer import (
     build_layer1_hard_rules,
     build_layer2_context,
@@ -85,6 +88,27 @@ def test_layer1_skips_other_protagonist_declaration_facts():
     # 但真设定 fact 应保留
     assert "主角所在城市:南城" in result, "真设定 fact 必须保留"
     assert "主角金手指:测试" in result, "真设定 fact 必须保留"
+
+
+def test_context_block_skips_truth_when_told():
+    """S6-3: 默认管线 truth 已独立注入「故事现状」,context_block 不再重复携带。"""
+    from biyu.pipeline import _build_context_block
+
+    with tempfile.TemporaryDirectory() as td:
+        book = Path(td)
+        tf = book / "truth_files"
+        tf.mkdir(parents=True)
+        (tf / "current_state.md").write_text("当前状态内容样例", encoding="utf-8")
+        ch = book / "chapters"
+        ch.mkdir(parents=True)
+        (ch / "ch1.md").write_text("上一章全文样例", encoding="utf-8")
+
+        block, _retriever = _build_context_block(book, 2, include_truth=False)
+        assert "当前状态内容样例" not in block, "truth 不得重复进入历史块"
+        assert "上一章全文样例" in block, "上一章全文必须保留"
+
+        block_full, _ = _build_context_block(book, 2, include_truth=True)
+        assert "当前状态内容样例" in block_full, "include_truth=True 保持旧行为"
 
 
 def test_layer1_never_guesses_name_from_protagonist_substring():

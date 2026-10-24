@@ -591,15 +591,21 @@ def _write_long_run_csv(
 
 def _build_context_block(
     book_dir: Path, chapter_num: int, context_mode: str = "long_context",
+    include_truth: bool = True,
 ) -> str:
-    """构造历史 context 块: 真相文件 + 历史章节。"""
+    """构造历史 context 块: 真相文件 + 历史章节。
+
+    S6-3: 默认管线 truth 三件套已由 truth_files_block 独立注入「故事现状」,
+    本块须以 include_truth=False 调用,否则同一份 truth 进载荷两次。
+    """
     parts: list[str] = []
 
     # 1. 真相文件(设定锁,最重要)
-    truth_data = read_all_truth_files(book_dir)
-    for name, content in truth_data.items():
-        if content.strip():
-            parts.append(f"=== {name} ===\n{content}")
+    if include_truth:
+        truth_data = read_all_truth_files(book_dir)
+        for name, content in truth_data.items():
+            if content.strip():
+                parts.append(f"=== {name} ===\n{content}")
 
     # 2. 历史章节(通过 retriever 获取)
     retriever = get_retriever(book_dir, context_mode)
@@ -1643,7 +1649,11 @@ async def generate_chapter(
 
     # ---- Build context block (truth files + history chapters) ----
     print(f"  构建上下文 (模式: {context_mode})...")
-    context_block, retriever = _build_context_block(book_dir, chapter_num, context_mode)
+    # S6-3: truth 三件套已由 truth_files_block 独立注入「故事现状」,
+    # 这里只带历史章节;Q-1 模式本块随后整体清空,不受影响。
+    context_block, retriever = _build_context_block(
+        book_dir, chapter_num, context_mode, include_truth=False,
+    )
     if injection_v2:
         # Q-1 已将 truth 预注入，历史改为目录查询；不再与 prev500 重复。
         context_block = ""

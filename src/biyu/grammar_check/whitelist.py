@@ -16,10 +16,12 @@ def load_whitelist(book_dir: Path) -> set[str]:
     whitelist: set[str] = set()
 
     # --- worldbook 设定词 ---
+    # 2026-10:改走 load_worldbook(嵌套列表加载时拍平),与写手注入同源
+    from biyu.worldbook import load_worldbook
+
     wb_path = book_dir / "worldbook.yaml"
-    if wb_path.exists():
-        with open(wb_path, encoding="utf-8") as f:
-            wb = yaml.safe_load(f) or {}
+    wb = load_worldbook(book_dir) or {} if wb_path.exists() else {}
+    if wb:
 
         # facts 条目中的专有名词
         for fact in wb.get("facts", []):

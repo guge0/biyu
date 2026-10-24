@@ -468,3 +468,24 @@ def test_worldbook_nested_lists_flattened_for_all_consumers(tmp_path) -> None:
     assert "硬设定甲" in prompt and "禁止事项一" in prompt and "边地" in prompt
     whitelist = load_whitelist(book)
     assert whitelist  # 不崩且提取到词条
+
+
+def test_nested_worldbook_reaches_whitelist_and_setting_lookup(tmp_path) -> None:
+    """2026-10 补漏:白名单与编辑器查询改走拍平加载,嵌套条目不再静默丢失。"""
+    from biyu.grammar_check.whitelist import load_whitelist
+    from biyu.editor.tools import look_up_setting
+
+    book = tmp_path / "Book"
+    book.mkdir()
+    (book / "worldbook.yaml").write_text(
+        "facts:\n"
+        "  - - 盐丁 Seventy\n"
+        "    - 桑渡口白役\n"
+        "forbidden:\n"
+        "  - - 私盐加人货承运\n",
+        encoding="utf-8",
+    )
+    wl = load_whitelist(book)
+    assert "桑渡口白役" in wl  # 嵌套条目里的专名进入白名单
+    result = look_up_setting("盐丁 Seventy", book)
+    assert "盐丁 Seventy" in result  # 嵌套条目可查

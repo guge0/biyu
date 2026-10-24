@@ -80,14 +80,19 @@ def build_worldbook_prompt(wb: dict | None) -> str:
     if anchors:
         lines = ["\n── 创作锚点 ──"]
         for key, val in anchors.items():
+            label = {
+                "protagonist_archetype": "主角定位",
+                "tone": "基调",
+                "satisfaction_pattern": "爽点偏好",
+                "consistency_rule": "文风一致性",
+            }.get(key, key)
             if isinstance(val, str) and val.strip():
-                label = {
-                    "protagonist_archetype": "主角定位",
-                    "tone": "基调",
-                    "satisfaction_pattern": "爽点偏好",
-                    "consistency_rule": "文风一致性",
-                }.get(key, key)
                 lines.append(f"- {label}: {val}")
+            elif isinstance(val, (list, tuple)):
+                # S6-4: 真书形态=格下多条(列表),逐条并入,不得静默丢节
+                items = [v.strip() for v in val if isinstance(v, str) and v.strip()]
+                if items:
+                    lines.append(f"- {label}: {'；'.join(items)}")
         if len(lines) > 1:
             sections.append("\n".join(lines))
 
@@ -95,14 +100,20 @@ def build_worldbook_prompt(wb: dict | None) -> str:
     power = wb.get("power_system")
     if power:
         lines = ["\n── 力量/修炼体系 ──"]
-        # power_system 可以是 dict(含 rules)或纯字符串(如"无")
+        # S6-6: 兼容三种形态——{"rules":[...]}(旧,输出不加键名)、语义键 dict-of-lists(真书)、纯字符串
         if isinstance(power, dict):
-            rules = power.get("rules", [])
-        else:
-            rules = []
-        for r in rules:
-            if isinstance(r, str) and r.strip():
-                lines.append(f"- {r}")
+            for key, val in power.items():
+                label = str(key)
+                items = val if isinstance(val, (list, tuple)) else [val]
+                rendered = [v.strip() for v in items if isinstance(v, str) and v.strip()]
+                if not rendered:
+                    continue
+                if label == "rules":
+                    lines.extend(f"- {r}" for r in rendered)
+                else:
+                    lines.append(f"- {label}: {'；'.join(rendered)}")
+        elif isinstance(power, str) and power.strip():
+            lines.append(f"- {power}")
         if len(lines) > 1:
             sections.append("\n".join(lines))
 

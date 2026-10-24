@@ -336,6 +336,8 @@ def _build_naming_guide(characters: list[dict]) -> str:
             continue
         if "aliases" not in char:
             continue
+        if not isinstance(char.get("aliases"), dict):
+            continue  # 2026-10:用户数据 aliases 格式错误时跳过该角色,不崩组装
         has_content = True
         name = char["name"]
         aliases = char["aliases"]

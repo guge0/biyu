@@ -57,8 +57,10 @@ def look_up_setting(keyword: str, book_dir: Path) -> str:
     if not wb_path.exists():
         return f"worldbook 不存在: {wb_path}"
 
-    with open(wb_path, encoding="utf-8") as f:
-        wb = yaml.safe_load(f) or {}
+    # 2026-10:改走拍平加载(嵌套列表条目也可查)
+    from biyu.worldbook import load_worldbook
+
+    wb = load_worldbook(book_dir) or {}
 
     matches: list[dict] = []
     for section in ("facts", "forbidden", "power_system", "factions", "geography"):
