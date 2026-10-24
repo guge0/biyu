@@ -655,6 +655,13 @@
     rightGroup.appendChild(contactPill);
     const versionText = document.createElement('span');
     versionText.textContent = state.version ? '笔驭 v' + state.version : '';
+    // S-3 T9 更新降级(工单 E 节):安装版不做壳内自动更新;点击版本区=下载指引。
+    // checkout 形态的 git 落后红点机制保留在书架页版本徽章(app.js),此处不重复。
+    versionText.style.cursor = 'pointer';
+    versionText.title = '点击查看新版获取方式';
+    versionText.addEventListener('click', () => {
+      showToast('获取新版：请到内测 Q 群（892467108）或官网下载页获取最新安装包；本机数据不受影响。');
+    });
     rightGroup.appendChild(versionText);
     bar.appendChild(leftGroup);
     bar.appendChild(rightGroup);
