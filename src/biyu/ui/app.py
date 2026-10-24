@@ -209,6 +209,25 @@ async def z1_startup_backup() -> None:
     asyncio.create_task(_run())
 
 
+@app.on_event("startup")
+async def s3_seed_sample_book() -> None:
+    """S-3 安装版首启:空书架幂等种入示例书《死亡回溯》(BIYU_SEED_SAMPLE_BOOK=1 时)。
+
+    纯本地、秒级完成;种子失败只记日志,不阻塞应用启动。
+    """
+    import logging
+
+    if os.environ.get("BIYU_SEED_SAMPLE_BOOK", "").strip() != "1":
+        return
+    try:
+        from biyu.ui_seed import maybe_seed_sample_book
+
+        outcome = maybe_seed_sample_book()
+        logging.getLogger("biyu.ui_seed").info("sample book seed: %s", outcome)
+    except Exception:
+        logging.getLogger("biyu.ui_seed").exception("示例书种入失败(不影响启动)")
+
+
 # 写保护：写方法只允许落在当前进程 primary 数据根的书。
 # 匹配 /api/workbench/books/{book}/... 与 /api/books/{book}/... 的写请求。
 def _write_protection(request: Request) -> JSONResponse | None:

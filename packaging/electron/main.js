@@ -31,7 +31,8 @@ function resolveLayout() {
     return {
       mode: 'portable',
       sidecarExe: devSidecar,
-      homeDir: path.join(devRoot, 'packaging', 'home-staging'),
+      // exe 目录兼任 BIYU_PROJECT_ROOT(config 免Key件/docs/prompts/assets 已由构建脚本铺入)
+      homeDir: path.dirname(devSidecar),
       icon: path.join(here, 'icons', 'biyu.ico'),
     };
   }
@@ -41,7 +42,7 @@ function resolveLayout() {
     return {
       mode: 'installed',
       sidecarExe: pkgSidecar,
-      homeDir: path.join(res, 'home'),
+      homeDir: path.dirname(pkgSidecar),
       icon: path.join(res, 'icon.ico'),
     };
   }
@@ -142,12 +143,13 @@ async function main() {
       BIYU_ENV: 'prod',
       BIYU_RUNTIME_ROLE: 'production',
       BIYU_DATA_ROOT: dataRoot,
-      BIYU_DATA_ROOT_SOURCE: 'environment',
+      BIYU_DATA_ROOT_SOURCE: 'persistent', // 数据根来自首启写入的持久配置(与生产 ps1 链路同语义),避免 UI 误报「临时数据根」
       BIYU_PRODUCTION_DATA_ROOT: dataRoot,
       BIYU_PROJECT_ROOT: layout.homeDir,
       BIYU_CHECKOUT_NAME: 'biyu-studio',
       BIYU_SHORT_SHA: String(build.sha || 'unknown'),
       BIYU_REMOTE_SLUG: 'guge0/biyu-studio',
+      BIYU_SEED_SAMPLE_BOOK: '1', // S-3 无 Key 层:首启空架种入示例书(ui_seed 幂等)
       BIYU_SIDECAR_PORT: String(port),
     }),
   });

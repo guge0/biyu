@@ -2,8 +2,13 @@
     [switch]$SkipVersionStamp
 )
 
-# S-3 T1:一键构建 biyu-sidecar(onedir)+ home 载荷 staging + 体积报告。
+# S-3 T1/T2:一键构建 biyu-sidecar(onedir)+ 根级载荷铺进 exe 目录 + 体积报告。
 # 在仓库根执行:powershell -NoProfile -ExecutionPolicy Bypass -File packaging\build_sidecar.ps1
+#
+# 载荷布局约定:exe 目录同时兼任 BIYU_PROJECT_ROOT——
+#  · get_project_root() 消费者(config/models.yaml.example、docs/index.html、prompts/assets 模板)
+#  · 冻结后 Path(__file__).parents[3] 消费者(prompts/writer|editor、config/editor.yaml、assets/声纹库)
+# 两类都落在 exe 旁,单一事实源。
 
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -12,44 +17,14 @@ $pk = Join-Path $repo 'packaging'
 $venvPython = Join-Path $repo '.venv\Scripts\python.exe'
 if (-not (Test-Path -LiteralPath $venvPython)) { throw "project venv python not found: $venvPython" }
 
-# ---------- 1) home 载荷 staging(BIYU_PROJECT_ROOT 指向的内容) ----------
-$homeDir = Join-Path $pk 'home-staging'
-if (Test-Path -LiteralPath $homeDir) { Remove-Item -LiteralPath $homeDir -Recurse -Force }
-New-Item -ItemType Directory -Path (Join-Path $homeDir 'config') | Out-Null
-
-# Key 红线:只带免 Key 件;models.yaml(私人 Key 配置)永不入包。
-$configFiles = @('models.yaml.example', 'default.yaml', 'auditor.yaml', 'editor.yaml', 'published_version.json')
-foreach ($f in $configFiles) {
-    Copy-Item -LiteralPath (Join-Path $repo "config\$f") -Destination (Join-Path $homeDir "config\$f")
-}
-if (Test-Path -LiteralPath (Join-Path $homeDir 'config\models.yaml')) { throw "FORBIDDEN: models.yaml must never be staged" }
-
-New-Item -ItemType Directory -Path (Join-Path $homeDir 'docs') | Out-Null
-Copy-Item -LiteralPath (Join-Path $repo 'docs\index.html') -Destination (Join-Path $homeDir 'docs\index.html')
-Copy-Item -LiteralPath (Join-Path $repo 'prompts') -Destination (Join-Path $homeDir 'prompts') -Recurse
-
-# ---------- 2) 构建信息(供壳注入 BIYU_SHORT_SHA;/api/version 回显) ----------
-$shortSha = (& git -C $repo rev-parse --short=8 HEAD 2>$null)
-if ([string]::IsNullOrWhiteSpace($shortSha)) { $shortSha = 'uncommitted' }
-$buildDate = Get-Date -Format 'yyyyMMdd'
-if (-not $SkipVersionStamp) {
-    # 无 BOM 写入:PS5.1 的 Set-Content -Encoding UTF8 会带 BOM,Node 端 JSON.parse 失败。
-    $versionJson = @{ version = '1.0.0'; build = $buildDate; sha = $shortSha } | ConvertTo-Json
-    [System.IO.File]::WriteAllText(
-        (Join-Path $homeDir 'packaging-version.json'),
-        $versionJson,
-        [System.Text.UTF8Encoding]::new($false)
-    )
-}
-
-# ---------- 3) 图标(缺则生成) ----------
+# ---------- 1) 图标(缺则生成) ----------
 $ico = Join-Path $pk 'electron\icons\biyu.ico'
 if (-not (Test-Path -LiteralPath $ico)) {
     & $venvPython (Join-Path $pk 'make_icon.py') | Write-Host
     if ($LASTEXITCODE -ne 0) { throw 'make_icon.py failed' }
 }
 
-# ---------- 4) PyInstaller ----------
+# ---------- 2) PyInstaller ----------
 # 注:$ErrorActionPreference='Stop' 会把原生命令 stderr 当终止错误,
 # 故用文件存在性探测代替试运行,并在 pip/PyInstaller 调用期间局部放宽 EAP。
 $pyinstallerPkg = Join-Path $repo '.venv\Lib\site-packages\PyInstaller'
@@ -73,13 +48,42 @@ try {
 }
 finally { Pop-Location }
 
-# ---------- 5) 体积与产物报告 ----------
+# ---------- 3) 根级载荷铺进 exe 目录(兼任 BIYU_PROJECT_ROOT) ----------
 $distDir = Join-Path $pk 'dist\biyu-sidecar'
+
+# Key 红线:只带免 Key 件;models.yaml(私人 Key 配置)永不入包。
+$configFiles = @('models.yaml.example', 'default.yaml', 'auditor.yaml', 'editor.yaml', 'published_version.json')
+New-Item -ItemType Directory -Path (Join-Path $distDir 'config') -Force | Out-Null
+foreach ($f in $configFiles) {
+    Copy-Item -LiteralPath (Join-Path $repo "config\$f") -Destination (Join-Path $distDir "config\$f") -Force
+}
+if (Test-Path -LiteralPath (Join-Path $distDir 'config\models.yaml')) { throw "FORBIDDEN: models.yaml must never be staged" }
+
+New-Item -ItemType Directory -Path (Join-Path $distDir 'docs') -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $repo 'docs\index.html') -Destination (Join-Path $distDir 'docs\index.html') -Force
+Copy-Item -LiteralPath (Join-Path $repo 'prompts') -Destination (Join-Path $distDir 'prompts') -Recurse -Force
+Copy-Item -LiteralPath (Join-Path $repo 'assets') -Destination (Join-Path $distDir 'assets') -Recurse -Force
+
+# ---------- 4) 构建信息(供壳注入 BIYU_SHORT_SHA;/api/version 回显) ----------
+$shortSha = (& git -C $repo rev-parse --short=8 HEAD 2>$null)
+if ([string]::IsNullOrWhiteSpace($shortSha)) { $shortSha = 'uncommitted' }
+$buildDate = Get-Date -Format 'yyyyMMdd'
+if (-not $SkipVersionStamp) {
+    # 无 BOM 写入:PS5.1 的 Set-Content -Encoding UTF8 会带 BOM,Node 端 JSON.parse 失败。
+    $versionJson = @{ version = '1.0.0'; build = $buildDate; sha = $shortSha } | ConvertTo-Json
+    [System.IO.File]::WriteAllText(
+        (Join-Path $distDir 'packaging-version.json'),
+        $versionJson,
+        [System.Text.UTF8Encoding]::new($false)
+    )
+}
+
+# ---------- 5) 体积与产物报告 ----------
 $files = Get-ChildItem -LiteralPath $distDir -Recurse -File
 $bytes = ($files | Measure-Object -Property Length -Sum).Sum
 $mb = [math]::Round($bytes / 1MB, 1)
 Write-Host ''
 Write-Host "=== biyu-sidecar built ==="
-Write-Host " dir : $distDir"
+Write-Host " dir : $distDir  (exe 目录兼任 BIYU_PROJECT_ROOT)"
 Write-Host " size: $mb MB ($($files.Count) files)"
 Write-Host " sha : $shortSha  build: $buildDate"

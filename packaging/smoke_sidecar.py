@@ -55,12 +55,13 @@ def _kill_tree(pid: int) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--exe", default=str(_DEFAULT_REPO / "packaging" / "dist" / "biyu-sidecar" / "biyu-sidecar.exe"))
-    ap.add_argument("--home", default=str(_DEFAULT_REPO / "packaging" / "home-staging"))
+    # exe 目录兼任 BIYU_PROJECT_ROOT(构建脚本已把 config/docs/prompts/assets 铺在 exe 旁)
+    ap.add_argument("--home", default=None)
     ap.add_argument("--timeout", type=float, default=60.0)
     args = ap.parse_args()
 
     exe = Path(args.exe)
-    home = Path(args.home)
+    home = Path(args.home) if args.home else exe.parent
     result: dict[str, object] = {"exe": str(exe), "home": str(home)}
 
     if not exe.is_file():

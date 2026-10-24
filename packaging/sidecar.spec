@@ -12,7 +12,19 @@ from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files
 
-_datas = collect_data_files("biyu", include_py_files=False)
+# 数据必须取自源码树 src/biyu:site-packages 里的 biyu 是陈旧安装副本
+# (实测缺 audit_reports/templates 等),而模块本身经 pathex=src 从源码编译。
+_SRC_BIYU = Path(os.path.abspath(os.path.join(SPECPATH, "..", "src", "biyu")))
+_datas = []
+for _root, _dirs, _files in os.walk(_SRC_BIYU):
+    if "__pycache__" in _root:
+        continue
+    for _f in _files:
+        if _f.endswith((".py", ".pyc", ".pyo")):
+            continue
+        _abs = Path(_root) / _f
+        _dest = _abs.parent.relative_to(_SRC_BIYU.parent).as_posix()
+        _datas.append((str(_abs), _dest))
 
 # conda 底座 venv(本机 biyu312)的 OpenSSL DLL 带 -x64 后缀,PyInstaller 默认钩子
 # 按无后缀名匹配会漏带,导致冻结后 _ssl「DLL load failed」;此处动态补齐。
