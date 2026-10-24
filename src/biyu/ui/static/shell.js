@@ -617,12 +617,64 @@
     leftGroup.appendChild(pathText);
     const rightGroup = document.createElement('span');
     rightGroup.className = 'biyu-sb-group';
+    // S-3 决策6A:状态栏常驻内测 Q 群胶囊 + 联系反馈弹窗
+    const contactPill = document.createElement('button');
+    contactPill.type = 'button';
+    contactPill.className = 'biyu-contact-pill';
+    contactPill.id = 'biyu-contact-pill';
+    contactPill.title = '内测作者交流 Q 群与问题反馈';
+    contactPill.textContent = '💬 内测 Q 群：892467108 · 反馈';
+    contactPill.addEventListener('click', openContactFeedback);
+    rightGroup.appendChild(contactPill);
     const versionText = document.createElement('span');
     versionText.textContent = state.version ? '笔驭 v' + state.version : '';
     rightGroup.appendChild(versionText);
     bar.appendChild(leftGroup);
     bar.appendChild(rightGroup);
     return bar;
+  }
+
+  /* ---------- S-3 决策6A:联系与反馈弹窗(图纸 openContactFeedbackModal 搬运) ---------- */
+  function openContactFeedback() {
+    let overlay = document.getElementById('biyu-contact-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'biyu-modal-overlay';
+      overlay.id = 'biyu-contact-overlay';
+      overlay.innerHTML =
+        '<div class="biyu-modal" role="dialog" aria-modal="true" aria-labelledby="biyu-contact-title">' +
+        '<h2 id="biyu-contact-title">💬 笔驭 (biyu) 作者交流群与问题反馈</h2>' +
+        '<div class="card" style="background:var(--surface-subtle);margin-bottom:14px">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px">' +
+        '<div><div style="font-size:15px;font-weight:600">官方内测作者交流 QQ 群：<code style="color:var(--mark);font-size:15px">892467108</code></div>' +
+        '<div style="font-size:12.5px;color:var(--ink-mute)">群内提供声纹卡分享、拆书模板、保真闸调优技巧与开发组直接答疑</div></div>' +
+        '<button type="button" class="b2 bs" id="biyu-contact-copy">复制群号</button></div>' +
+        '<div style="font-size:12px;color:var(--ink-soft);border-top:1px solid var(--rule);padding-top:8px">' +
+        '· 反馈邮箱：<code>feedback@biyu.studio</code></div></div>' +
+        '<p class="eyebrow" style="margin-bottom:6px">快速提交问题或建议</p>' +
+        '<textarea class="biyu-contact-textarea" id="biyu-contact-text" rows="3" placeholder="写下你遇到的问题或功能建议…"></textarea>' +
+        '<div class="biyu-modal-actions">' +
+        '<button type="button" class="b3" id="biyu-contact-close">关闭</button>' +
+        '<button type="button" class="b1" id="biyu-contact-send">提交反馈</button></div>' +
+        '</div>';
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) overlay.hidden = true;
+      });
+      document.getElementById('biyu-contact-close').addEventListener('click', () => { overlay.hidden = true; });
+      document.getElementById('biyu-contact-copy').addEventListener('click', (event) => {
+        if (navigator.clipboard) navigator.clipboard.writeText('892467108');
+        event.target.textContent = '已复制 ✓';
+        setTimeout(() => { event.target.textContent = '复制群号'; }, 1500);
+      });
+      document.getElementById('biyu-contact-send').addEventListener('click', () => {
+        const text = document.getElementById('biyu-contact-text').value.trim();
+        const subject = encodeURIComponent('笔驭反馈');
+        const body = encodeURIComponent(text || '（请在邮件正文中描述你遇到的问题）');
+        window.location.href = 'mailto:feedback@biyu.studio?subject=' + subject + '&body=' + body;
+      });
+    }
+    overlay.hidden = false;
   }
 
   /* ---------- 启动 ---------- */

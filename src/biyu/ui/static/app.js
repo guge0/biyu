@@ -167,8 +167,8 @@
     const realBooks = sorted.filter(b => b.kind === "real" || !b.kind);
     const otherBooks = sorted.filter(b => b.kind && b.kind !== "real");
 
-    realBooks.forEach((book) => {
-      listEl.appendChild(renderBookCard(book));
+    realBooks.forEach((book, index) => {
+      listEl.appendChild(renderBookCard(book, index === 0));
     });
 
     // S-1 留白栏：本数（中文数字）
@@ -255,9 +255,9 @@
     }
   }
 
-  function renderBookCard(book) {
+  function renderBookCard(book, isLead) {
     const card = document.createElement("div");
-    card.className = "card book-card";
+    card.className = "card book-card" + (isLead ? " lead" : "");
     // R1 slug ID:data 属性 + URL 用 book.id(无 id 时 /api/books 回退目录名)
     card.dataset.bookId = book.id || book.name;
 
@@ -312,6 +312,12 @@
     settingBadge.className = book.settings_ready ? "badge ok" : "badge need";
     settingBadge.textContent = book.settings_ready ? "设定就绪" : "设定待填";
     badges.appendChild(settingBadge);
+    if (book.is_sample) {
+      const sampleBadge = document.createElement("span");
+      sampleBadge.className = "badge ok";
+      sampleBadge.textContent = "★ 预载示例书 · 免Key可玩";
+      badges.appendChild(sampleBadge);
+    }
     card.appendChild(badges);
 
     const footRow = document.createElement("div");
@@ -373,6 +379,14 @@
       showRenameModal(book);
     });
     moreMenu.appendChild(renameBtn);
+
+    const settingsLink = document.createElement("a");
+    settingsLink.className = "b3";
+    settingsLink.href = "/settings.html?book=" + encodeURIComponent(book.id || book.name);
+    settingsLink.style.textDecoration = "none";
+    settingsLink.textContent = "设定集 (" + (book.settings_filled_count || 0) + "/9格)";
+    settingsLink.addEventListener("click", (e) => e.stopPropagation());
+    moreMenu.appendChild(settingsLink);
 
     const trashBtn = document.createElement("button");
     trashBtn.className = "b3";
@@ -510,4 +524,325 @@
 
   // ---------- 启动 ----------
   document.addEventListener("DOMContentLoaded", () => { wireCreateBook(); init(); });
+})();
+
+/* ==================== S-3 T3 · 无 Key 体验层（图纸 P0-2A/B/C/D 搬运） ====================
+ * 迎宾笺条（随 setup ready 两态）+ 书斋耕读历（热力格/拦截统计/印章入口）
+ * + 领 Key 锦囊（三渠道图文，保存走既有 setup 向导）+ 朱批钤印（真实达成态）。
+ * 独立拉取数据,不改上方现役书架流程。
+ */
+(function () {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+
+  const KEY_GUIDE_STEPS = {
+    deepseek: [
+      ["第 1 步", "浏览器打开 platform.deepseek.com，手机号验证码 5 秒登录", "https://platform.deepseek.com"],
+      ["第 2 步", "点左侧「充值」充 ¥10（约可写 80 章 / 25 万字网文，几乎用不完）", ""],
+      ["第 3 步", "点左侧「API Keys → 创建 API Key」，复制以 sk- 开头的密钥粘贴到下方即可！", ""],
+    ],
+    silicon: [
+      ["第 1 步", "打开硅基流动 cloud.siliconflow.cn 注册账号（新用户直接送 14 元免费 Token 额度）", "https://cloud.siliconflow.cn"],
+      ["第 2 步", "在左侧「API 密钥」新建一条 sk- 密钥，在笔驭服务商选「硅基流动 DeepSeek-V3」即可白嫖开写！", ""],
+    ],
+    kimi: [
+      ["Kimi", "前往 platform.moonshot.cn 创建 API Key，适合长上下文设定集读取", "https://platform.moonshot.cn"],
+      ["Claude", "也可在服务商选「Claude」，填 Anthropic 官方 Key（claude-3-7-sonnet）", ""],
+    ],
+  };
+
+  function renderWelcome(ready) {
+    const strip = $("welcome-strip");
+    if (!strip) return;
+    const badge = $("welcome-mode-badge");
+    const text = $("welcome-text");
+    if (!ready) {
+      badge.textContent = "✦ 免 Key 零门槛畅玩模式";
+      badge.className = "badge ws-badge amber";
+      text.innerHTML = "还没申请 API Key？完全不影响！你现在可直接<strong>畅读并体检《死亡回溯》预载示例书</strong>、使用<strong>⚡独立快检台免费查 AI 味</strong>、手动建书或批量导入旧作。";
+    } else {
+      badge.textContent = "✓ 已配 Key 直连";
+      badge.className = "badge ws-badge ok";
+      text.textContent = "当前已连接官方 API Key，五步写作管线与独立快检台均可全速运行。";
+    }
+    strip.hidden = false;
+  }
+
+  function renderKeyGuideSteps(tab) {
+    const box = $("key-guide-steps");
+    if (!box) return;
+    box.replaceChildren();
+    KEY_GUIDE_STEPS[tab].forEach((step) => {
+      const item = document.createElement("div");
+      item.className = "list-item m-done";
+      const num = document.createElement("span");
+      num.className = "ch";
+      num.style.color = "var(--ok)";
+      num.textContent = step[0];
+      const body = document.createElement("span");
+      body.style.flex = "1";
+      body.textContent = step[1];
+      item.append(num, body);
+      if (step[2]) {
+        const copy = document.createElement("button");
+        copy.type = "button";
+        copy.className = "b2 bs";
+        copy.textContent = "复制网址";
+        copy.addEventListener("click", () => {
+          navigator.clipboard?.writeText(step[2]);
+          copy.textContent = "已复制";
+          setTimeout(() => (copy.textContent = "复制网址"), 1500);
+        });
+        item.appendChild(copy);
+      }
+      box.appendChild(item);
+    });
+  }
+
+  function openKeyGuide() {
+    const overlay = $("key-guide-overlay");
+    if (!overlay) return;
+    overlay.hidden = false;
+    renderKeyGuideSteps("deepseek");
+    document.querySelectorAll(".key-guide-tab").forEach((btn) => {
+      btn.classList.toggle("current", btn.dataset.tab === "deepseek");
+    });
+  }
+
+  function wireKeyGuide() {
+    const overlay = $("key-guide-overlay");
+    if (!overlay) return;
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) overlay.hidden = true;
+    });
+    $("key-guide-close").addEventListener("click", () => { overlay.hidden = true; });
+    document.querySelectorAll(".key-guide-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".key-guide-tab").forEach((b) => b.classList.toggle("current", b === btn));
+        renderKeyGuideSteps(btn.dataset.tab);
+      });
+    });
+    $("key-guide-save").addEventListener("click", () => {
+      const key = $("key-guide-input").value.trim();
+      overlay.hidden = true;
+      const setupKey = document.getElementById("setup-key");
+      if (key && setupKey) setupKey.value = key;
+      const setupOverlay = document.getElementById("setup-overlay");
+      if (setupOverlay) setupOverlay.hidden = false;
+      if (setupKey) setupKey.focus();
+    });
+  }
+
+  // ---------- 朱批钤印 ----------
+  let sealState = null;
+  let activeSealKey = null;
+
+  const SEAL_CHARS = {
+    first_chapter: "初啼定稿",
+    ten_k: "落纸万言",
+    hundred_k: "云烟十万",
+    first_contract: "言出法随",
+  };
+  const SEAL_QUOTES = {
+    first_chapter: "第一份正文由你亲手拍板落定——从这一章起，你是一名作者。",
+    ten_k: "一万字是最陡的坡。你已经翻过去了。",
+    hundred_k: "机器起草、作者钦定。十万晨光与铜鞘清响，皆由你亲手拍板落定。",
+    first_contract: "每一条细纲要点皆有正文原句佐证，绝不让 AI 乱改你笔下的江湖。",
+  };
+
+  function sealSvg(chars) {
+    const c = (chars || "笔驭印").padEnd(4, "印");
+    return (
+      '<svg class="cinnabar-seal-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">' +
+      '<rect x="6" y="6" width="108" height="108" rx="8" fill="#A63424" stroke="#7E2215" stroke-width="4"/>' +
+      '<rect x="13" y="13" width="94" height="94" rx="4" fill="none" stroke="#F7F1E3" stroke-width="2.2" stroke-dasharray="48 4 36 3"/>' +
+      '<line x1="60" y1="14" x2="60" y2="106" stroke="#F7F1E3" stroke-width="1.8" opacity="0.85"/>' +
+      '<line x1="14" y1="60" x2="106" y2="60" stroke="#F7F1E3" stroke-width="1.8" opacity="0.85"/>' +
+      '<text x="37" y="46" fill="#F7F1E3" font-family="serif" font-size="24" font-weight="700" text-anchor="middle">' + c[0] + "</text>" +
+      '<text x="37" y="90" fill="#F7F1E3" font-family="serif" font-size="24" font-weight="700" text-anchor="middle">' + c[1] + "</text>" +
+      '<text x="83" y="46" fill="#F7F1E3" font-family="serif" font-size="24" font-weight="700" text-anchor="middle">' + c[2] + "</text>" +
+      '<text x="83" y="90" fill="#F7F1E3" font-family="serif" font-size="24" font-weight="700" text-anchor="middle">' + c[3] + "</text>" +
+      "</svg>"
+    );
+  }
+
+  function renderSealTab(key) {
+    const seal = (sealState && sealState.seals || []).find((s) => s.key === key);
+    const scroll = $("seal-scroll");
+    if (!seal || !scroll) return;
+    activeSealKey = key;
+    scroll.innerHTML =
+      '<span class="badge ' + (seal.achieved ? "need" : "") + '" style="margin-bottom:8px">' +
+      (seal.achieved ? "里程碑已达成" : "尚未达成 · 继续耕读") + "</span>" +
+      '<h3 style="font-family:var(--display-font);font-size:23px;font-weight:600;color:#262018;margin:4px 0 6px">' + seal.title + "</h3>" +
+      '<p style="font-size:13px;color:#5A5144;margin:0 0 12px">' + seal.detail + "</p>" +
+      sealSvg(SEAL_CHARS[key]) +
+      '<p style="font-family:var(--serif);font-size:14.5px;color:#2E2820;margin:8px auto 12px;max-width:28em;line-height:1.75">' + SEAL_QUOTES[key] + "</p>" +
+      '<div style="font-size:11.5px;color:#827868;border-top:1px dashed #D2C5A8;padding-top:10px">笔驭 biyu · 本地优先 AI 网文工作站&nbsp;|&nbsp;内测作者群：892467108</div>';
+    document.querySelectorAll("#seal-tabs .b2").forEach((btn) => {
+      btn.classList.toggle("current", btn.dataset.seal === key);
+    });
+  }
+
+  function openSeals() {
+    if (!sealState) return;
+    const tabs = $("seal-tabs");
+    if (!tabs) return;
+    tabs.replaceChildren();
+    sealState.seals.forEach((seal) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "b2 bs";
+      btn.dataset.seal = seal.key;
+      btn.textContent = (seal.achieved ? "💮 " : "◻ ") + seal.title;
+      btn.addEventListener("click", () => renderSealTab(seal.key));
+      tabs.appendChild(btn);
+    });
+    const firstAchieved = sealState.seals.find((s) => s.achieved) || sealState.seals[0];
+    renderSealTab(firstAchieved.key);
+    $("seals-overlay").hidden = false;
+  }
+
+  function saveSealPoster() {
+    const scroll = $("seal-scroll");
+    const canvas = document.createElement("canvas");
+    canvas.width = 640;
+    canvas.height = 760;
+    const ctx = canvas.getContext("2d");
+    const grad = ctx.createLinearGradient(0, 0, 0, 760);
+    grad.addColorStop(0, "#F7F3E6");
+    grad.addColorStop(1, "#EFE8D4");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 640, 760);
+    ctx.strokeStyle = "#D5C8A8";
+    ctx.lineWidth = 4;
+    ctx.strokeRect(14, 14, 612, 732);
+    const title = (scroll.querySelector("h3") || {}).textContent || "朱批钤印";
+    const paragraphs = scroll.querySelectorAll("p");
+    const detail = (paragraphs[0] || {}).textContent || "";
+    const quote = (paragraphs[1] || {}).textContent || "";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#262018";
+    ctx.font = "600 34px 'Noto Serif SC', serif";
+    ctx.fillText(title, 320, 140);
+    ctx.font = "16px sans-serif";
+    ctx.fillStyle = "#5A5144";
+    ctx.fillText(detail, 320, 190, 540);
+    ctx.fillStyle = "#A63424";
+    ctx.fillRect(250, 250, 140, 140);
+    ctx.strokeStyle = "#F7F1E3";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(262, 262, 116, 116);
+    const chars = SEAL_CHARS[activeSealKey] || "笔驭印印";
+    ctx.fillStyle = "#F7F1E3";
+    ctx.font = "700 34px serif";
+    ctx.fillText(chars[0], 285, 310);
+    ctx.fillText(chars[1], 355, 310);
+    ctx.fillText(chars[2], 285, 370);
+    ctx.fillText(chars[3], 355, 370);
+    ctx.fillStyle = "#2E2820";
+    ctx.font = "18px serif";
+    const lines = quote.match(/.{1,26}/g) || [];
+    lines.forEach((line, i) => ctx.fillText(line, 320, 470 + i * 34, 540));
+    ctx.fillStyle = "#827868";
+    ctx.font = "13px sans-serif";
+    ctx.fillText("笔驭 biyu · 本地优先 AI 网文工作站 | 内测作者群：892467108", 320, 700);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "笔驭里程碑_" + title + ".png";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  function renderHomestead() {
+    Promise.all([
+      fetch("/api/homestead/stats").then((r) => r.json()),
+      fetch("/api/seals/state").then((r) => r.json()),
+    ]).then((payload) => {
+      const stats = payload[0];
+      sealState = payload[1];
+      const card = $("homestead-card");
+      if (!card) return;
+      $("homestead-streak").textContent = "连续耕读 " + stats.streak_days + " 天";
+      $("homestead-intercepted").textContent = "累计拦截 " + stats.intercepted_count + " 处 AI 翻译腔与套话";
+      $("homestead-week-words").textContent = stats.week_words.toLocaleString() + " 字";
+      $("homestead-approved").textContent = stats.approved_chapters + " 章";
+      $("seal-count").textContent = sealState.achieved_count;
+      const heat = $("homestead-heatmap");
+      heat.replaceChildren(document.createTextNode("近 14 日手稿热力："));
+      stats.heatmap.forEach((day) => {
+        const cell = document.createElement("span");
+        cell.className = "cal-heatmap-cell cal-lv-" + day.level;
+        cell.title = day.label + "：" + day.words + " 字";
+        const d = document.createElement("span");
+        d.textContent = day.label.slice(3);
+        const w = document.createElement("span");
+        w.style.fontSize = "9px";
+        w.textContent = day.words > 0 ? (day.words / 1000).toFixed(1) + "k" : "休";
+        cell.append(d, w);
+        heat.appendChild(cell);
+      });
+      card.hidden = false;
+    }).catch(() => { /* 统计失败静默隐藏卡片,不阻塞书架 */ });
+  }
+
+  function wireExperienceLayer() {
+    ["manual-create-button", "manual-create-empty-button", "welcome-manual-button"].forEach((id) => {
+      const btn = $(id);
+      if (!btn) return;
+      btn.addEventListener("click", () => {
+        $("create-book-overlay").hidden = false;
+        $("create-book-title").focus();
+      });
+    });
+    const keyGuideBtn = $("key-guide-button");
+    if (keyGuideBtn) keyGuideBtn.addEventListener("click", openKeyGuide);
+    wireKeyGuide();
+
+    const sealBtn = $("seal-open-button");
+    if (sealBtn) sealBtn.addEventListener("click", openSeals);
+    const sealsOverlay = $("seals-overlay");
+    if (sealsOverlay) {
+      $("seals-close").addEventListener("click", () => { sealsOverlay.hidden = true; });
+      sealsOverlay.addEventListener("click", (event) => {
+        if (event.target === sealsOverlay) sealsOverlay.hidden = true;
+      });
+      $("seal-copy").addEventListener("click", () => {
+        const seal = (sealState && sealState.seals || []).find((s) => s.key === activeSealKey);
+        const text = "【笔驭 · 朱批钤印】我达成了「" + ((seal && seal.title) || "里程碑") +
+          "」！机器起草、作者钦定，本地优先的 AI 网文工作站。内测作者群：892467108";
+        if (navigator.clipboard) navigator.clipboard.writeText(text);
+        $("seal-copy").textContent = "已复制 ✓";
+        setTimeout(() => { $("seal-copy").textContent = "📋 复制群晒单文案"; }, 1600);
+      });
+      $("seal-save-poster").addEventListener("click", saveSealPoster);
+    }
+
+    const toggle = $("homestead-toggle");
+    if (toggle) toggle.addEventListener("click", () => {
+      const area = $("homestead-heatmap-area");
+      const collapsed = area.style.display === "none";
+      area.style.display = collapsed ? "flex" : "none";
+      toggle.textContent = collapsed ? "收起日历 ▴" : "展开耕读日历 ▾";
+      toggle.setAttribute("aria-expanded", String(collapsed));
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    wireExperienceLayer();
+    Promise.all([
+      fetch("/api/books").then((r) => r.json()),
+      fetch("/api/setup/status").then((r) => r.json()),
+    ]).then((payload) => {
+      const books = payload[0].books || [];
+      if (books.length === 0) return; // 图纸:迎宾条与耕读历仅在「有书态」注入
+      renderWelcome(Boolean(payload[1].ready));
+      renderHomestead();
+    }).catch(() => { /* 体验层失败不影响书架主流程 */ });
+  });
 })();

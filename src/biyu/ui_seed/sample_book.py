@@ -16,7 +16,7 @@ from typing import Any
 
 MARKER_FILENAME = ".biyu-seed.json"
 SAMPLE_TITLE = "死亡回溯"
-SAMPLE_GENRE = "悬疑"
+SAMPLE_GENRE = "xuanyi"  # 代码值;genre.js 以代码映射中文徽章(写中文会显示「未知题材」)
 
 _NORTH_STAR_MD = """# 北极星
 

@@ -89,7 +89,8 @@ def test_index_bookshelf_is_v2():
     assert "page-title" in html
     assert "我的书架" in html
     assert "empty-state" in html
-    assert "新建第一部作品" in html
+    # S-3 T3 锚点适配:空态主按钮文案按图纸 V2.1 改为「+ 新建第一本书（AI 开书向导）」
+    assert "新建第一本书（AI 开书向导）" in html
     assert 'id="settings-entry"' in html
     assert 'id="create-book-empty-button"' in html
     # 旧导航契约锚点保留（运行时由壳接管，见 test_runtime_navigation）

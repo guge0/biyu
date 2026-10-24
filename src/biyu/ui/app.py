@@ -277,6 +277,9 @@ app.include_router(_good_sentences_router)
 app.include_router(_settings_router)
 app.include_router(_backup_router)
 app.include_router(_appearance_router)
+from biyu.ui.ui_seed_routes import router as _ui_seed_router  # S-3:耕读历/印章只读接口
+
+app.include_router(_ui_seed_router)
 # M2 章节工作台 + 审读路由(books/chapters/characters/truth_files/cost/SSE/reviews)
 app.include_router(_web_router)
 

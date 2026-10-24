@@ -177,3 +177,68 @@ body.biyu-shell-active{padding-bottom:40px}
   .biyu-theme-drawer{right:8px;left:8px;width:auto;top:76px}
   .biyu-statusbar{padding:6px 12px}
 }
+
+/* ==================== S-3 · 状态栏联系胶囊与全局弹窗(图纸决策6A) ==================== */
+.biyu-contact-pill {
+  background: var(--surface-subtle);
+  border: 1px solid var(--rule-strong);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--mark);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.biyu-contact-pill:hover { background: var(--mark-bg); border-color: var(--mark); }
+
+.biyu-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(28, 24, 18, 0.42);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 220;
+  padding: 20px;
+}
+.biyu-modal-overlay[hidden] { display: none; }
+.biyu-modal {
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-float);
+  max-width: 560px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 26px 28px;
+}
+.biyu-modal h2 {
+  font-family: var(--display-font);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+.biyu-modal .card {
+  background: var(--surface-subtle);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+}
+.biyu-modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 18px; }
+.biyu-contact-textarea {
+  width: 100%;
+  background: var(--surface-subtle);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  resize: vertical;
+}
