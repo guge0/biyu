@@ -35,6 +35,13 @@
         <div id="overview-content" hidden>
           <section id="breakpoint-card" class="breakpoint-card" aria-label="最近进度"></section>
           <section id="metrics" class="overview-metrics" aria-label="全书数字"></section>
+          <!-- S-3 T6(#101/#104):方阵/分档双视图切换(图纸) -->
+          <div class="segmented overview-view-switch" role="group" aria-label="概览视图切换" style="margin-bottom:14px">
+            <button type="button" id="view-matrix-btn" class="current">章节方阵</button>
+            <button type="button" id="view-list-btn">分档列表</button>
+          </div>
+          <section id="matrix-view" class="matrix-grid" aria-label="章节方阵"></section>
+          <div id="list-view" hidden>
           <section class="export-bar" aria-label="导出正文">
             <div><span class="export-title">导出正文</span><p>只可选择已定稿章节，导出顺序按章号排列。</p></div>
             <span id="export-status" role="status">尚未选择章节</span>
@@ -43,11 +50,12 @@
           <section id="waiting-group" class="chapter-group"></section>
           <section id="problem-group" class="chapter-group"></section>
           <section id="finalized-group" class="chapter-group"></section>
+          </div>
         </div>
       </div>
     </div>
   </main>
   <script src="/cn-num.js"></script>
-  <script src="/overview.js?v=u1-2"></script>
+  <script src="/overview.js?v=s3t6-1"></script>
 <script src="/shell.js?v=4c7eddac" defer></script></body>
 </html>

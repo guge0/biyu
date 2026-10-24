@@ -92,6 +92,9 @@ function syncPage(book,data){
   const encoded=encodeURIComponent(book);
   history.replaceState(null,'',`/good-sentences.html?book=${encoded}`);
   $('workbench-link').href=`/workbench.html?book=${encoded}`;
+  // S-3 T6(#108):蒸馏入口带当前书跳声纹页
+  const distill=document.getElementById('distill-voiceprint-link');
+  if(distill)distill.href=`/voiceprint.html?book=${encoded}`;
   $('book-name').textContent=`《${data.book.display_name}》`;
   const filter=$('chapter-filter');
   filter.replaceChildren(new Option('全部章节','all'));

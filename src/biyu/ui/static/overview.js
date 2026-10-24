@@ -332,3 +332,60 @@ boot().catch(error=>{
   $('load-status').textContent='概览没有读成功';
   showError(error.message);
 });
+
+/* ============ S-3 T6 · #101/#104 章节方阵视图(图纸 matrix-grid 搬运) ============ */
+const MATRIX_KINDS = { waiting: 'mc-need', problem: 'mc-note', finalized: 'mc-done' };
+function matrixCell(item, type) {
+  const cell = document.createElement('a');
+  cell.className = 'matrix-cell ' + (MATRIX_KINDS[type] || 'mc-done');
+  cell.href = item.href;
+  const head = document.createElement('div');
+  head.style.cssText = 'display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px';
+  const no = document.createElement('span');
+  no.style.cssText = 'font-family:var(--display-font);font-size:14.5px;font-weight:600;color:var(--ink)';
+  no.textContent = `第 ${item.chapter} 章`;
+  head.append(no);
+  const chapterCosts = (currentMetrics && currentMetrics.chapter_costs) || {};
+  const costValue = Number(chapterCosts[String(item.chapter)] || 0);
+  if (costValue > 0) {
+    const cost = document.createElement('span');
+    cost.style.cssText = 'font-size:11px;color:var(--ink-faint)';
+    cost.textContent = costText(costValue);
+    head.append(cost);
+  }
+  const status = document.createElement('div');
+  status.style.cssText = `font-size:12px;font-weight:500;color:${type === 'waiting' ? 'var(--mark)' : 'var(--ink-mute)'};margin-bottom:2px`;
+  status.textContent = type === 'waiting' ? (item.status || '等着处理')
+    : type === 'problem' ? `记了 ${item.problem_count} 处问题` : '已定稿';
+  const words = document.createElement('div');
+  words.style.cssText = 'font-size:11px;color:var(--ink-faint)';
+  words.textContent = Number(item.word_count) > 0 ? `${numberText(item.word_count)} 字` : '待生成';
+  cell.append(head, status, words);
+  cell.title = `第 ${item.chapter} 章 · 点击直达工作台`;
+  return cell;
+}
+function renderMatrix(data) {
+  const root = document.getElementById('matrix-view');
+  root.replaceChildren();
+  const all = [
+    ...data.groups.waiting.map(i => [i, 'waiting']),
+    ...data.groups.problem_finalized.map(i => [i, 'problem']),
+    ...data.groups.finalized.map(i => [i, 'finalized']),
+  ].sort((a, b) => a[0].chapter - b[0].chapter);
+  all.forEach(([item, type]) => root.appendChild(matrixCell(item, type)));
+}
+function setOverviewView(view) {
+  const matrix = view === 'matrix';
+  document.getElementById('matrix-view').hidden = !matrix;
+  document.getElementById('list-view').hidden = matrix;
+  document.getElementById('view-matrix-btn').classList.toggle('current', matrix);
+  document.getElementById('view-list-btn').classList.toggle('current', !matrix);
+}
+document.getElementById('view-matrix-btn').addEventListener('click', () => setOverviewView('matrix'));
+document.getElementById('view-list-btn').addEventListener('click', () => setOverviewView('list'));
+const _origOverviewRender = render;
+render = function (data) {
+  _origOverviewRender(data);
+  renderMatrix(data);
+  setOverviewView('matrix');
+};
