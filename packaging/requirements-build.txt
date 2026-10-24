@@ -1,0 +1,2 @@
+# S-3 打包构建期工具(仅本机 .venv 使用,不进产品依赖 pyproject)
+pyinstaller>=6.10
