@@ -17,7 +17,10 @@ function normalizeQuotedText(text) { return String(text || '').replace(QUOTE_NOR
 function quoteStillExists(quote,text) { const needle=normalizeQuotedText(quote);return Boolean(needle)&&normalizeQuotedText(text).includes(needle); }
 function shouldShowOfficialMode(snapshot){return snapshot?.manuscript_state==='candidate'&&Boolean(String(snapshot?.official_text||'').trim());}
 let current = {}, shownStage = 0, selectedText = '', selectedAnchor = 0, selectedSnapshot = null, dirty = new Set(), busy = false, revisionLines = [], sessionNotes = [], sessionNotesContext = '', diagnosisClosedForSha = '', failureDismissedFor = '', runStartedAt = 0, runTimer = 0, pendingImport = null, importedOfficialChapters = [], remainingMemoryChapters = [], readingView = 'read';
-let readingAsideOpen=false;
+// S-3 T5 批2(图纸#53):⑤读稿右栏(词族雷达+批注)默认展开,作者可点「收起意见」专注阅读;
+// 手动收起后记住选择,切视图不再强制弹开。
+let readingAsideOpen=true;
+let asideUserClosed=false;
 let activeIssueId='';
 let readingMoreOpen=false;
 let readingOfficialRestore=null;
@@ -400,7 +403,7 @@ function setReadingView(view,focusIssueId=''){
   $('reading-mode-official').classList.toggle('current',view==='official');
   if(view==='edit')requestAnimationFrame(sizeChapterEditor);
   if(view==='official'){setReadingAside(false);return;}
-  if(view==='read')setReadingAside(false);
+  if(view==='read')setReadingAside(!asideUserClosed);
   else if(view==='review')setReadingAside(true,focusIssueId);
   else{
     if(readingAsideOpen&&!focusIssueId)activeIssueId='';
@@ -957,6 +960,7 @@ function render({preserveDirty=false}={}) {
   try {
     applyPanels();
     renderWorkbenchIdentity(); renderLayerStatus(); renderStageBar(); applyActionState();
+    renderWriteContractPanel(); renderAuditorRadar();
     if (!preserveDirty || !dirty.has('outline')) $('outline').value = current.outline || '';
     if (!preserveDirty || !dirty.has('planning')) $('planning').value = (current.planning || '').replace(/^(?:status|source):[^\n]*\r?\n?/gm, '').replace(/^\s+/, '');
     if (!preserveDirty || !dirty.has('chapter')) $('chapter-edit').value = current.chapter_text || '';
@@ -1398,8 +1402,8 @@ $('memory-start').onclick=previewImportedMemory;
 $('memory-continue').onclick=continueImportedMemory;
 $('revision-select-all').onclick=()=>setRevisionSelection(true);
 $('revision-clear-all').onclick=()=>setRevisionSelection(false);
-$('review-entry').onclick=()=>readingView==='edit'?setReadingAside(true):setReadingView('review');
-$('review-exit').onclick=()=>{if(readingView==='edit')setReadingAside(false);else setReadingView('read');};
+$('review-entry').onclick=()=>{asideUserClosed=false;readingView==='edit'?setReadingAside(true):setReadingView('review');};
+$('review-exit').onclick=()=>{asideUserClosed=true;if(readingView==='edit')setReadingAside(false);else setReadingView('read');};
 $('reading-aside-backdrop').onclick=()=>{if(readingView==='edit')setReadingAside(false);else setReadingView('read');};
 $('review-detail-back').onclick=()=>{activeIssueId='';renderReviewPaneMode();};
 $('issue-detail-prev').onclick=()=>moveIssueDetail(-1);
@@ -1579,3 +1583,92 @@ boot().catch(e=>showError(e.message));
     if (frame && frame.src.includes("embed=1")) frame.src = "/settings.html?book=" + book + "&embed=1";
   });
 })();
+
+/* ============ S-3 T5 批2 · ④左栏契约面板 + ⑤Auditor 词族密度雷达(图纸 #35/#53/决策7) ============ */
+function renderWriteContractPanel() {
+  const items = document.getElementById('write-contract-items');
+  const badge = document.getElementById('write-contract-badge');
+  const source = document.getElementById('write-contract-source');
+  if (!items || !badge) return;
+  let text = (current.planning || '').replace(/^(?:status|source):[^\n]*\r?\n?/gm, '').trim();
+  let label = '导演执行方案';
+  if (!text) { text = (current.outline || '').replace(/^---[\s\S]*?---\s*/, '').trim(); label = '作者细纲（跳过导演）'; }
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+  if (!lines.length) {
+    items.innerHTML = '<p class="cp-item" style="color:var(--ink-mute)">契约要点将在细纲/方案确认后显示。</p>';
+    badge.textContent = '待定'; badge.className = 'badge amber';
+    source.textContent = '—';
+    return;
+  }
+  items.replaceChildren();
+  lines.slice(0, 12).forEach((line, i) => {
+    const row = document.createElement('div');
+    row.className = 'cp-item';
+    const num = document.createElement('span');
+    num.className = 'cp-num';
+    num.textContent = String(i + 1).padStart(2, '0');
+    row.append(num, document.createTextNode(line));
+    items.appendChild(row);
+  });
+  const locked = Boolean(current.planning || current.planning_skipped);
+  badge.textContent = locked ? '✓ 已锁定' : '草稿';
+  badge.className = locked ? 'badge ok' : 'badge amber';
+  source.textContent = label + ' · 保真闸按此逐条审计';
+}
+
+const DENSITY_LABELS = {
+  simile_markers: '明喻引导词（像是/仿佛/如同）',
+  tic_words: '缓冲词（缓缓/微微/轻轻/嘴角）',
+  cliche_expressions: '套话表情（瞳孔一缩/嘴角上扬等）',
+};
+function renderAuditorRadar() {
+  const card = document.getElementById('auditor-radar');
+  const rowsEl = document.getElementById('auditor-radar-rows');
+  const badge = document.getElementById('auditor-radar-badge');
+  if (!card || !rowsEl) return;
+  const data = current.auditor_density;
+  if (!data || !data.density) { card.hidden = true; return; }
+  card.hidden = false;
+  const violations = data.violations || [];
+  const over = violations.length > 0;
+  card.classList.toggle('clean', !over);
+  badge.textContent = over ? (violations.length + ' 项超阈值 · 点击查看') : '✓ 复检达标';
+  badge.className = over ? 'badge need' : 'badge ok';
+  rowsEl.replaceChildren();
+  Object.keys(DENSITY_LABELS).forEach(key => {
+    const item = data.density[key];
+    if (!item) return;
+    const perK = Number(item.per_kchar || 0);
+    const limit = Number(item.limit || 1);
+    const exceeded = perK > limit;
+    const row = document.createElement('div');
+    row.className = 'density-row';
+    row.title = '本章共 ' + item.count + ' 处';
+    const meta = document.createElement('div');
+    meta.className = 'density-meta';
+    const name = document.createElement('span');
+    name.innerHTML = '<strong>' + DENSITY_LABELS[key] + '</strong>';
+    const value = document.createElement('span');
+    value.style.fontWeight = '600';
+    value.style.color = exceeded ? 'var(--mark)' : 'var(--ok)';
+    value.textContent = perK.toFixed(1) + ' / 千字 (阈值 ≤' + limit + (exceeded ? ' · 超标)' : ' ✓)');
+    meta.append(name, value);
+    const bg = document.createElement('div');
+    bg.className = 'density-bar-bg';
+    const fill = document.createElement('div');
+    fill.className = 'density-bar-fill';
+    fill.style.width = Math.min(100, Math.round((perK / (limit * 2)) * 100)) + '%';
+    fill.style.background = exceeded ? 'var(--mark)' : 'var(--ok)';
+    bg.appendChild(fill);
+    row.append(meta, bg);
+    row.addEventListener('click', () => {
+      const details = document.querySelector('.review-toolbar details');
+      if (details) {
+        details.setAttribute('open', '');
+        const scroller = readingScrollElement();
+        if (scroller) scroller.scrollTop = 0;
+      }
+    });
+    rowsEl.appendChild(row);
+  });
+}

@@ -173,7 +173,10 @@ def test_reading_mode_and_aside_are_orthogonal() -> None:
     script = JS.read_text(encoding="utf-8")
 
     assert '>收起意见</button>' in html
-    assert "let readingAsideOpen=false" in script
+    # S-3 T5 批2(图纸#53):读稿右栏默认展开(readingAsideOpen=true),
+    # 手动收起由 asideUserClosed 记忆;正交性契约不变。
+    assert "let readingAsideOpen=true" in script
+    assert "let asideUserClosed=false" in script
     assert "function setReadingAside(open" in script
     assert "setReadingAside(false)" in script
     assert "setReadingAside(true" in script

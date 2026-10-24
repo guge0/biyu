@@ -534,3 +534,62 @@ body.biyu-embedded nav.top-nav { display: none; }
   border: none;
   background: transparent;
 }
+
+/* ==================== S-3 T5 批2 · ④双栏契约面板与⑤词族雷达(图纸搬运) ==================== */
+.workbench-split-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 22px;
+  align-items: flex-start;
+}
+.contract-panel {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  position: sticky;
+  top: 12px;
+}
+.contract-panel .cp-head {
+  padding: 14px 18px;
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.contract-panel .cp-item {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+.contract-panel .cp-item:last-child { border-bottom: none; }
+.contract-panel .cp-num {
+  display: inline-block;
+  font-weight: 600;
+  color: var(--ink-mute);
+  width: 24px;
+}
+@media (max-width: 1080px) { .workbench-split-grid { grid-template-columns: 1fr; } }
+
+/* 决策7:Auditor 词族密度雷达卡 */
+.auditor-radar-card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--mark);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 12px;
+}
+.auditor-radar-card.clean { border-top-color: var(--ok); }
+.density-row { margin-bottom: 10px; cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+.density-row:hover { background: var(--surface-subtle); }
+.density-row:last-child { margin-bottom: 0; }
+.density-meta { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; gap: 8px; }
+.density-bar-bg { height: 7px; background: var(--rule-soft); border-radius: 4px; overflow: hidden; }
+.density-bar-fill { height: 100%; border-radius: 4px; transition: width .3s ease; }

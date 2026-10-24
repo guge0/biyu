@@ -102,7 +102,13 @@
         <section class="version-section"><h3>方案版本</h3><p class="aside-hint">每次确认会保存一版；可以查看或回到任意一版。</p><div id="plan-version-list"></div></section>
       </article>
       <article class="stage-panel" data-panel="2" hidden>
-        <div class="panel-head"><div><h2>生成正文</h2><p>开始前会显示费用预估；完成后自动进入读稿。</p></div></div>
+        <div class="panel-head"><div><h2>④ 写章与保真闸</h2><p>左栏锁定本章写作契约，右栏选择声纹与篇幅并执行生成；保真闸按契约逐条核对。</p></div></div>
+        <div class="workbench-split-grid">
+          <aside class="contract-panel" id="write-contract-panel">
+            <div class="cp-head"><div><span style="font-size:14px;font-weight:600">本章写作契约</span><div style="font-size:11.5px;color:var(--ink-mute)" id="write-contract-source">—</div></div><span class="badge ok" id="write-contract-badge">—</span></div>
+            <div id="write-contract-items"><p class="cp-item" style="color:var(--ink-mute)">契约要点将在细纲/方案确认后显示。</p></div>
+          </aside>
+          <div class="write-main-col">
         <div id="generation-status" class="generation-status"></div>
         <section id="generation-voiceprint" class="generation-voiceprint" aria-live="polite" hidden>
           <div class="generation-voiceprint-head"><div><h3>本章声纹</h3><p>写手按当前生效的这份写；要深度管理（查看原句/新建）去声纹页。</p></div><a id="generation-voiceprint-link" href="/voiceprint.html">去声纹页查看或新建</a></div>
@@ -120,8 +126,10 @@
           </div>
           <p class="chapter-length-hint">只设下限、不设上限：先写完戏核和钩子；短于所选档位会在读稿时提醒，不会自动灌水。</p>
         </div>
-        <div class="action-row"><button data-action="write" class="b1">生成正文</button></div><p data-reason="write" class="disabled-reason"></p>
+        <div class="action-row"><button data-action="write" class="b1">生成正文</button><p data-reason="write" class="disabled-reason"></p></div>
         <section class="version-section"><h3>正文版本</h3><p class="aside-hint">成功版本可查看、比较或设为当前候选；失败原因直接显示在上方。</p><div id="candidate-version-list"></div></section>
+          </div>
+        </div>
       </article>
       <article id="reading-decision" class="stage-panel reading-layout reading-view-read" data-panel="3" hidden>
         <header class="reading-decision-head">
@@ -155,6 +163,14 @@
         </section>
         <button id="reading-aside-backdrop" class="reading-aside-backdrop" type="button" aria-label="收起意见栏" hidden></button>
         <aside class="review-column">
+          <div id="auditor-radar" class="auditor-radar-card" hidden>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <span style="font-weight:600;font-size:14px;color:var(--ink)">① AI 味与词族密度体检 (Auditor)</span>
+              <span class="badge" id="auditor-radar-badge">—</span>
+            </div>
+            <p style="font-size:11.5px;color:var(--ink-mute);margin:0 0 10px">引擎自动扫描全章词族每千字频率；点超标条可查看对应检查详情：</p>
+            <div id="auditor-radar-rows"></div>
+          </div>
           <div id="review-list-view" class="review-list-view">
             <div class="review-toolbar"><p id="review-position">本轮返修清单 · <span id="revision-count">0</span> 项</p><div class="review-bulk-actions"><button id="revision-select-all" type="button" class="b3">全选</button><button id="revision-clear-all" type="button" class="b3">清空</button><button id="review-exit" type="button" class="b3">收起意见</button></div><details><summary>检查详情</summary><div id="check-summary" class="check-summary"></div><h4>已通过 / 已跳过</h4><div id="completed-check-list"></div></details></div>
             <div id="revision-list-shell" class="revision-list-shell"><p id="revision-echo" class="revision-echo" role="status" hidden></p><div id="issue-list" class="issue-list" tabindex="-1"></div><details class="revision-fold" open><summary>整体意见 <span id="general-comment-status">未填写</span></summary><label class="general-comment"><textarea id="general-comment" placeholder="例如：保留开头，压缩中段，结尾再狠一点"></textarea></label></details><div class="revision-mode" id="revision-mode"><p class="revision-mode-title">返修模式（必须选择）</p><div class="revision-mode-options" role="group" aria-label="返修模式"><label><input type="radio" name="revision-mode" value="local_revision"><span>局部返修</span></label><label><input type="radio" name="revision-mode" value="deep_rewrite"><span>深度重写</span></label></div></div><details class="revision-fold"><summary>原始审读报告 <span><b id="completed-count">0</b> 项已通过</span></summary><div id="report" class="markdown report-pane"></div></details><details id="sample-preview" class="revision-fold sample-preview"><summary>本章记录：问题 <span id="sample-preview-problems">0</span> · 好句 <span id="sample-preview-good">0</span></summary><div id="sample-preview-list"></div><p class="record-hint">问题记录不会直接变成负例——蒸馏时你复核一遍才算。</p></details></div>
@@ -185,6 +201,6 @@
     <div id="import-dialog" class="modal-overlay" hidden><div class="modal import-modal"><h3>导入稿件</h3><p>导入本身不花钱，也不会改动世界观和角色卡。</p><label>从第几章开始<input id="import-chapter" type="number" min="1" value="1"></label><div class="import-source"><label>粘贴正文<textarea id="import-text" placeholder="粘贴单章；多章请用“第N章”作为明确分隔"></textarea></label><label>或选择本地 .md / .txt<input id="import-files" type="file" accept=".md,.txt,text/plain,text/markdown" multiple></label></div><fieldset><legend>这批稿件是什么身份？（必须选择）</legend><label><input type="radio" name="import-identity" value="candidate">作为候选稿</label><p>进入待定夺，可继续审读、批注和返修。</p><label><input type="radio" name="import-identity" value="official">作为正式稿</label><p>直接存为定稿；不会自动建立记忆。</p></fieldset><div id="import-preview" class="import-preview" hidden></div><div class="modal-actions"><button id="import-cancel" class="b3">取消</button><button id="import-next" class="primary">预览落点</button><button id="import-confirm" class="primary" hidden>确认导入</button></div></div></div>
     <div id="memory-import-dialog" class="modal-overlay" hidden><div class="modal import-modal"><h3>要不要根据导入稿建立记忆？</h3><div id="memory-cost" class="import-cost"></div><div id="memory-preview" class="import-preview"></div><div class="modal-actions"><button id="memory-later" class="b3">先不建立</button><button id="memory-stop" class="b3" hidden>结果不对，停下</button><button id="memory-start" class="primary">先看首章结果</button><button id="memory-continue" class="primary" hidden>结果正确，继续其余章节</button></div></div></div>
   </main>
-  <script src="/mini-md.js?v=u1-1"></script><script src="/cn-num.js"></script><script src="/workbench.js?v=s3t5-1"></script><script src="/runtime-identity.js?v=a2-2"></script>
+  <script src="/mini-md.js?v=u1-1"></script><script src="/cn-num.js"></script><script src="/workbench.js?v=s3t5-2"></script><script src="/runtime-identity.js?v=a2-2"></script>
 <script src="/shell.js?v=4c7eddac" defer></script></body>
 </html>

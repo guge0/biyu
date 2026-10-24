@@ -50,6 +50,13 @@ _hidden = [
     "uvicorn.lifespan.on",
 ]
 
+# 动态 import 的检查器/规则模块(auditor 与 lint_rules 按 _REGISTRY 字符串加载,
+# PyInstaller 静态分析看不到;冻结版漏包会让所有检查器报 No module named)
+from PyInstaller.utils.hooks import collect_submodules
+
+_hidden += collect_submodules("biyu.auditor")
+_hidden += collect_submodules("biyu.lint_rules")
+
 a = Analysis(
     [os.path.join(SPECPATH, "sidecar_main.py")],
     pathex=[os.path.abspath(os.path.join(SPECPATH, "..", "src"))],

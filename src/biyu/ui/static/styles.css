@@ -2114,7 +2114,8 @@ hr{border:none;border-top:1px solid var(--rule);margin:26px 0 18px}
   max-width:var(--reading-review-width);
   grid-template-columns:minmax(0,630px) 320px;
 }
-.workbench .reading-layout.reading-view-read .review-column{display:none}
+/* S-3 T5 批2(图纸#53):⑤读稿右栏(词族雷达+批注)常显,不再在纯阅读态整栏隐藏;保留选择器锚定列位 */
+.workbench .reading-layout.reading-view-read .review-column{grid-column:2;grid-row:1}
 .workbench .reading-decision-head{flex:none;border-bottom:1px solid var(--rule);padding:0 0 11px;margin-bottom:18px}
 .workbench .reading-head-line,.workbench .reading-meta-line{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .workbench .reading-head-line h2{margin:0;font-family:var(--serif);font-size:27px;font-weight:500}

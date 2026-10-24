@@ -79,3 +79,47 @@ def test_cell_draft_endpoint_registered() -> None:
     assert "_DRAFTABLE" in text
     for cell in ("north_star", "book_outline", "world_facts"):
         assert cell in text
+
+
+# ---------- S-3 T5 批2:#35 左栏契约 / #53 决策7 词族雷达 ----------
+
+def test_write_step_split_contract_panel() -> None:
+    """#35:④写章双栏——左栏 sticky 契约面板,右栏工具与生成。"""
+    html = _src("workbench.html")
+    assert 'class="workbench-split-grid"' in html
+    assert 'id="write-contract-panel"' in html
+    assert "本章写作契约" in html
+    assert "④ 写章与保真闸" in html
+    js = _src("workbench.js")
+    assert "renderWriteContractPanel" in js
+    css = _src("biyu-paper.css")
+    assert ".contract-panel" in css and ".workbench-split-grid" in css
+
+
+def test_auditor_radar_card_in_reading_step() -> None:
+    """#53/决策7:⑤读稿右栏置顶 Auditor 词族密度雷达(进度条+点击)。"""
+    html = _src("workbench.html")
+    assert 'id="auditor-radar"' in html and "auditor-radar-card" in html
+    assert "AI 味与词族密度体检 (Auditor)" in html
+    js = _src("workbench.js")
+    assert "renderAuditorRadar" in js and "auditor_density" in js
+    for key in ("simile_markers", "tic_words", "cliche_expressions"):
+        assert key in js
+    css = _src("biyu-paper.css")
+    assert ".auditor-radar-card" in css and ".density-bar-fill" in css
+
+
+def test_auditor_density_snapshot_field(tmp_path, monkeypatch) -> None:
+    """快照新增字段 auditor_density:超标候选稿三词族密度齐全。"""
+    from biyu.ui.workbench import _auditor_density
+
+    report = tmp_path / "ch4.json"
+    report.write_text('{"results": [{"checker": "style_repeat", "severity": "WARN", '
+                      '"details": {"density": {"simile_markers": {"count": 9, "per_kchar": 9.0, "limit": 3.0}}, '
+                      '"density_violations": ["『明喻』密度 9.0/千字"]}}]}', encoding="utf-8")
+    out = _auditor_density(report)
+    assert out["severity"] == "WARN"
+    assert out["density"]["simile_markers"]["per_kchar"] == 9.0
+    assert len(out["violations"]) == 1
+    missing = tmp_path / "none.json"
+    assert _auditor_density(missing) is None

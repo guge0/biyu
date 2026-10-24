@@ -972,6 +972,27 @@ def _auditor_author_projection(result: dict[str, Any], chapter_text: str) -> dic
     }
 
 
+def _auditor_density(report_json: Path) -> dict[str, Any] | None:
+    """S-3 T5(决策7):抽 Auditor 词族密度供读稿页雷达卡;报告缺失返回 None(空态)。"""
+    try:
+        data = json.loads(report_json.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    for item in data.get("results", []):
+        if str(item.get("checker", "")) != "style_repeat":
+            continue
+        details = item.get("details") if isinstance(item.get("details"), dict) else {}
+        density = details.get("density") if isinstance(details.get("density"), dict) else None
+        if density is None:
+            return None
+        return {
+            "severity": str(item.get("severity", "")),
+            "density": density,
+            "violations": [str(v) for v in details.get("density_violations", []) if isinstance(v, str)],
+        }
+    return None
+
+
 def _load_issue_cards(path: Path, chapter_text: str = "") -> list[dict[str, Any]]:
     if not path.exists():
         return []
@@ -1274,6 +1295,7 @@ def chapter_snapshot(book_dir: Path, chapter: int, book_key: str | None = None) 
         checklist_state = "feature_off"
         checklist_meta = {"total": 0, "unresolved": 0}
     issue_cards = [*editor_cards, *checklist_cards]
+    auditor_density = _auditor_density(report_json)
     review_state, review_state_error = _read_review_state(book_dir, chapter)
     manuscript_state, check_state, check_sources = _reading_states(
         pending_exists=pending_exists,
@@ -1383,6 +1405,7 @@ def chapter_snapshot(book_dir: Path, chapter: int, book_key: str | None = None) 
         "negative_sha": _sha(_read(negative)),
         "report": _read(report),
         "issue_cards": issue_cards,
+        "auditor_density": auditor_density,
         "unhandled_issue_count": sum(
             1 for card in issue_cards if not card.get("selected") and not card.get("ignored")
         ),
