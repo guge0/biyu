@@ -1,5 +1,13 @@
 const $ = id => document.getElementById(id);
 const STAGES = ['细纲', '写作方案', '生成正文', '读稿定夺', '评章摘句'];
+/* 图纸五步 → 底层面板映射:①设定/②大纲为前置步;③=0+1 一页两级;④=2;⑤=3(+已并入的评章区) */
+const DISPLAY_STEPS = [
+  { key: 'setting', label: '设定', num: '①', prep: true },
+  { key: 'outline', label: '大纲', num: '②', prep: true },
+  { key: 'contract', label: '细纲', num: '③', stage: 0 },
+  { key: 'write', label: '写章与保真闸', num: '④', stage: 2 },
+  { key: 'read', label: '读稿', num: '⑤', stage: 3 },
+];
 const STEP_LAYERS = Object.freeze({outline:'细纲层',planning:'方案层',generation:'执笔层',reading:'读稿层',revision:'执笔层',adoption:'读稿层',review:'读稿层'});
 const STEP_LABELS = Object.freeze({outline:'细纲',planning:'写作方案',generation:'生成正文',reading:'读稿定夺',revision:'返修候选稿',adoption:'采用正式正文',review:'评章摘句'});
 const LABELS = Object.freeze({pending:'待定夺', official:'正式正文'});
@@ -218,11 +226,49 @@ async function api(path, options) {
   }
   return response;
 }
+/* ============ S-3 T5 · 五步工作台显示层(图纸:①设定 ②大纲 ③细纲 ④写章 ⑤读稿) ============
+ * 后端 stage 数字语义(0细纲/1方案/2生成/3读稿/4评章)保持不变,只重排显示:
+ * ③细纲 = 一页两级(面板0+1 同屏,决策2);④写章 = 面板2;⑤读稿 = 面板3(评章区并入,面板4退役)。
+ * ①设定/②大纲 为前置准备步,永远可进,不参与解锁门。
+ */
+let prepStep = null; // null=章内阶段; 'setting' | 'outline'
+function displayKeyForStage(n) { return n <= 1 ? 'contract' : n === 2 ? 'write' : 'read'; }
+function applyPanels() {
+  document.querySelectorAll('[data-panel]').forEach(panel => {
+    const key = panel.dataset.panel;
+    let visible = false;
+    if (prepStep) visible = key === prepStep;
+    else if (key === 'setting' || key === 'outline') visible = false;
+    else {
+      const display = displayKeyForStage(shownStage);
+      if (display === 'contract') visible = key === '0' || key === '1';
+      else if (display === 'write') visible = key === '2';
+      else visible = key === '3';
+    }
+    panel.hidden = !visible;
+  });
+}
 function setStage(stage) {
   shownStage = stage;
-  document.querySelectorAll('[data-panel]').forEach(panel => { panel.hidden = Number(panel.dataset.panel) !== stage; });
+  prepStep = null;
+  applyPanels();
   renderStageBar();
   renderFailureState();
+}
+async function showPrepStep(key) {
+  if (prepStep === key || !await resolveDirty()) return;
+  prepStep = key;
+  applyPanels();
+  if (key === 'setting') {
+    const frame = document.getElementById('setting-embed');
+    const bookId = $('book').value;
+    if (frame && bookId && !frame.src.includes('embed=1')) {
+      frame.src = '/settings.html?book=' + encodeURIComponent(bookId) + '&embed=1';
+    }
+  } else if (key === 'outline') {
+    renderOutlineStep();
+  }
+  renderStageBar();
 }
 async function requestStage(stage) {
   if (stage === shownStage || !await resolveDirty()) return;
@@ -426,17 +472,32 @@ function canOpenStage(index) {
 }
 function renderStageBar() {
   const bar = $('stage-bar'); bar.replaceChildren();
-  STAGES.forEach((label, index) => {
-    const button = document.createElement('button'); button.className = 'stage-button'; button.textContent = label;
-    if (index < current.stage) button.classList.add('done');
-    if (index === shownStage) { button.classList.add('current'); button.setAttribute('aria-current', 'step'); }
-    const locked = !canOpenStage(index);
+  DISPLAY_STEPS.forEach((step) => {
+    const button = document.createElement('button'); button.className = 'stage-button';
+    const num = document.createElement('span'); num.className = 's-num'; num.textContent = step.num;
+    button.append(num, document.createTextNode(step.label));
+    let locked = false;
+    let isCurrent = prepStep === step.key;
+    let isDone = false;
+    if (!step.prep) {
+      locked = !canOpenStage(step.stage);
+      if (!prepStep) isCurrent = displayKeyForStage(shownStage) === step.key;
+      if (step.key === 'contract') isDone = current.stage >= 2;
+      if (step.key === 'write') isDone = current.stage >= 3;
+      if (step.key === 'read') isDone = current.stage >= 4;
+    }
+    if (isDone) button.classList.add('done');
+    if (isCurrent) { button.classList.add('current'); button.setAttribute('aria-current', 'step'); }
     if (locked) button.classList.add('locked');
-    if(index===4&&index>current.stage&&!locked)button.classList.add('available');
     button.setAttribute('aria-disabled', locked ? 'true' : 'false');
     button.tabIndex = 0;
-    button.title = locked ? (index===4?'采用为正式正文后才能保存章评':'完成前一阶段后自动解锁') : (index===4&&index>current.stage?'查看已记录摘句；采用为正式正文后可保存章评':index < current.stage ? '点回查看已完成阶段' : '当前阶段');
-    button.onclick = () => { if (locked) { showNotice(button.title); return; } requestStage(index); }; bar.append(button);
+    button.title = locked ? '完成前一阶段后自动解锁' : (isCurrent ? '当前阶段' : (step.prep ? '书级设定与大纲，随时可看可改' : '点开这一步'));
+    button.onclick = () => {
+      if (locked) { showNotice(button.title); return; }
+      if (step.prep) showPrepStep(step.key);
+      else { prepStep = null; requestStage(step.stage); }
+    };
+    bar.append(button);
   });
 }
 function failureIdentity() {
@@ -894,7 +955,7 @@ function startRunLogPolling(){
 function stopRunLogPolling(){if(runLogTimer){clearInterval(runLogTimer);runLogTimer=0;}}
 function render({preserveDirty=false}={}) {
   try {
-    document.querySelectorAll('[data-panel]').forEach(panel => { panel.hidden = Number(panel.dataset.panel) !== shownStage; });
+    applyPanels();
     renderWorkbenchIdentity(); renderLayerStatus(); renderStageBar(); applyActionState();
     if (!preserveDirty || !dirty.has('outline')) $('outline').value = current.outline || '';
     if (!preserveDirty || !dirty.has('planning')) $('planning').value = (current.planning || '').replace(/^(?:status|source):[^\n]*\r?\n?/gm, '').replace(/^\s+/, '');
@@ -1387,3 +1448,134 @@ async function boot(){
   }else $('entry-status').textContent='还没有书，请先从书架新建一本书。';
 }
 boot().catch(e=>showError(e.message));
+
+/* ============ S-3 T5 · ①设定/②大纲 前置步逻辑 ============ */
+(function () {
+  "use strict";
+  const outlineCells = {}; // cell_id → {version, content, editing}
+  let outlineLoadedFor = "";
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+  async function fetchSettingsCells() {
+    const book = document.getElementById("book").value;
+    const r = await fetch("/api/settings/books/" + encodeURIComponent(book));
+    if (!r.ok) throw new Error("设定快照读取失败");
+    const snap = await r.json();
+    return (snap.cells || []).filter(c => c.id === "north_star" || c.id === "book_outline");
+  }
+
+  function renderOutlineCell(body, cell, meta) {
+    const wrap = document.createElement("div");
+    wrap.className = "card";
+    wrap.style.marginBottom = "16px";
+    wrap.innerHTML =
+      '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
+      "<div><strong>" + esc(meta.label) + "</strong></div>" +
+      '<div class="row" style="gap:6px">' +
+      '<button class="b2 bs" data-outline-draft="' + esc(cell.id) + '" type="button">✨ ' + esc(meta.draftLabel) + "</button>" +
+      '<button class="b2 bs" data-outline-draft="' + esc(cell.id) + '" data-instruction="续写下一卷，承接已有内容" type="button" id="draft-next-' + esc(cell.id) + '" hidden>+ 续写后卷</button>' +
+      '<div class="segmented"><button type="button" class="current" data-outline-view="read-' + esc(cell.id) + '">阅读</button>' +
+      '<button type="button" data-outline-view="edit-' + esc(cell.id) + '">编辑</button></div></div></div>' +
+      '<div class="clean-read-block" id="outline-read-' + esc(cell.id) + '" style="white-space:pre-wrap"></div>' +
+      '<textarea id="outline-edit-' + esc(cell.id) + '" class="editing-pane" hidden style="width:100%;min-height:120px"></textarea>' +
+      '<div class="row" style="margin-top:8px;gap:8px">' +
+      '<button class="b1 bs" data-outline-save="' + esc(cell.id) + '" type="button" hidden>保存这一格</button>' +
+      '<span class="entry-status" role="status" id="outline-status-' + esc(cell.id) + '"></span></div>' +
+      '<div id="outline-gate-' + esc(cell.id) + '"></div>';
+    body.appendChild(wrap);
+    const readEl = wrap.querySelector("#outline-read-" + CSS.escape(cell.id));
+    const editEl = wrap.querySelector("#outline-edit-" + CSS.escape(cell.id));
+    readEl.textContent = cell.content || "（还没有内容）";
+    editEl.value = cell.content || "";
+    outlineCells[cell.id] = { version: cell.version, content: cell.content || "", editing: false };
+    wrap.querySelectorAll("[data-outline-view]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const editing = btn.dataset.outlineView.startsWith("edit-");
+        outlineCells[cell.id].editing = editing;
+        if (editing) editEl.value = outlineCells[cell.id].content;
+        readEl.hidden = editing; editEl.hidden = !editing;
+        wrap.querySelector('[data-outline-save="' + cell.id + '"]').hidden = !editing;
+        wrap.querySelectorAll("[data-outline-view]").forEach(b => b.classList.toggle("current", b === btn));
+      });
+    });
+    wrap.querySelector('[data-outline-save="' + cell.id + '"]').addEventListener("click", async () => {
+      const status = wrap.querySelector("#outline-status-" + CSS.escape(cell.id));
+      try {
+        const resp = await fetch("/api/settings/books/" + encodeURIComponent(document.getElementById("book").value) + "/cells/" + cell.id, {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ version: outlineCells[cell.id].version, content: editEl.value }),
+        });
+        const result = await resp.json();
+        if (!resp.ok) throw new Error(result.detail || "保存失败");
+        outlineCells[cell.id] = { version: result.cell.version, content: result.cell.content, editing: false };
+        status.textContent = "已保存，旧版已进入历史。";
+        renderOutlineStep(true);
+      } catch (e) { status.textContent = "保存失败：" + e.message; }
+    });
+    wrap.querySelectorAll("[data-outline-draft]").forEach(btn => {
+      btn.addEventListener("click", () => requestCellDraft(cell.id, btn.dataset.instruction || ""));
+    });
+  }
+
+  async function requestCellDraft(cellId, instruction) {
+    const gate = document.getElementById("outline-gate-" + cellId);
+    gate.innerHTML = '<p class="aside-hint">正在起草…（本机直连模型，只出草稿不落盘）</p>';
+    try {
+      const resp = await fetch("/api/settings/books/" + encodeURIComponent(document.getElementById("book").value) + "/cells/" + cellId + "/draft", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instruction }),
+      });
+      const result = await resp.json();
+      if (!resp.ok || !result.ok) throw new Error(result.detail || result.error || "起草失败");
+      gate.innerHTML =
+        '<div class="ai-draft-gate"><div class="ai-draft-head"><span>✦ AI 起草待审稿（机器起草、作者批准 —— 批准前不会覆盖盘上原内容）</span><span class="badge amber">草稿待确认</span></div>' +
+        '<div style="font-size:13px;white-space:pre-wrap;line-height:1.7;margin-bottom:10px">' + esc(result.draft) + "</div>" +
+        '<div class="row" style="gap:8px"><button class="b1 bs" id="outline-draft-approve" type="button">✓ 批准并追加合入</button>' +
+        '<button class="b2 bs" id="outline-draft-discard" type="button">× 放弃草稿</button></div></div>';
+      gate.querySelector("#outline-draft-approve").addEventListener("click", () => {
+        const cell = outlineCells[cellId];
+        const editEl = document.getElementById("outline-edit-" + CSS.escape(cellId));
+        const merged = (cell.content ? cell.content.replace(/\s+$/, "") + "\n\n" : "") + result.draft;
+        editEl.value = merged;
+        outlineCells[cellId].content = merged;
+        editEl.hidden = false;
+        document.querySelector('[data-outline-save="' + cellId + '"]').hidden = false;
+        gate.innerHTML = '<p class="aside-hint">草稿已并入编辑框，点「保存这一格」落盘（旧版自动进历史）。</p>';
+      });
+      gate.querySelector("#outline-draft-discard").addEventListener("click", () => { gate.innerHTML = ""; });
+    } catch (e) {
+      gate.innerHTML = '<p class="aside-hint" style="color:var(--mark)">✗ ' + esc(e.message) + "</p>";
+    }
+  }
+
+  window.renderOutlineStep = async function renderOutlineStep(force) {
+    const body = document.getElementById("outline-step-body");
+    const book = document.getElementById("book").value;
+    if (!book) return;
+    if (!force && outlineLoadedFor === book) return;
+    try {
+      const cells = await fetchSettingsCells();
+      body.replaceChildren();
+      const metas = {
+        north_star: { label: "书级格 01 · 全书北极星（一句话终极命题）", draftLabel: "帮我补全" },
+        book_outline: { label: "书级格 02 · 分卷大纲", draftLabel: "扩写大纲" },
+      };
+      cells.forEach(cell => renderOutlineCell(body, cell, metas[cell.id] || { label: cell.id, draftLabel: "帮我补全" }));
+      outlineLoadedFor = book;
+    } catch (e) {
+      body.innerHTML = '<p class="aside-hint" style="color:var(--mark)">读取失败：' + esc(e.message) + "</p>";
+    }
+  };
+
+  document.getElementById("setting-next").addEventListener("click", () => showPrepStep("outline"));
+  document.getElementById("outline-next").addEventListener("click", () => { prepStep = null; setStage(0); });
+  document.getElementById("outline-back-setting").addEventListener("click", () => showPrepStep("setting"));
+  document.getElementById("book").addEventListener("change", () => {
+    outlineLoadedFor = "";
+    const frame = document.getElementById("setting-embed");
+    const book = encodeURIComponent(document.getElementById("book").value);
+    document.getElementById("setting-open-full").href = "/settings.html?book=" + book;
+    if (frame && frame.src.includes("embed=1")) frame.src = "/settings.html?book=" + book + "&embed=1";
+  });
+})();

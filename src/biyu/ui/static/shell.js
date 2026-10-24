@@ -966,6 +966,13 @@
     const oldNav = document.querySelector('nav.top-nav');
     if (oldNav) oldNav.style.display = 'none';
 
+    // S-3 T5:工作台①设定步以 iframe 内嵌 settings 页(?embed=1)——
+    // 嵌入态只保留主题令牌管线,不注入标题栏/状态栏/抽屉,避免双层壳。
+    if (new URLSearchParams(location.search).get('embed') === '1') {
+      document.body.classList.add('biyu-embedded');
+      return;
+    }
+
     const wallpaper = document.createElement('div');
     wallpaper.className = 'biyu-shell-bg-wallpaper';
     wallpaper.setAttribute('aria-hidden', 'true');

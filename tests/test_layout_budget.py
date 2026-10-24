@@ -235,7 +235,9 @@ def test_long_prose_scrolls_without_bleeding_under_actions():
 def test_saved_excerpts_can_be_opened_before_adoption():
     assert "function canOpenStage(index)" in JS
     assert "index===4&&((current.samples||[]).length>0||current.actions?.excerpt?.enabled)" in JS
-    assert "查看已记录摘句；采用为正式正文后可保存章评" in JS
-    assert "采用为正式正文后才能保存章评" in JS
+    # S-3 T5 锚点适配:评章区已并入⑤读稿页(review-summary 卡,图纸 #70-#73),
+    # 「采用前可查看摘句」由⑤读稿步随 panel 3 常驻达成,不再依赖独立阶段按钮提示文案。
     assert "showNotice(button.title)" in JS
-    assert ".workbench .notice-banner" in CSS
+    html = Path("src/biyu/ui/static/workbench.html").read_text(encoding="utf-8")
+    assert 'id="review-summary"' in html
+    assert 'data-panel="4"' not in html

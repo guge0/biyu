@@ -52,13 +52,31 @@
           <div class="run-foot"><span id="run-elapsed">已用 0:00</span><button id="run-surface-close" type="button" hidden>返回读稿</button></div>
         </div>
       </div>
-      <article class="stage-panel" data-panel="0">
-        <div class="panel-head"><div><h2>细纲 <span id="global-dirty" class="stale-badge" hidden>有修改未保存</span></h2><p>先写清本章人物、转折和章末钩子。</p></div><div class="segmented" role="group" aria-label="视图切换"><button data-view="outline-read" class="current">阅读</button><button data-view="outline-edit">编辑</button></div></div>
+      <!-- S-3 T5 · ①设定(内嵌设定集,含 9 格/人物卡/本书记忆,决策1:无责编) -->
+      <article class="stage-panel" data-panel="setting" hidden>
+        <div class="panel-head"><div><h2>① 设定与人物档案</h2><p>写手和导演每一章都会读这里；任何 AI 补全均先出「待审草稿」，经你批准后才落盘。</p></div></div>
+        <iframe id="setting-embed" class="setting-embed-frame" title="设定集（书级两格、世界观七格、人物卡、本书记忆）"></iframe>
+        <div class="action-row" style="margin-top:14px;justify-content:space-between">
+          <button id="setting-next" class="b1" type="button">确认设定，下一步：大纲 →</button>
+          <a class="b3" href="/settings.html" id="setting-open-full" style="text-decoration:none">在新页打开完整设定集</a>
+        </div>
+      </article>
+      <!-- S-3 T5 · ②大纲(北极星 + 分卷,AI 扩写/续写走草稿闸) -->
+      <article class="stage-panel" data-panel="outline" hidden>
+        <div class="panel-head"><div><h2>② 大纲 · 北极星与分卷规划</h2><p>北极星锁定全书终极命题，分卷大纲控制长篇连载节奏；AI 扩写/续写均带草稿确认闸。</p></div></div>
+        <div id="outline-step-body"><p class="aside-hint">正在读取书级格…</p></div>
+        <div class="action-row" style="margin-top:14px">
+          <button id="outline-next" class="b1" type="button">确认大纲，去本章契约页 →</button>
+          <button id="outline-back-setting" class="b3" type="button">返回设定</button>
+        </div>
+      </article>
+      <article class="stage-panel contract-tier-box" data-panel="0">
+        <div class="panel-head"><div><h2><span class="tier-step-badge">第一级 · 作者细纲（本章本意）</span><br>细纲 <span id="global-dirty" class="stale-badge" hidden>有修改未保存</span></h2><p>先写清本章出场人物、转折和章末钩子。</p></div><div class="segmented" role="group" aria-label="视图切换"><button data-view="outline-read" class="current">阅读</button><button data-view="outline-edit">编辑</button></div></div>
         <div id="outline-read" class="markdown reading-pane"></div><textarea id="outline" class="editing-pane" hidden></textarea>
         <div class="action-row"><button id="prefill-outline" class="b2">用模板开始</button><button data-save="outline" class="b1">保存并确认</button></div><section id="outline-fact-status" class="outline-fact-status" aria-live="polite" hidden></section><p class="disabled-reason" data-reason="prefill_outline"></p><section class="version-section"><h3>细纲版本</h3><p class="aside-hint">每次保存都会留一版；可以查看或回到任意一版。</p><div id="outline-version-list"></div></section>
       </article>
-      <article class="stage-panel" data-panel="1" hidden>
-        <div class="panel-head"><div><h2>写作方案 <span id="planning-dirty" class="stale-badge" hidden>尚未保存</span></h2><p>阅读会预览你正在修改的内容；保存前不会覆盖盘上版本。</p></div><div class="segmented" role="group" aria-label="视图切换"><button data-view="planning-read" class="current">阅读</button><button data-view="planning-edit">编辑</button></div></div>
+      <article class="stage-panel contract-tier-box tier-director" data-panel="1" hidden>
+        <div class="panel-head"><div><h2><span class="tier-step-badge tier-director-badge">第二级 · 导演执行方案（保真闸核对准绳）</span><br>写作方案 <span id="planning-dirty" class="stale-badge" hidden>尚未保存</span></h2><p>阅读会预览你正在修改的内容；保存前不会覆盖盘上版本。</p></div><div class="segmented" role="group" aria-label="视图切换"><button data-view="planning-read" class="current">阅读</button><button data-view="planning-edit">编辑</button></div></div>
         <p id="planning-source" class="planning-source">方案来源：尚未保存</p>
         <div id="planning-empty" class="planning-empty-note" hidden>这一章还没有写作方案。<br>可以让导演先写一版，你在这上面改；也可以切到「编辑」自己从头写。</div>
         <div id="planning-run" class="planning-run-card" role="status" aria-live="polite" hidden><h3>导演正在写这一章的方案</h3><ol><li>读细纲、世界观、人物卡 <span>完成</span></li><li class="now">拟必检项与戏核</li><li>校验格式</li></ol><p id="planning-run-elapsed">已用 0:00 · 页面可以离开，写完会留在这里</p></div>
@@ -148,12 +166,14 @@
           </div>
         </aside>
         <footer class="reading-actions"><div class="reading-actions-main"><button id="adopt-button" data-action="adopt" class="b1">采 用</button><button id="save-chapter" class="b2">保存正文修改</button><div class="reading-more"><button id="reading-more-toggle" type="button" class="b3" aria-expanded="false">更多 ▾</button><div id="reading-more-menu" class="reading-more-menu" hidden><button data-action="revoke_planning" class="b3">退回方案</button><button data-action="regenerate" class="b3">重新生成</button><button id="reading-history-toggle" type="button" class="b3">本章文件与回收站</button></div></div><span id="global-dirty-reading" class="reading-dirty-note" hidden>有修改未保存</span><p id="adopt-reason" data-reason="adopt"></p><p data-reason="edit_chapter"></p><p data-reason="rewrite"></p><p data-reason="regenerate"></p></div><div class="reading-actions-side" aria-hidden="true"></div></footer>
-      </article>
-      <article class="stage-panel" data-panel="4" hidden>
-        <div class="panel-head"><div><h2>评章摘句</h2><p>从“读稿定夺”选中文字记录；这里查看数量、整理条目并保存章评。</p></div><div class="sample-counts">好句 <b id="good-count">0</b> · 问题句 <b id="bad-count">0</b></div></div>
-        <details class="sample-drawer"><summary>查看和整理摘句（<span id="sample-total">0</span>）</summary><div id="sample-list"></div></details>
-        <textarea id="chapter-review" placeholder="本章哪里好、哪里水、还想不想追……"></textarea>
-        <div class="action-row"><button id="save-review" class="b1">保存章评</button><button id="undo-adopt" class="b3">撤销采用</button><button id="complete-chapter" class="b2" hidden>本章完成，进入下一章</button></div><p class="disabled-reason">撤销采用会把本章退回候选状态，世界观和角色卡自动跟着退回；其他已写正文不会改动。</p><p data-reason="chapter_review" class="disabled-reason"></p><p id="save-receipt" class="save-receipt" hidden></p>
+        <!-- S-3 T5 · 评章摘句与归档收尾(原面板4并入⑤读稿,图纸 #70–#73) -->
+        <section id="review-summary" class="card" style="background:var(--surface-subtle);margin-top:18px">
+          <div class="panel-head" style="margin-bottom:10px"><div><h2 style="font-size:16px">评章摘句与归档收尾</h2></div><div class="sample-counts">好句 <b id="good-count">0</b> · 问题句 <b id="bad-count">0</b></div></div>
+          <details class="sample-drawer"><summary>查看和整理摘句（<span id="sample-total">0</span>）</summary><div id="sample-list"></div></details>
+          <textarea id="chapter-review" placeholder="本章哪里好、哪里水、还想不想追……"></textarea>
+          <div class="action-row"><button id="save-review" class="b1">保存章评</button><button id="undo-adopt" class="b3">撤销采用</button><button id="complete-chapter" class="b2" hidden>本章完成，进入下一章</button></div>
+          <p class="disabled-reason">撤销采用会把本章退回候选状态，世界观和角色卡自动跟着退回；其他已写正文不会改动。</p><p data-reason="chapter_review" class="disabled-reason"></p><p id="save-receipt" class="save-receipt" hidden></p>
+        </section>
       </article>
     </section>
     <div id="selection-tools" class="selection-tools" hidden><span id="selection-preview"></span><button id="selection-revision" class="selection-primary">让写手改这句</button><div class="selection-secondary"><button data-feedback="note_problem">记下问题（暂不修改）</button><button data-feedback="good">记为好句</button></div><small>“让写手改这句”会自动记下问题，不用重复点。</small></div>
@@ -165,6 +185,6 @@
     <div id="import-dialog" class="modal-overlay" hidden><div class="modal import-modal"><h3>导入稿件</h3><p>导入本身不花钱，也不会改动世界观和角色卡。</p><label>从第几章开始<input id="import-chapter" type="number" min="1" value="1"></label><div class="import-source"><label>粘贴正文<textarea id="import-text" placeholder="粘贴单章；多章请用“第N章”作为明确分隔"></textarea></label><label>或选择本地 .md / .txt<input id="import-files" type="file" accept=".md,.txt,text/plain,text/markdown" multiple></label></div><fieldset><legend>这批稿件是什么身份？（必须选择）</legend><label><input type="radio" name="import-identity" value="candidate">作为候选稿</label><p>进入待定夺，可继续审读、批注和返修。</p><label><input type="radio" name="import-identity" value="official">作为正式稿</label><p>直接存为定稿；不会自动建立记忆。</p></fieldset><div id="import-preview" class="import-preview" hidden></div><div class="modal-actions"><button id="import-cancel" class="b3">取消</button><button id="import-next" class="primary">预览落点</button><button id="import-confirm" class="primary" hidden>确认导入</button></div></div></div>
     <div id="memory-import-dialog" class="modal-overlay" hidden><div class="modal import-modal"><h3>要不要根据导入稿建立记忆？</h3><div id="memory-cost" class="import-cost"></div><div id="memory-preview" class="import-preview"></div><div class="modal-actions"><button id="memory-later" class="b3">先不建立</button><button id="memory-stop" class="b3" hidden>结果不对，停下</button><button id="memory-start" class="primary">先看首章结果</button><button id="memory-continue" class="primary" hidden>结果正确，继续其余章节</button></div></div></div>
   </main>
-  <script src="/mini-md.js?v=u1-1"></script><script src="/cn-num.js"></script><script src="/workbench.js?v=c2-22"></script><script src="/runtime-identity.js?v=a2-2"></script>
+  <script src="/mini-md.js?v=u1-1"></script><script src="/cn-num.js"></script><script src="/workbench.js?v=s3t5-1"></script><script src="/runtime-identity.js?v=a2-2"></script>
 <script src="/shell.js?v=4c7eddac" defer></script></body>
 </html>

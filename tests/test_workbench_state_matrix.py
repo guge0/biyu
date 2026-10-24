@@ -431,7 +431,8 @@ def test_dirty_guards_cover_stage_view_and_chapter_review() -> None:
     js = Path("src/biyu/ui/static/workbench.js").read_text(encoding="utf-8")
 
     assert 'id="global-dirty"' in html
-    assert "requestStage(index)" in js
+    # S-3 T5 锚点适配:五步条按 step.stage 调 requestStage(底层阶段数字语义未变)
+    assert "requestStage(step.stage)" in js
     assert "requestView(button.dataset.view)" in js
     assert "dirty.has('review') && incoming.verdict_sha !== current.verdict_sha" in js
     assert "$('chapter-review').addEventListener('input'" in js
@@ -499,5 +500,7 @@ def test_excerpt_selection_uses_the_reading_stage_without_a_second_full_chapter(
 
     assert 'id="chapter-read" class="markdown reading-pane selectable"' in html
     assert 'id="final-chapter"' not in html
-    assert "从“读稿定夺”选中文字" in html
+    # S-3 T5 锚点适配:评章卡按图纸 #70-73 并入⑤读稿页,标题改为「评章摘句与归档收尾」
+    assert "评章摘句与归档收尾" in html
+    assert 'id="chapter-review"' in html
     assert "$('final-chapter')" not in js
