@@ -593,3 +593,18 @@ body.biyu-embedded nav.top-nav { display: none; }
 .density-meta { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; gap: 8px; }
 .density-bar-bg { height: 7px; background: var(--rule-soft); border-radius: 4px; overflow: hidden; }
 .density-bar-fill { height: 100%; border-radius: 4px; transition: width .3s ease; }
+
+/* ==================== S-3 T7 · 快检台(图纸 P0-1 三色高亮与 60/40 双栏) ==================== */
+.qc-split-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 24px; align-items: flex-start; }
+@media (max-width: 1080px) { .qc-split-grid { grid-template-columns: 1fr; } }
+.qc-editor-box {
+  background: var(--surface);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: 24px 28px;
+  min-height: 440px;
+}
+.qc-hl-hedge { background: rgba(166, 75, 56, 0.13); border-bottom: 2px wavy var(--mark); padding: 1px 2px; border-radius: 3px; cursor: pointer; }
+.qc-hl-simile { background: var(--amber-bg); border-bottom: 2px solid var(--amber); padding: 1px 2px; border-radius: 3px; cursor: pointer; }
+.qc-hl-cliche { background: rgba(110, 68, 154, 0.11); border-bottom: 2px dashed #6E449A; padding: 1px 2px; border-radius: 3px; cursor: pointer; }

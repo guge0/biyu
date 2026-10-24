@@ -257,3 +257,14 @@ body.biyu-shell-active{padding-bottom:40px}
 }
 .biyu-import-wizard-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
 .biyu-import-modal { max-width: 640px; }
+
+/* S-3 T7:顶栏快检朱砂胶囊(P0-1A) */
+.biyu-quickcheck-pill {
+  background: var(--mark-bg) !important;
+  color: var(--mark) !important;
+  border: 1px solid rgba(166, 75, 56, 0.32) !important;
+  font-weight: 600 !important;
+  border-radius: var(--r-md);
+  padding: 6px 12px;
+}
+.biyu-quickcheck-pill:hover, .biyu-quickcheck-pill.current { background: var(--mark) !important; color: #FAF8F3 !important; border-color: var(--mark) !important; }

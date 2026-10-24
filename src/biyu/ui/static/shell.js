@@ -473,6 +473,15 @@
     if (currentPage() === 'index') shelfBtn.classList.add('current');
     nav.appendChild(shelfBtn);
 
+    // S-3 T7:快检一级入口在无书态同样可达
+    const qcBtn0 = document.createElement('a');
+    qcBtn0.className = 'biyu-nav-btn biyu-quickcheck-pill';
+    qcBtn0.id = 'nav-quickcheck';
+    qcBtn0.href = '/quickcheck.html';
+    qcBtn0.textContent = '⚡ 独立快检 / 去AI味';
+    if (currentPage() === 'quickcheck') qcBtn0.classList.add('current');
+    nav.appendChild(qcBtn0);
+
     const book = state.book;
     if (book) {
       const bookBtn = document.createElement('a');
@@ -499,6 +508,15 @@
         pills.appendChild(pill);
       });
       nav.appendChild(bookBtn);
+      // S-3 T7(P0-1A):顶栏一级快检入口(朱砂胶囊)
+      const qcBtn = document.createElement('a');
+      qcBtn.className = 'biyu-nav-btn biyu-quickcheck-pill';
+      qcBtn.id = 'nav-quickcheck';
+      qcBtn.href = '/quickcheck.html';
+      qcBtn.title = '免建书免填设定，随手粘贴小说即刻查 AI 味词族密度';
+      qcBtn.textContent = '⚡ 独立快检 / 去AI味';
+      if (currentPage() === 'quickcheck') qcBtn.classList.add('current');
+      nav.appendChild(qcBtn);
       nav.appendChild(pills);
     }
     return nav;
