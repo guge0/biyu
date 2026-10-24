@@ -163,3 +163,51 @@ def test_ui_seed_routes_registered() -> None:
 
     paths = {getattr(route, "path", "") for route in router.routes}
     assert paths == {"/api/homestead/stats", "/api/seals/state"}
+
+
+# ---------- S-3 T8 · 耕读历/印章 删书降级与可重算专项 ----------
+
+def test_homestead_degrades_gracefully_after_book_removal(tmp_path: Path) -> None:
+    """spec 场景2:删除示例书后计数与卡仍工作(重算→零值/低值,不报错)。"""
+    root = _seeded_root(tmp_path)
+    before = homestead_stats(root)
+    assert before["approved_chapters"] == 3
+
+    # 模拟用户删书(受保护删除=移出书架目录);耕读历纯文件重算,无状态残留
+    import shutil
+
+    for book in list(root.iterdir()):
+        if book.is_dir() and (book / "book.json").is_file():
+            shutil.rmtree(book)
+    after = homestead_stats(root)
+    assert after["approved_chapters"] == 0
+    assert after["streak_days"] == 0
+    assert after["week_words"] == 0
+    assert len(after["heatmap"]) == 14  # 热力格照常渲染(全 0)
+
+
+def test_homestead_recomputes_from_files(tmp_path: Path) -> None:
+    """数据可重算:直接改章节文件字数,统计随之变化(无缓存依赖)。"""
+    root = _seeded_root(tmp_path)
+    book = next(p for p in root.iterdir() if (p / "book.json").is_file())
+    chapter = book / "chapters" / "ch1.md"
+    chapter.write_text("一笔" * 600, encoding="utf-8")  # 1200 汉字
+    stats = homestead_stats(root)
+    today_heat = stats["heatmap"][-1]
+    # 重写 ch1 后当日字数=新写1200+种子其余两章与候选稿;关键断言:数值随文件内容变化(可重算)
+    assert today_heat["words"] > 1200
+    assert today_heat["words"] != 898
+    assert today_heat["level"] == 1  # 实测 1889 字 <2000 → lv1;分级口径与图纸 cal-lv 一致
+
+
+def test_seals_state_degrades_after_book_removal(tmp_path: Path) -> None:
+    root = _seeded_root(tmp_path)
+    import shutil
+
+    for book in list(root.iterdir()):
+        if book.is_dir() and (book / "book.json").is_file():
+            shutil.rmtree(book)
+    seals = seals_state(root)
+    assert seals["achieved_count"] == 0
+    assert all(not s["achieved"] for s in seals["seals"])
+    assert seals["finalized_words"] == 0
