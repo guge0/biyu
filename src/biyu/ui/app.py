@@ -278,8 +278,12 @@ app.include_router(_settings_router)
 app.include_router(_backup_router)
 app.include_router(_appearance_router)
 from biyu.ui.ui_seed_routes import router as _ui_seed_router  # S-3:耕读历/印章只读接口
+from biyu.ui.wizard import router as _wizard_router  # S-3 T4:一句话开书向导
+from biyu.ui.legacy_migrate import router as _legacy_migrate_router  # S-3 T4:旧版数据根迁移
 
 app.include_router(_ui_seed_router)
+app.include_router(_wizard_router)
+app.include_router(_legacy_migrate_router)
 # M2 章节工作台 + 审读路由(books/chapters/characters/truth_files/cost/SSE/reviews)
 app.include_router(_web_router)
 

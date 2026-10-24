@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>笔驭作者工作台 · 新建作品</title>
+  <link rel="stylesheet" href="/styles.css?v=a1f1bf55">
+  <link rel="stylesheet" href="/biyu-paper.css?v=ecdbc72d">
+  <link rel="stylesheet" href="/shell.css?v=f47278a2">
+</head>
+<body>
+  <!-- 旧版顶部导航：S-1 起由 shell.js 接管渲染；此块保留导航契约锚点，运行时隐藏 -->
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">笔驭</a>
+    <div class="nav-links"><a href="/">书架</a></div>
+    <div class="nav-badges"></div>
+  </nav>
+
+  <main class="page">
+    <div class="spread">
+      <div class="margin-col">
+        <div class="num" id="wizard-step-num">一</div>
+        <div class="unit">步</div>
+        <div class="meta">共三步<br>开书向导</div>
+      </div>
+      <div class="main-col">
+
+        <!-- ============ 第一步：一句话想法（图纸屏2 Step1） ============ -->
+        <section id="wizard-step1">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:6px">
+            <div>
+              <h1 class="page-title">新建作品 · 一句话想法</h1>
+              <p class="page-sub" style="margin-bottom:14px">写下你的核心脑洞或卖点，机器为你生成书名、世界观骨架、主角卡与第一卷方向；也可跳过 AI 直接手动建书。</p>
+            </div>
+            <button id="wizard-manual-top" class="b2 bs" type="button" title="决策5必含：不开 AI 也能直接建立空白书档案">✎ 跳过 AI，手动建空白书</button>
+          </div>
+
+          <div class="card" style="margin-bottom:18px">
+            <p class="eyebrow">第一步 · 一句话核心脑洞（必填）</p>
+            <textarea id="wizard-idea" class="prose-input" rows="3" placeholder="示例：社恐主角靠死亡回归在末世反复试错"></textarea>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <span style="font-size:12px;color:var(--ink-mute)">一键填入示例：</span>
+              <button class="b2 bs wizard-sample" type="button" data-idea="社恐主角靠死亡回归在末世反复试错，每次读档都会在铜刀鞘上留下一道不可磨灭的刻痕。" data-genre="末世回溯">社恐死亡回溯</button>
+              <button class="b2 bs wizard-sample" type="button" data-idea="落魄钦天监学徒发现大周朝的二十四节气全是修仙世家伪造的阵法节点，一旦立春失守全城化妖。" data-genre="玄幻修仙">钦天监伪造节气</button>
+              <button class="b2 bs wizard-sample" type="button" data-idea="赛博义体医生每替死人摘除一枚脑机芯片，就会被迫经历死者生前最后十分钟的记忆。" data-genre="悬疑智斗">义体医生解剖记忆</button>
+            </div>
+          </div>
+
+          <div class="grid grid-2" style="margin-bottom:22px">
+            <div class="card">
+              <p class="eyebrow">可选 · 题材标签</p>
+              <div id="wizard-genres" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
+            </div>
+            <div class="card">
+              <p class="eyebrow">可选 · 本章篇幅下限档位</p>
+              <div class="segmented" style="margin-top:8px" id="wizard-tiers">
+                <button class="b2 bs" type="button" data-tier="2000">短 · 约 2,000</button>
+                <button class="b2 bs current" type="button" data-tier="3000">标准 · 约 3,000</button>
+                <button class="b2 bs" type="button" data-tier="4000">长 · 约 4,000</button>
+              </div>
+              <p style="font-size:12px;color:var(--ink-mute);margin:10px 0 0">只设下限、不设上限：先写完戏核和钩子，不会自动灌水。</p>
+            </div>
+          </div>
+
+          <div class="row" style="justify-content:space-between">
+            <div class="row">
+              <button id="wizard-generate" class="b1" type="button">生成开书方案</button>
+              <button id="wizard-manual" class="b2" type="button">手动建书（不调模型）</button>
+              <a class="b3" href="/" style="text-decoration:none">返回书架</a>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 第二步：推演中 / REQ-W1 失败态（图纸屏2 Step2） ============ -->
+        <section id="wizard-step2" hidden>
+          <div id="wizard-running">
+            <h1 class="page-title">正在为你搭建新书骨架…</h1>
+            <p class="page-sub">机器正在根据你的脑洞推演世界观硬设定、人物弧光与第一卷方向。</p>
+            <div class="list">
+              <div class="list-item m-done"><span class="ch" style="color:var(--ok)">✓ 01</span><span class="ti">提炼核心戏剧冲突与全书北极星</span><span class="tm">—</span></div>
+              <div class="list-item m-act"><span class="ch">● 02</span><span class="ti">推演世界观硬设定、主角卡与第一卷方向…</span><span class="rt">正在推演</span></div>
+              <div class="list-item m-not"><span class="ch">○ 03</span><span class="ti">生成 3 个候选书名</span><span class="tm">待执行</span></div>
+            </div>
+          </div>
+          <div id="wizard-error" hidden>
+            <div class="banner" style="margin-bottom:18px">
+              <strong style="color:var(--mark)">✗ 开书方案推演没有完成（连接失败、Key 未配置或余额不足）</strong>
+              <p style="margin:6px 0 0;font-size:13px">按 REQ-W1 保护规则：系统没有在磁盘上建立残缺空书目录，你的想法原文已完整保留。可重试推演或改用「手动建书」。</p>
+              <p id="wizard-error-detail" style="margin:6px 0 0;font-size:12px;color:var(--ink-mute)"></p>
+            </div>
+            <div class="row">
+              <button id="wizard-retry" class="b1" type="button">重试生成开书方案</button>
+              <button id="wizard-error-manual" class="b2" type="button">改为手动建书</button>
+              <button id="wizard-back-idea" class="b3" type="button">← 返回修改想法</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 第三步：立项结果（就地编辑，图纸屏2 Step3） ============ -->
+        <section id="wizard-step3" hidden>
+          <h1 class="page-title">立项方案已就绪 · 确认后即刻开写</h1>
+          <p class="page-sub">以下每一项都可直接微调；点底部「就这样，开写第一章」后才会正式建书落盘并进入第一章契约页。</p>
+
+          <div class="card" style="margin-bottom:16px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+              <span class="eyebrow" style="margin:0">书名（3 个候选可点选切换，或直接在下方改字）</span>
+              <span class="badge" id="wizard-result-meta">—</span>
+            </div>
+            <div class="row" id="wizard-titles" style="margin-bottom:10px;gap:8px"></div>
+            <input type="text" id="wizard-title-input" class="field" maxlength="30" placeholder="书名">
+          </div>
+
+          <div class="card" style="margin-bottom:16px">
+            <p class="eyebrow">一句话简介（全书北极星 · 可直接修改）</p>
+            <textarea id="wizard-summary" class="prose-input" rows="2"></textarea>
+          </div>
+
+          <div class="grid grid-2" style="margin-bottom:20px">
+            <div class="card">
+              <p class="eyebrow">世界观骨架与硬禁令</p>
+              <textarea id="wizard-worldview" class="prose-input" rows="5" placeholder="每行一条硬设定，保真闸将按此核查"></textarea>
+            </div>
+            <div class="card">
+              <p class="eyebrow">主角卡</p>
+              <textarea id="wizard-protagonist" class="prose-input" rows="2" style="margin-bottom:12px" placeholder="姓名+定位+性格亮点（一句话）"></textarea>
+              <p class="eyebrow">第一卷方向</p>
+              <textarea id="wizard-vol1" class="prose-input" rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="row" style="justify-content:space-between">
+            <button id="wizard-confirm" class="b1" type="button">就这样，开写第一章</button>
+            <div class="row">
+              <button id="wizard-back-idea2" class="b2" type="button">退回改想法</button>
+              <button id="wizard-reroll" class="b4" type="button">重抽一版立项</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="error-banner" class="error-banner" hidden style="margin-top:16px"></section>
+      </div>
+    </div>
+  </main>
+
+  <!-- 手动建书弹窗（决策5：复用现役建书表单） -->
+  <div id="wizard-manual-overlay" class="modal-overlay" hidden>
+    <form id="wizard-manual-form" class="setup-card">
+      <h2>手动新建作品（只建本地写作档案，不调用模型）</h2>
+      <p>适合已经有完整构思的认真型作者：直接建立本地书籍目录，随后在工作台手填设定或直接写第一章。</p>
+      <label>书名（必填）<input id="wizard-manual-title" required maxlength="120" placeholder="输入新书名…"></label>
+      <label>题材<select id="wizard-manual-genre">
+        <option value="xuanhuan">玄幻</option><option value="qihuan">奇幻</option>
+        <option value="dushi">都市</option><option value="kehuan">科幻</option>
+        <option value="lishi">历史</option><option value="xuanyi" selected>悬疑</option>
+        <option value="qingxiaoshuo">轻小说</option>
+      </select></label>
+      <div class="modal-actions">
+        <button id="wizard-manual-cancel" class="btn-secondary" type="button">取消</button>
+        <button id="wizard-manual-submit" class="btn-primary" type="submit">创建空白作品并进入设定</button>
+      </div>
+      <p id="wizard-manual-status" role="status"></p>
+    </form>
+  </div>
+
+  <script src="/icons.js"></script>
+  <script src="/genre.js?v=shelf-close-1"></script>
+  <script src="/cn-num.js"></script>
+  <script src="/wizard.js?v=s3t4-1"></script>
+  <script src="/shell.js?v=4c7eddac" defer></script>
+</body>
+</html>

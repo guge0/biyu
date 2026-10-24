@@ -76,7 +76,7 @@
         <div class="row" id="settings-entry" style="margin:0 0 14px">
           <button id="connection-settings-button" class="b2 bs" type="button" aria-label="Key 与模型设置">Key / 模型</button>
           <button id="backup-settings-button" class="b2 bs" type="button">备份</button>
-          <a id="import-works-button" class="b2 bs" href="/workbench.html" style="text-decoration:none" title="粘贴正文 / 本地 TXT 批量 / 旧版 biyu 数据根迁移">📥 导入作品</a>
+          <button id="import-works-button" class="b2 bs biyu-import-wizard-trigger" type="button" title="粘贴正文 / 本地 TXT 批量 / 旧版 biyu 数据根迁移">📥 导入作品</button>
           <button id="manual-create-button" class="b2 bs" type="button" title="不开 AI，直接建立本地写作档案">手动建书</button>
           <button id="version-badge" class="env-badge env-test" type="button" title="当前运行版本" aria-expanded="false" aria-controls="version-details">
             <span class="env-dot"></span>
@@ -118,7 +118,7 @@
             <div class="row" style="justify-content:center;gap:12px;flex-wrap:wrap">
               <button type="button" class="b1" id="create-book-empty-button">+ 新建第一本书（AI 开书向导）</button>
               <button type="button" class="b2" id="manual-create-empty-button">✎ 跳过 AI，手动建空白书</button>
-              <a class="b2" id="import-empty-link" href="/workbench.html" style="text-decoration:none">📥 导入已有作品 / 旧版迁移</a>
+              <a class="b2 biyu-import-wizard-trigger" id="import-empty-link" href="#" style="text-decoration:none">📥 导入已有作品 / 旧版迁移</a>
             </div>
           </div>
 

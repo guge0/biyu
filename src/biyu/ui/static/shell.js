@@ -551,6 +551,15 @@
     const right = document.createElement('div');
     right.className = 'biyu-win-right';
 
+    // S-3 决策6B:全局顶栏「📥 导入向导」入口(三合一弹窗)
+    const importWizard = document.createElement('button');
+    importWizard.type = 'button';
+    importWizard.className = 'biyu-import-wizard-btn';
+    importWizard.title = '粘贴正文 / 本地 TXT 批量 / 旧版 biyu 数据根自动识别迁移';
+    importWizard.textContent = '📥 导入向导';
+    importWizard.addEventListener('click', openImportWizard);
+    right.appendChild(importWizard);
+
     const gacha = document.createElement('button');
     gacha.type = 'button';
     gacha.className = 'biyu-gacha-switch';
@@ -632,6 +641,239 @@
     bar.appendChild(leftGroup);
     bar.appendChild(rightGroup);
     return bar;
+  }
+
+  // 书架等页面上的导入入口按钮(决策6B 第二/三入口)统一接三合一弹窗
+  function wireImportTriggers() {
+    document.querySelectorAll('.biyu-import-wizard-trigger').forEach((el) => {
+      el.addEventListener('click', (event) => {
+        event.preventDefault();
+        openImportWizard(el.dataset.importTab || 'paste');
+      });
+    });
+  }
+
+  /* ---------- S-3 决策6B:三合一导入向导弹窗(①粘贴 ②本地txt ③旧版数据根迁移) ---------- */
+  function openImportWizard(defaultTab) {
+    let overlay = document.getElementById('biyu-import-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'biyu-modal-overlay';
+      overlay.id = 'biyu-import-overlay';
+      overlay.innerHTML =
+        '<div class="biyu-modal biyu-import-modal" role="dialog" aria-modal="true" aria-labelledby="biyu-import-title">' +
+        '<h2 id="biyu-import-title">📥 导入稿件与迁移向导</h2>' +
+        '<p style="font-size:13px;color:var(--ink-mute);margin:0 0 12px">导入本身不花钱，也不会改动现有世界观和角色卡。支持三来源统一入口：</p>' +
+        '<div class="row biyu-import-tabs" role="tablist">' +
+        '<button type="button" class="b2 bs current" data-tab="paste">① 粘贴正文</button>' +
+        '<button type="button" class="b2 bs" data-tab="txt">② 本地 .txt/.md 批量</button>' +
+        '<button type="button" class="b2 bs" data-tab="legacy">③ 旧版 biyu 数据根迁移</button></div>' +
+        '<div id="biyu-import-body"></div>' +
+        '<div class="biyu-modal-actions"><button type="button" class="b3" id="biyu-import-close">取消</button></div>' +
+        '</div>';
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) overlay.hidden = true;
+      });
+      document.getElementById('biyu-import-close').addEventListener('click', () => { overlay.hidden = true; });
+      overlay.querySelectorAll('.biyu-import-tabs button').forEach((btn) => {
+        btn.addEventListener('click', () => renderImportTab(btn.dataset.tab));
+      });
+    }
+    overlay.hidden = false;
+    renderImportTab(defaultTab || 'paste');
+  }
+
+  function importState() {
+    return { pending: null };
+  }
+  const importFlow = importState();
+
+  async function importTargetSelect() {
+    const books = await fetch('/api/books').then((r) => r.json()).catch(() => ({ books: [] }));
+    const options = (books.books || [])
+      .map((b) => '<option value="' + String(b.id).replace(/"/g, '&quot;') + '">' +
+        (b.display_name || b.title || b.name) + '</option>')
+      .join('');
+    return '<label style="display:block;font-size:12px;font-weight:600;color:var(--ink-mute);margin-bottom:4px">导入到哪本书</label>' +
+      '<select id="biyu-import-book" class="biyu-contact-textarea" style="height:34px;margin-bottom:10px">' + options + '</select>';
+  }
+
+  function importIdentityBlock() {
+    return '<div style="background:var(--surface-subtle);border:1px solid var(--rule);border-radius:8px;padding:10px 14px;margin-bottom:12px">' +
+      '<div style="font-size:12.5px;font-weight:600;margin-bottom:6px">这批稿件是什么身份？（必须选择）</div>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:13px;margin-bottom:4px">' +
+      '<input type="radio" name="biyu-import-identity" value="candidate" checked><span><strong>作为候选稿</strong> —— 进入待定夺，可继续审读、批注和返修</span></label>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:13px">' +
+      '<input type="radio" name="biyu-import-identity" value="official"><span><strong>作为正式稿</strong> —— 直接存为定稿；下一步可选是否建立本书记忆</span></label></div>';
+  }
+
+  async function renderImportTab(tab) {
+    document.querySelectorAll('.biyu-import-tabs button').forEach((b) => {
+      b.classList.toggle('current', b.dataset.tab === tab);
+    });
+    const body = document.getElementById('biyu-import-body');
+    importFlow.pending = null;
+    if (tab === 'legacy') {
+      body.innerHTML =
+        '<div style="background:var(--surface-subtle);border-radius:8px;padding:12px 14px;margin-bottom:12px">' +
+        '<p style="font-weight:600;margin:0 0 8px">自动识别旧版 biyu 数据根目录并一键迁移（纯文件复制，不调模型、不改源目录）</p>' +
+        '<div class="row" style="gap:8px;margin-bottom:8px">' +
+        '<input id="biyu-legacy-root" class="biyu-contact-textarea" style="flex:1" placeholder="旧版数据根目录，例如 E:\\biyu_v1_data\\books">' +
+        '<button type="button" class="b2 bs" id="biyu-legacy-scan">重新识别</button></div>' +
+        '<div id="biyu-legacy-result" style="font-size:12.5px;color:var(--ink-soft)"></div></div>' +
+        '<div class="biyu-modal-actions" style="justify-content:flex-end">' +
+        '<button type="button" class="b1" id="biyu-legacy-commit" disabled>迁移所选到书架</button></div>';
+      document.getElementById('biyu-legacy-scan').addEventListener('click', legacyScan);
+      document.getElementById('biyu-legacy-commit').addEventListener('click', legacyCommit);
+      return;
+    }
+    const targetSelect = await importTargetSelect();
+    const isPaste = tab === 'paste';
+    body.innerHTML = targetSelect +
+      '<label style="display:block;font-size:12px;font-weight:600;color:var(--ink-mute);margin-bottom:4px">从第几章开始</label>' +
+      '<input id="biyu-import-chapter" type="number" min="1" value="1" class="biyu-contact-textarea" style="width:90px;height:34px;margin-bottom:12px">' +
+      (isPaste
+        ? '<textarea id="biyu-import-text" class="biyu-contact-textarea" rows="6" placeholder="粘贴单章；多章请用「第N章」作为明确分隔"></textarea>'
+        : '<input id="biyu-import-files" type="file" accept=".txt,.md" multiple class="biyu-contact-textarea" style="height:auto;padding:8px">') +
+      importIdentityBlock() +
+      '<div class="biyu-modal-actions" style="justify-content:space-between">' +
+      '<span id="biyu-import-preview" style="font-size:12.5px;color:var(--ink-soft);white-space:pre-line"></span>' +
+      '<button type="button" class="b1" id="biyu-import-next">预览落点 →</button></div>';
+    document.getElementById('biyu-import-next').addEventListener('click', () => importPreview(isPaste));
+  }
+
+  async function collectItems(isPaste) {
+    const start = Math.max(1, Number(document.getElementById('biyu-import-chapter').value || 1));
+    const identity = document.querySelector('input[name="biyu-import-identity"]:checked');
+    if (!identity) throw new Error('请选择稿件身份');
+    if (isPaste) {
+      const text = document.getElementById('biyu-import-text').value.trim();
+      if (!text) throw new Error('请先粘贴正文');
+      return [{ title: '', chapter: start, content: text, identity: identity.value }];
+    }
+    const files = [...document.getElementById('biyu-import-files').files];
+    if (!files.length) throw new Error('请选择 .txt / .md 文件');
+    const items = [];
+    for (let i = 0; i < files.length; i++) {
+      items.push({
+        title: '', chapter: start + i,
+        content: await files[i].text(), identity: identity.value,
+      });
+    }
+    return items;
+  }
+
+  async function importPreview(isPaste) {
+    const button = document.getElementById('biyu-import-next');
+    const previewEl = document.getElementById('biyu-import-preview');
+    try {
+      const items = await collectItems(isPaste);
+      const book = document.getElementById('biyu-import-book').value;
+      const payload = { items };
+      const resp = await fetch('/api/workbench/books/' + encodeURIComponent(book) + '/imports/preview', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const body = await resp.json();
+      if (!resp.ok) throw new Error(body.detail || '预览失败');
+      importFlow.pending = { book, payload: { ...payload, confirmed: true } };
+      previewEl.textContent = body.items.map((item) =>
+        '第 ' + item.chapter + ' 章 · ' + (item.identity === 'official' ? '正式稿' : '候选稿') +
+        (item.exists ? ' · 已有同身份内容，旧稿移入回收站保留' : '')).join('\n');
+      button.textContent = '确认导入';
+      button.onclick = () => importCommit();
+    } catch (exc) {
+      previewEl.textContent = '✗ ' + (exc.message || exc);
+    }
+  }
+
+  async function importCommit() {
+    const button = document.getElementById('biyu-import-next');
+    if (!importFlow.pending) return;
+    button.disabled = true;
+    button.textContent = '导入中…';
+    try {
+      const { book, payload } = importFlow.pending;
+      const resp = await fetch('/api/workbench/books/' + encodeURIComponent(book) + '/imports', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const body = await resp.json();
+      if (!resp.ok) throw new Error(body.detail || '导入失败');
+      const officials = (body.imported || []).filter((i) => i.identity === 'official');
+      document.getElementById('biyu-import-overlay').hidden = true;
+      showToast('已导入 ' + (body.imported || []).length + ' 章' +
+        (officials.length ? '；正式稿可在读稿页建立本书记忆' : '；候选稿记忆没有改变'));
+      if (location.pathname === '/index.html' || location.pathname === '/') {
+        setTimeout(() => location.reload(), 900);
+      }
+    } catch (exc) {
+      document.getElementById('biyu-import-preview').textContent = '✗ ' + (exc.message || exc);
+    } finally {
+      button.disabled = false;
+      button.textContent = '预览落点 →';
+      button.onclick = () => importPreview(document.querySelector('.biyu-import-tabs .current').dataset.tab === 'paste');
+    }
+  }
+
+  async function legacyScan() {
+    const result = document.getElementById('biyu-legacy-result');
+    const root = document.getElementById('biyu-legacy-root').value.trim();
+    if (!root) { result.textContent = '请先填写旧版数据根目录。'; return; }
+    result.textContent = '正在识别…';
+    try {
+      const resp = await fetch('/api/migrate/legacy/scan', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_root: root }),
+      });
+      const body = await resp.json();
+      if (!resp.ok) throw new Error(body.detail || '识别失败');
+      if (!body.count) {
+        result.textContent = '✓ 识别完成：这个目录里没有旧版书籍（书籍目录需含 book.json）。';
+        document.getElementById('biyu-legacy-commit').disabled = true;
+        return;
+      }
+      result.innerHTML = '<div style="color:var(--ok);font-weight:600;margin-bottom:6px">✓ 已识别 ' + body.count + ' 本旧版作品：</div>' +
+        body.books.map((b) =>
+          '<label style="display:flex;gap:8px;align-items:center;font-size:13px;padding:2px 0">' +
+          '<input type="checkbox" class="biyu-legacy-pick" value="' + b.id + '" checked>' +
+          '<span><strong>' + b.title + '</strong>（' + b.chapter_count + ' 章）</span></label>').join('');
+      document.getElementById('biyu-legacy-commit').disabled = false;
+    } catch (exc) {
+      result.textContent = '✗ ' + (exc.message || exc);
+      document.getElementById('biyu-legacy-commit').disabled = true;
+    }
+  }
+
+  async function legacyCommit() {
+    const picks = [...document.querySelectorAll('.biyu-legacy-pick:checked')].map((el) => el.value);
+    if (!picks.length) return;
+    const button = document.getElementById('biyu-legacy-commit');
+    button.disabled = true;
+    button.textContent = '迁移中…';
+    try {
+      const resp = await fetch('/api/migrate/legacy/commit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source_root: document.getElementById('biyu-legacy-root').value.trim(),
+          ids: picks,
+        }),
+      });
+      const body = await resp.json();
+      if (!resp.ok) throw new Error(body.detail || '迁移失败');
+      document.getElementById('biyu-import-overlay').hidden = true;
+      showToast('已迁移 ' + body.imported.length + ' 本到书架：' +
+        body.imported.map((b) => '《' + b.title + '》').join('、'));
+      if (location.pathname === '/index.html' || location.pathname === '/') {
+        setTimeout(() => location.reload(), 900);
+      }
+    } catch (exc) {
+      document.getElementById('biyu-legacy-result').textContent = '✗ ' + (exc.message || exc);
+    } finally {
+      button.disabled = false;
+      button.textContent = '迁移所选到书架';
+    }
   }
 
   /* ---------- S-3 决策6A:联系与反馈弹窗(图纸 openContactFeedbackModal 搬运) ---------- */
@@ -748,6 +990,7 @@
     document.body.appendChild(toast);
 
     document.body.classList.add('biyu-shell-active');
+    wireImportTriggers();
     if (!oldNav) {
       console.warn('[biyu-shell] 本页没有旧导航容器，已按无壳降级处理：仅注入新壳。');
     }

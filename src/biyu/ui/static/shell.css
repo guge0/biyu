@@ -242,3 +242,18 @@ body.biyu-shell-active{padding-bottom:40px}
   color: var(--ink);
   resize: vertical;
 }
+
+/* S-3 决策6B:顶栏导入向导按钮 */
+.biyu-import-wizard-btn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--btn-border);
+  border-radius: var(--r-md);
+  background: var(--surface-subtle);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.biyu-import-wizard-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
+.biyu-import-modal { max-width: 640px; }

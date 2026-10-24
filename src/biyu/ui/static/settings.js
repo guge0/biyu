@@ -44,3 +44,15 @@ async function archive(){if(!current||!current.id.startsWith('character:')||busy
 async function load(preferred){if(!book){$('book-subtitle').textContent='没有指定书，设定没有读取成功。';error('没有指定书。');return;}try{snapshot=await api(`/api/settings/books/${encoded}`);const filled=snapshot.cells.filter(cell=>(cell.content||'').trim()).length,total=snapshot.characters.reduce((sum,card)=>sum+(card.content||'').length,0);$('book-title').textContent='设定集';$('book-subtitle').textContent=`${snapshot.book?.title||book} · 写手和导演每一章都会读这里`;$('filled-count').textContent=String(filled);$('character-total').textContent=`${total.toLocaleString()} 字`;renderNav();const target=preferred&&getCurrent(preferred)?preferred:'north_star';selectCell(target);}catch(exc){$('book-subtitle').textContent='设定没有读取成功，请看下方提示。';if(exc.status===404)error('服务还是旧版本，请关闭旧启动窗口后重新双击 start_biyu_ui.bat。');else error(exc.message);}}
 $('read-tab').onclick=()=>{if(current&&!creatingCharacter)selectCell(current.id);};$('edit-tab').onclick=showEdit;$('back-button').onclick=()=>creatingCharacter?showRoster():showEdit();$('save-button').onclick=confirmSave;$('archive-button').onclick=archive;$('roster-entry').onclick=showRoster;$('character-search').oninput=()=>{if(!$('roster').hidden)renderRoster();};$('zebian-launch').onclick=()=>launchZebian({mode:'recent'});$('zebian-new-session').onclick=()=>launchZebian({mode:'new'});$('zebian-session-select').onchange=()=>{const id=$('zebian-session-select').value;if(id)launchZebian({session_id:id});};$('zebian-copy').onclick=copyZebianPrompt;load();loadZebianSessions();
 })();
+
+/* S-3 决策6A:联系名片卡复制群号 */
+(function () {
+  "use strict";
+  const btn = document.getElementById("contact-copy-group");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    if (navigator.clipboard) navigator.clipboard.writeText("892467108");
+    btn.textContent = "已复制 ✓";
+    setTimeout(() => { btn.textContent = "复制 Q 群号"; }, 1500);
+  });
+})();

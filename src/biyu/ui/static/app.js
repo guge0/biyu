@@ -490,9 +490,10 @@
     const submit = $("create-book-submit");
     const status = $("create-book-status");
     if (!overlay || !form || !submit || !status) return;
-    const open = () => { status.textContent = ""; overlay.hidden = false; $("create-book-title").focus(); };
-    [$("create-book-button"), $("create-book-empty-button")].forEach(button => {
-      if (button) button.addEventListener("click", open);
+    // S-3 T4:「+ 新建作品 / + 新建第一本书」进入 AI 开书向导页(图纸屏2);
+    // 手动建书按钮(T3 体验层)仍开本弹窗。
+    [$("create-book-button"), $("create-book-empty-button")].forEach((button) => {
+      if (button) button.addEventListener("click", () => { location.href = "/wizard.html"; });
     });
     $("create-book-cancel").addEventListener("click", () => { overlay.hidden = true; });
     form.addEventListener("submit", async event => {
