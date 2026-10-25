@@ -66,6 +66,18 @@ def test_quickcheck_shell_entry() -> None:
     assert 'href="/quickcheck.html"' in _src("quickcheck.html") or True
 
 
+def test_quickcheck_entry_not_duplicated_on_book_pages() -> None:
+    """S-3B 走查修复:无书兜底入口必须带 !book 条件。
+
+    旧实现在有书态同时渲染 qcBtn0 与书组朱砂胶囊(同 id 同文案并排两个)。
+    """
+    shell = _src("shell.js")
+    assert "if (!book) {" in shell
+    assert shell.count("const qcBtn0") == 1
+    # 有书态的朱砂胶囊仍保留
+    assert "biyu-quickcheck-pill" in shell
+
+
 def test_quickcheck_routes_registered() -> None:
     from biyu.ui.quickcheck_routes import router
 

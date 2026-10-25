@@ -365,6 +365,17 @@
       closeBookMoreMenus(opening ? moreMenu : null);
       moreMenu.hidden = !opening;
       moreToggle.setAttribute("aria-expanded", String(opening));
+      if (opening) {
+        // S-3B 走查修复:书卡贴近视口底部时菜单向下展开会整条掉到视口外,
+        // 而应用壳页面不可滚动——放不下就向上翻。
+        moreMenu.style.top = "";
+        moreMenu.style.bottom = "";
+        const rect = moreMenu.getBoundingClientRect();
+        if (rect.bottom > window.innerHeight - 8) {
+          moreMenu.style.top = "auto";
+          moreMenu.style.bottom = "calc(100% + 6px)";
+        }
+      }
     });
     moreMenu.addEventListener("click", (event) => event.stopPropagation());
     more.append(moreToggle, moreMenu);

@@ -17,9 +17,40 @@ from .workbench_versions import snapshot_candidate
 
 
 _RUNNING: dict[tuple[str, int], dict[str, object]] = {}
+_WATCHERS: set["asyncio.Task[None]"] = set()
+
+
+def _process_exited(entry: dict[str, object]) -> bool:
+    """条目里的子进程是否已退出(键宽容:测试或其他调用方可能塞部分字段)。"""
+    proc = entry.get("process")
+    if proc is None:
+        return False
+    return getattr(proc, "returncode", None) is not None
+
+
+def _drop_if_exited(key: tuple[str, int]) -> None:
+    """进程已退出但 _RUNNING 还挂着时立即收尸(S-3B 缺陷0 读路径自愈)。"""
+    entry = _RUNNING.get(key)
+    if entry is not None and _process_exited(entry):
+        _RUNNING.pop(key, None)
+
+
+async def _reap_on_exit(key: tuple[str, int], proc: object) -> None:
+    """S-3B 缺陷0:子进程一退出就无条件清 _RUNNING,不依赖 SSE 消费端。
+
+    SSE 客户端断开(刷新页面)后,消费端可能永远停在 stdout 读循环上,
+    execute 的 finally 何时执行不可靠;章动作必须以进程退出为准立即恢复。
+    """
+    try:
+        await proc.wait()  # type: ignore[attr-defined]
+    except Exception:
+        pass
+    finally:
+        _RUNNING.pop(key, None)
 
 
 def running_action(book: str, chapter: int) -> str | None:
+    _drop_if_exited((book, chapter))
     entry = _RUNNING.get((book, chapter))
     return str(entry["action"]) if entry else None
 
@@ -29,6 +60,7 @@ def running_run(book: str, chapter: int) -> dict[str, object] | None:
 
     键全部宽容取值:_RUNNING 也可能被测试或其他调用方塞入部分字段的项。
     """
+    _drop_if_exited((book, chapter))
     entry = _RUNNING.get((book, chapter))
     if not entry:
         return None
@@ -137,6 +169,11 @@ async def execute(action_id: str, *, book: str, chapter: int, confirmed: bool, e
             yield {"type": "error", "message": message, "returncode": 1, "run_id": run_id}
             return
         _RUNNING[key]["process"] = proc
+        # S-3B 缺陷0:看门狗与消费端解耦——进程退出即清 _RUNNING。
+        # 持强引用防 GC(asyncio 只持弱引用),完成即从集合移除。
+        watcher = asyncio.create_task(_reap_on_exit(key, proc))
+        _WATCHERS.add(watcher)
+        watcher.add_done_callback(_WATCHERS.discard)
         if action.stdin_after_confirm:
             proc.stdin.write(action.stdin_after_confirm.encode("utf-8"))
             await proc.stdin.drain()

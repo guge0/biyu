@@ -26,6 +26,27 @@ def _repo_root(book_dir: Path | None = None) -> Path:
     return Path(result.stdout.strip()).resolve()
 
 
+def _looks_like_source_repo(root: Path) -> bool:
+    """目录是否具备笔驭源码仓特征(守卫用指纹,不依赖环境变量)。"""
+    root = Path(root)
+    return (root / "src" / "biyu" / "config.py").is_file() or (root / "pyproject.toml").is_file()
+
+
+def source_repo_toplevel_containing(path: Path) -> Path | None:
+    """path 落在笔驭源码仓 worktree 内时返回该仓根,否则 None(S-3B 缺陷2 启动自检)。"""
+    path = Path(path)
+    if not path.is_dir():
+        return None
+    probe = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"], cwd=str(path),
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    if probe.returncode != 0:
+        return None
+    root = Path(probe.stdout.strip()).resolve()
+    return root if _looks_like_source_repo(root) else None
+
+
 def repo_root_for_book(book_dir: Path) -> Path:
     """Compatibility seam for callers/tests that previously patched zero-arg `_repo_root`."""
     try:
@@ -35,7 +56,7 @@ def repo_root_for_book(book_dir: Path) -> Path:
     # 铁律⑧(书不进仓)守卫:数据根落在笔驭源码仓内时(开发试验态),
     # 绝不允许把书稿提交进产品仓——改为落到数据根自己的仓。
     root = Path(root).resolve()
-    if (root / "src" / "biyu" / "config.py").is_file() or (root / "pyproject.toml").is_file():
+    if _looks_like_source_repo(root):
         book_dir_resolved = Path(book_dir).resolve()
         for parent in book_dir_resolved.parents:
             if parent == root:
@@ -44,7 +65,12 @@ def repo_root_for_book(book_dir: Path) -> Path:
 
 
 def ensure_local_repository(data_root: Path) -> Path:
-    """Create the author data repository when it is not already in a Git worktree."""
+    """Create the author data repository when it is not already in a Git worktree.
+
+    S-3B 缺陷2 补洞:数据根位于笔驭源码仓树内(即使被外层 .gitignore 覆盖)时,
+    外层仓的忽略规则会让书稿 git add 永远退出 1,必须为数据根自建仓,
+    不能因为「已经在 worktree 里」就跳过 init。
+    """
     data_root = data_root.expanduser().resolve()
     data_root.mkdir(parents=True, exist_ok=True)
     probe = subprocess.run(
@@ -52,15 +78,16 @@ def ensure_local_repository(data_root: Path) -> Path:
         capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
     initialized = probe.returncode != 0
-    if not initialized:
-        root = Path(probe.stdout.strip()).resolve()
-    else:
+    root = Path(probe.stdout.strip()).resolve() if not initialized else None
+    if not initialized and root != data_root and _looks_like_source_repo(root):
+        initialized = True
+        root = None
+    if initialized:
         subprocess.run(
             ["git", "init"], cwd=str(data_root), capture_output=True, text=True,
             encoding="utf-8", errors="replace", check=True,
         )
         root = data_root
-    if initialized:
         _run_git("config", "user.name", "Biyu Local", cwd=root)
         _run_git("config", "user.email", "biyu@local", cwd=root)
     return root

@@ -208,6 +208,30 @@ def test_setup_dialog_supports_multiple_provider_keys_and_can_close() -> None:
     assert "还有设置没有确认，确定关闭吗？" in setup_js
 
 
+def test_setup_stage_selects_echo_current_stage_models() -> None:
+    """S-3B 走查修复:分环节下拉必须回显当前环节模型。
+
+    旧实现一律默认列表第一项(r1/deepseek-reasoner),展开后直接「确认并关闭」
+    会把 stage_overrides 静默改成推理模型写正文。
+    """
+    setup_js = Path("src/biyu/ui/static/setup.js").read_text(encoding="utf-8")
+    assert "currentAlias" in setup_js
+    assert "select.value = current" in setup_js
+    # 换服务商后,已展开的分环节区要按新服务商的环节模型重渲染
+    assert "if (advancedFields && advancedFields.innerHTML) renderAdvanced();" in setup_js
+
+
+def test_setup_close_does_not_flag_untouched_dialog_as_unsaved() -> None:
+    """S-3B 走查修复:selected_model/provider 为空时,只开弹窗不改动也应能直接关闭。
+
+    旧实现拿空串和下拉生效值比较,取消时永远误弹「还有设置没有确认」。
+    """
+    setup_js = Path("src/biyu/ui/static/setup.js").read_text(encoding="utf-8")
+    assert "initialSetupValues = {provider: provider?.value ?? '', model: model?.value ?? ''}" in setup_js
+    assert "regularMode && initialSetupValues && (provider?.value !== initialSetupValues.provider" in setup_js
+    assert "provider?.value !== snapshot?.provider" not in setup_js
+
+
 def test_settings_reader_uses_markdown_renderer_for_book_level_cells() -> None:
     html = Path("src/biyu/ui/static/settings.html").read_text(encoding="utf-8")
     js = Path("src/biyu/ui/static/settings.js").read_text(encoding="utf-8")

@@ -526,6 +526,9 @@ hr,.hr{height:1px;background:var(--rule-strong);border:none;margin:24px 0 18px}
 
 /* ①设定 内嵌 settings 页(iframe 嵌入态) */
 body.biyu-embedded .margin-col { display: none; }
+/* S-3B 走查修复:侧栏 display:none 后 .spread 的 66px 首列不会消失,
+   主列会掉进第一列被压成 66px 竖条——嵌入态改单列。 */
+body.biyu-embedded .spread { grid-template-columns: minmax(0, 1fr); }
 body.biyu-embedded .settings-page { padding-top: 4px; }
 body.biyu-embedded nav.top-nav { display: none; }
 .setting-embed-frame {

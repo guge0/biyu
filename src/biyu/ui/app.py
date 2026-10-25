@@ -228,6 +228,30 @@ async def s3_seed_sample_book() -> None:
         logging.getLogger("biyu.ui_seed").exception("示例书种入失败(不影响启动)")
 
 
+@app.on_event("startup")
+async def s3b_warn_data_root_inside_source_repo() -> None:
+    """S-3B 缺陷2 兜底:数据根落在笔驭源码仓树内时启动即告警(开发/走查环境误配)。
+
+    真实用户根(%APPDATA% 等)不在任何仓内,不受影响;git add 撞忽略规则的
+    守卫洞已在 ensure_local_repository/repo_root_for_book 补上,这里只做可见提醒。
+    """
+    import logging
+
+    try:
+        from biyu.config import get_data_root
+        from biyu.git_helper import source_repo_toplevel_containing
+
+        offender = source_repo_toplevel_containing(get_data_root())
+    except Exception:
+        return
+    if offender is not None:
+        logging.getLogger("biyu.ui").warning(
+            "数据根位于笔驭源码仓树内(%s):相关书稿操作会改用数据根自己的仓,"
+            "但请把测试数据根移到任何 git 仓之外,避免外层忽略规则干扰。",
+            offender,
+        )
+
+
 # 写保护：写方法只允许落在当前进程 primary 数据根的书。
 # 匹配 /api/workbench/books/{book}/... 与 /api/books/{book}/... 的写请求。
 def _write_protection(request: Request) -> JSONResponse | None:

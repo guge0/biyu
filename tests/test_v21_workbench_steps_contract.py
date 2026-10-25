@@ -48,6 +48,8 @@ def test_setting_step_embeds_settings() -> None:
     assert "biyu-embedded" in shell and "embed') === '1'" in shell
     css = _src("biyu-paper.css")
     assert "body.biyu-embedded .margin-col" in css
+    # S-3B 走查修复:嵌入态侧栏隐藏后 .spread 必须改单列,否则主列掉进 66px 首列
+    assert "body.biyu-embedded .spread { grid-template-columns: minmax(0, 1fr); }" in css
 
 
 def test_outline_step_cells_and_draft_gate() -> None:
@@ -79,6 +81,41 @@ def test_cell_draft_endpoint_registered() -> None:
     assert "_DRAFTABLE" in text
     for cell in ("north_star", "book_outline", "world_facts"):
         assert cell in text
+
+
+def test_cell_draft_prompt_v2_carries_book_context(tmp_path) -> None:
+    """S-3B 缺陷1b:cell_draft 提示词 v2——system 加冲突禁令,user 加题材+北极星两行。"""
+    from biyu.ui.cell_draft import _build_prompt, _north_star_line
+
+    system = _build_prompt("world_facts", "已有设定", genre_label="悬疑", north_star="一句话北极星")[0]["content"]
+    assert "不得与本书北极星和题材冲突" in system
+    user = _build_prompt("world_facts", "已有设定", genre_label="悬疑", north_star="一句话北极星")[1]["content"]
+    assert "本书题材：悬疑" in user
+    assert "全书北极星：一句话北极星" in user
+    assert "这一格已有的内容：\n已有设定" in user
+    # 空北极星/空格内容也成立
+    user_empty = _build_prompt("north_star", "", genre_label="不限", north_star="")[1]["content"]
+    assert "全书北极星：（暂无）" in user_empty and "(空)" in user_empty
+
+    assert _north_star_line("# 北极星\n\n## 一句话故事\n一句话故事在这里\n") == "一句话故事在这里"
+    assert _north_star_line("") == ""
+    assert len(_north_star_line("x" * 200)) <= 60
+
+
+def test_cell_draft_book_context_reads_genre_and_star(tmp_path) -> None:
+    from biyu.ui.cell_draft import _book_context
+
+    book = tmp_path / "book-a"
+    book.mkdir()
+    (book / "book.json").write_text('{"title":"A","genre":"xuanyi"}', encoding="utf-8")
+    (book / "北极星.md").write_text("# 北极星\n\n## 一句话故事\n主角带着记忆回到末世前三天\n", encoding="utf-8")
+    genre_label, star = _book_context(book)
+    assert genre_label == "悬疑"
+    assert star == "主角带着记忆回到末世前三天"
+    # 未知题材代号原样透出;缺 book.json 不炸
+    (book / "book.json").write_text('{"title":"A","genre":"mystery-x"}', encoding="utf-8")
+    assert _book_context(book)[0] == "mystery-x"
+    assert _book_context(tmp_path / "ghost")[0] == "不限"
 
 
 # ---------- S-3 T5 批2:#35 左栏契约 / #53 决策7 词族雷达 ----------

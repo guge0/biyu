@@ -106,3 +106,90 @@ def test_run_log_endpoint_returns_tail_and_rejects_bad_id(tmp_path, monkeypatch)
     with pytest.raises(HTTPException) as exc_info:
         chapter_run_log("Book", 1, run_id="../../etc")
     assert exc_info.value.status_code == 400
+
+
+# ---------- S-3B 缺陷0:run 完成后无条件清 _RUNNING ----------
+
+def test_running_read_path_self_heals_after_process_exit() -> None:
+    """读路径自愈:_RUNNING 条目里的进程已退出时,running_* 立即视为不在运行。"""
+    import biyu.ui.cli_executor as ex
+
+    class ExitedProc:
+        returncode = 0
+
+    class LiveProc:
+        returncode = None
+
+    try:
+        ex._RUNNING[("Book", 7)] = {"action": "write", "process": ExitedProc()}
+        assert ex.running_action("Book", 7) is None
+        assert ("Book", 7) not in ex._RUNNING
+        assert ex.running_run("Book", 7) is None
+
+        ex._RUNNING[("Book", 8)] = {"action": "adopt", "process": LiveProc()}
+        assert ex.running_action("Book", 8) == "adopt"
+        assert ex.running_run("Book", 8)["action"] == "adopt"
+
+        # 旧式条目可能没有 process 键,宽容处理
+        ex._RUNNING[("Book", 9)] = {"action": "write"}
+        assert ex.running_action("Book", 9) == "write"
+    finally:
+        for key in (("Book", 7), ("Book", 8), ("Book", 9)):
+            ex._RUNNING.pop(key, None)
+
+
+def test_run_completion_clears_running_even_when_consumer_gone(tmp_path, monkeypatch) -> None:
+    """SSE 消费端断开(刷新页面)后,run 完成必须无条件清 _RUNNING,章动作恢复可用。
+
+    模拟方式:消费端拿到 started 事件后放弃消费(生成器不关闭、finally 不执行),
+    子进程真实退出;看门狗必须替它收尸。
+    """
+    import sys as _sys
+
+    import biyu.ui.cli_executor as ex
+    from biyu.ui.action_registry import Action
+
+    book = _make_book(tmp_path)
+    monkeypatch.setattr(ex, "resolve_book_dir", lambda _book: book)
+    monkeypatch.setattr(
+        ex, "action_for",
+        lambda action_id, *, book, chapter: Action(argv=(), confirm=False, estimate="¥0"),
+    )
+    captured: dict = {}
+    real_create = asyncio.create_subprocess_exec
+
+    async def fake_create(*args, **kwargs):
+        # 忽略业务 argv,起一个真实、打印一行、存活片刻后退出的子进程
+        proc = await real_create(
+            _sys.executable, "-u", "-c",
+            "print('阶段提示'); import sys, time; sys.stdout.flush(); time.sleep(0.3)",
+            stdin=kwargs.get("stdin"), stdout=kwargs.get("stdout"),
+            stderr=kwargs.get("stderr"), env=kwargs.get("env"),
+        )
+        captured["proc"] = proc
+        return proc
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_create)
+
+    async def scenario() -> None:
+        ex._RUNNING.pop(("Book", 1), None)
+        gen = ex.execute("write", book="Book", chapter=1, confirmed=True, extra={})
+        try:
+            event = await gen.__anext__()
+            assert event["type"] == "started"
+            assert ex.running_action("Book", 1) == "write"  # 运行中照常可见
+            # 消费端就此消失:不 aclose,不取消——生成器挂在 yield 上
+            proc = captured["proc"]
+            await proc.wait()  # 子进程退出(run 已成功)
+            for _ in range(100):
+                if ("Book", 1) not in ex._RUNNING:
+                    break
+                await asyncio.sleep(0.05)
+            assert ("Book", 1) not in ex._RUNNING, "子进程退出后 _RUNNING 必须被无条件清除"
+            assert ex.running_action("Book", 1) is None
+            assert ex.running_run("Book", 1) is None
+        finally:
+            await gen.aclose()  # 清理生成器;finally 再 pop 是空操作
+            ex._RUNNING.pop(("Book", 1), None)
+
+    asyncio.run(scenario())

@@ -47,12 +47,19 @@ class CreateFromPremiseRequest(BaseModel):
     vol1: str = ""
 
 
+# S-3B 缺陷1:提示词升级为 v2(老板终审件《新提示词全文_待老板终审.md》第一节,照文落码)
 _PREMISE_SYSTEM = (
-    "你是中文网文开书策划。根据作者的一句话想法,输出严格 JSON(不要 markdown 代码块):"
+    "你是中文网文开书策划。根据作者的一句话想法，输出严格 JSON（不要 markdown 代码块）："
     '{"titles":["书名1","书名2","书名3"],"summary":"一句话故事(全书北极星,60字内)",'
     '"worldview":["硬设定1","硬设定2","硬设定3"],"protagonist":"主角卡一句话(姓名+定位+性格亮点)",'
     '"vol1":"第一卷方向(80字内)"}'
-    "。书名要有网文钩子、避免烂大街;硬设定必须可核查、能当保真闸红线用。"
+    "规则："
+    "1. 书名 6-14 字、有记忆点、带网文钩子，三个候选风格拉开（直白爽感型/悬念反差型/意象型），"
+    "避免烂大街与套用名作；"
+    "2. 硬设定必须可核查、能当保真闸红线用；想法里没有的超自然元素不得强加，"
+    "无力量体系时世界观不写力量板块；"
+    "3. 人物、世界、主线必须与作者想法一致，禁止另起一套故事或套用其它作品的设定与人名；"
+    "4. 题材按所选倾向如实归纳，不明确的按想法本身判断。"
 )
 
 
@@ -65,18 +72,22 @@ def _extract_json(text: str) -> dict[str, Any]:
 
 
 async def _generate_premise(idea: str, genre: str) -> dict[str, Any]:
-    from biyu.config import get_registry
+    # S-3B 缺陷1(老板裁定 2026-10-25):premise 改用 v4_flash 非思考档别名取 adapter。
+    # writer 档(v4_pro)思考模式会把小 max_tokens 预算全部耗在 reasoning 上,content 为空。
+    from biyu.llm import ModelRegistry
 
-    # 用 writer(chat) 档:planner 常配 deepseek-reasoner,纯 JSON 输出不稳(text 可能为空)
-    adapter = get_registry().get_adapter_for_stage("writer")
-    user = f"一句话想法:{idea}\n题材倾向:{genre or '不限'}"
+    try:
+        adapter = ModelRegistry().get_adapter("v4_flash")
+    except (FileNotFoundError, KeyError, ValueError) as exc:
+        raise ValueError(f"开书模型(v4_flash)不可用：请先在连接设置保存 Key（{exc}）") from exc
+    user = f"一句话想法：{idea}\n题材倾向：{genre or '不限'}"
     last_error: Exception | None = None
     for _attempt in range(2):
         resp = await adapter.generate(
             [{"role": "system", "content": _PREMISE_SYSTEM},
              {"role": "user", "content": user}],
             temperature=0.7,
-            max_tokens=1600,
+            max_tokens=4000,
         )
         try:
             data = _extract_json(resp.text or "")

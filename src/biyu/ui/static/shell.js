@@ -474,15 +474,19 @@
     nav.appendChild(shelfBtn);
 
     // S-3 T7:快检一级入口在无书态同样可达
-    const qcBtn0 = document.createElement('a');
-    qcBtn0.className = 'biyu-nav-btn biyu-quickcheck-pill';
-    qcBtn0.id = 'nav-quickcheck';
-    qcBtn0.href = '/quickcheck.html';
-    qcBtn0.textContent = '⚡ 独立快检 / 去AI味';
-    if (currentPage() === 'quickcheck') qcBtn0.classList.add('current');
-    nav.appendChild(qcBtn0);
-
+    // S-3B 走查修复:有书态下方已有朱砂胶囊(qcBtn),这里不再重复渲染,
+    // 否则书页顶栏出现两个同文案同链接的「独立快检」入口(且 id 重复)。
     const book = state.book;
+    if (!book) {
+      const qcBtn0 = document.createElement('a');
+      qcBtn0.className = 'biyu-nav-btn biyu-quickcheck-pill';
+      qcBtn0.id = 'nav-quickcheck';
+      qcBtn0.href = '/quickcheck.html';
+      qcBtn0.textContent = '⚡ 独立快检 / 去AI味';
+      if (currentPage() === 'quickcheck') qcBtn0.classList.add('current');
+      nav.appendChild(qcBtn0);
+    }
+
     if (book) {
       const bookBtn = document.createElement('a');
       bookBtn.className = 'biyu-nav-btn';

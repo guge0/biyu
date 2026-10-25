@@ -48,6 +48,83 @@ def test_wizard_js_flow_contract() -> None:
 def test_wizard_extract_json_variants() -> None:
     assert _extract_json('```json\n{"a": 1}\n```') == {"a": 1}
     assert _extract_json('前缀 {"titles": ["x"]} 后缀')["titles"] == ["x"]
+    # S-3B 缺陷1:剥壳容错钉死——``` 围栏(无语言标注)+多行 JSON+前后解说
+    assert _extract_json('好的，这是方案：\n```\n{"titles": ["甲", "乙", "丙"],\n "summary": "s"}\n```\n以上。')["titles"] == ["甲", "乙", "丙"]
+    import pytest
+
+    from biyu.ui.wizard import _extract_json as _ej
+    with pytest.raises(ValueError):
+        _ej("模型只输出了一堆没有 JSON 的文字")
+
+
+def test_wizard_premise_uses_v4_flash_alias_with_4000_budget(monkeypatch) -> None:
+    """S-3B 缺陷1(老板裁定):premise 必须按 v4_flash 别名取 adapter,max_tokens≥4000。"""
+    import asyncio
+
+    captured: dict = {}
+
+    class FakeResp:
+        text = json.dumps({
+            "titles": ["甲", "乙", "丙"], "summary": "一句话",
+            "worldview": ["设定一", "设定二"], "protagonist": "张三 · 主角",
+            "vol1": "第一卷方向",
+        }, ensure_ascii=False)
+        cost = 0.0
+
+    class FakeAdapter:
+        async def generate(self, messages, **kwargs):
+            captured["max_tokens"] = kwargs.get("max_tokens")
+            return FakeResp()
+
+    class FakeRegistry:
+        def get_adapter(self, alias):
+            captured["alias"] = alias
+            return FakeAdapter()
+
+    import biyu.llm as llm_pkg
+    monkeypatch.setattr(llm_pkg, "ModelRegistry", FakeRegistry)
+    result = asyncio.run(_generate_premise("想法", ""))
+    assert result["titles"] == ["甲", "乙", "丙"]
+    assert captured["alias"] == "v4_flash"
+    assert captured["max_tokens"] >= 4000
+
+
+def test_wizard_premise_prompt_is_v2() -> None:
+    """S-3B 缺陷1b:system 提示词钉死为老板终审 v2 文本的关键约束。"""
+    import biyu.ui.wizard as wizard_mod
+
+    system = wizard_mod._PREMISE_SYSTEM
+    assert "6-14 字" in system and "记忆点" in system
+    assert "直白爽感型" in system and "悬念反差型" in system and "意象型" in system
+    assert "套用其它作品的设定与人名" in system
+    assert "无力量体系时世界观不写力量板块" in system
+    assert "严格 JSON" in system
+
+
+def test_wizard_premise_survives_thinking_model_empty_content(monkeypatch) -> None:
+    """思考模型边界不再依赖:content 空+reasoning 有 JSON 时,优雅失败且不落任何书。"""
+    import asyncio
+
+    class ThinkingResp:
+        text = ""  # 思考把 token 预算耗尽,content 空
+        reasoning_content = '{"titles":["甲","乙","丙"],"summary":"s","worldview":["w"],"protagonist":"p","vol1":"v"}'
+        cost = 0.0
+
+    class ThinkingAdapter:
+        async def generate(self, messages, **kwargs):
+            return ThinkingResp()
+
+    class FakeRegistry:
+        def get_adapter(self, alias):
+            return ThinkingAdapter()
+
+    import biyu.llm as llm_pkg
+    monkeypatch.setattr(llm_pkg, "ModelRegistry", FakeRegistry)
+    try:
+        asyncio.run(_generate_premise("想法", ""))
+        raise AssertionError("thinking 模型空 content 应当失败而非静默成功")
+    except ValueError as exc:
+        assert "JSON" in str(exc)
 
 
 def test_wizard_premise_with_fake_adapter(monkeypatch) -> None:
@@ -66,13 +143,11 @@ def test_wizard_premise_with_fake_adapter(monkeypatch) -> None:
             return FakeResp()
 
     class FakeRegistry:
-        def get_adapter_for_stage(self, stage, override=None):
+        def get_adapter(self, alias):
             return FakeAdapter()
 
-    import biyu.ui.wizard as wizard_mod
-    monkeypatch.setattr(
-        "biyu.config.get_registry", lambda: FakeRegistry(), raising=True,
-    )
+    import biyu.llm as llm_pkg
+    monkeypatch.setattr(llm_pkg, "ModelRegistry", FakeRegistry)
     result = asyncio.run(_generate_premise("想法", ""))
     assert result["titles"] == ["甲", "乙", "丙"]
     assert len(result["worldview"]) == 2

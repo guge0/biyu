@@ -95,6 +95,17 @@ def test_app_js_book_card_contract() -> None:
     assert "全书概览" in js
 
 
+def test_book_more_menu_flips_upward_near_viewport_bottom() -> None:
+    """S-3B 走查修复:书卡贴近视口底时更多菜单向上展开(应用壳页面不可滚动)。
+
+    旧实现固定 top:calc(100% + 6px) 向下展开,最后一行书卡的菜单整条掉到
+    视口外,只剩一条白边可见。
+    """
+    js = _src("app.js")
+    assert "rect.bottom > window.innerHeight - 8" in js
+    assert 'moreMenu.style.bottom = "calc(100% + 6px)"' in js
+
+
 # ---------- 壳层联系区(决策6A) ----------
 
 def test_shell_contact_pill() -> None:
