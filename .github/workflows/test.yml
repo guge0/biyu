@@ -11,7 +11,6 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 30
     env:
-      BIYU_RUNTIME_ROLE: test
       BIYU_KEYRING_DISABLED: "1"
       PYTHONUTF8: "1"
     steps:
