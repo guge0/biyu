@@ -2250,7 +2250,12 @@ async def run_web_architect(
             else:
                 await queue.put({"type": "done", **result})
         except Exception as exc:
-            await queue.put({"type": "error", "message": str(exc) or "导演没有写完，盘上方案未改变"})
+            # S-3C 异常矩阵:导演失败的原始异常(LLMError: [401] ...)翻成人话再推给页面
+            from .llm_error_copy import humanize_llm_error
+
+            await queue.put(
+                {"type": "error", "message": humanize_llm_error(exc, default=str(exc) or "导演没有写完，盘上方案未改变")}
+            )
         finally:
             _WEB_ARCHITECT_RUNS.pop(key, None)
             await queue.put(None)

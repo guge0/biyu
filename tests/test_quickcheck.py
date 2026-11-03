@@ -58,6 +58,18 @@ def test_quickcheck_page_skeleton() -> None:
     assert 'id="qc-save-new"' in html and 'id="qc-save-existing"' in html
 
 
+def test_quickcheck_paste_button_reads_clipboard() -> None:
+    """S-3B 老板走查反馈:「粘贴我的小说稿」必须真读剪贴板,不再只聚焦空输入框。
+
+    剪贴板有内容=直接填入+按钮反馈;权限拒绝/空剪贴板回落聚焦(不报错)。
+    """
+    js = _src("quickcheck.js")
+    assert "navigator.clipboard.readText()" in js
+    assert "已读入剪贴板" in js
+    assert 'qc-paste-btn").textContent = "📋 粘贴我的小说稿"' in js  # 反馈后复原
+    assert "$(\"qc-input\").focus();" in js  # 回落路径保留
+
+
 def test_quickcheck_shell_entry() -> None:
     shell = _src("shell.js")
     assert "nav-quickcheck" in shell and "⚡ 独立快检 / 去AI味" in shell

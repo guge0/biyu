@@ -135,6 +135,8 @@ def _runtime_identity() -> dict[str, object]:
         "sha": short_sha,
         "data_root": str(Path(os.environ.get("BIYU_DATA_ROOT") or "").resolve()),
         "data_root_temporary": source == "environment",
+        # S-3C 浏览器模式（便携）页内提示通道:启动器经 BIYU_LAUNCH_MODE 注入,前端据此标注
+        "launch_mode": os.environ.get("BIYU_LAUNCH_MODE", "").strip(),
     }
 
 app = FastAPI(title="笔驭作者工作台", version="0.2.0")

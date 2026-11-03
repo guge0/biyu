@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
 import sys
 import time
 from datetime import datetime, timezone
@@ -12,6 +13,7 @@ from uuid import uuid4
 
 from biyu.config import resolve_book_dir
 from .action_registry import action_for
+from .llm_error_copy import humanize_llm_error
 from .workbench_state import read_workbench_step, write_workbench_step
 from .workbench_versions import snapshot_candidate
 
@@ -153,6 +155,7 @@ async def execute(action_id: str, *, book: str, chapter: int, confirmed: bool, e
         "log_path": str(run_log),
     }
     last_output = ""
+    tail_lines: list[str] = []  # S-3C:末几行日志留底,失败时从中挑最能说明原因的一行
     try:
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -191,6 +194,9 @@ async def execute(action_id: str, *, book: str, chapter: int, confirmed: bool, e
             decoded = line.decode("utf-8", errors="replace").rstrip()
             if decoded:
                 last_output = decoded
+                tail_lines.append(decoded)
+                if len(tail_lines) > 6:
+                    tail_lines.pop(0)
             _append_run_log(run_log, decoded)
             yield {"type": "log", "text": decoded, "run_id": run_id}
         code = await proc.wait()
@@ -198,8 +204,17 @@ async def execute(action_id: str, *, book: str, chapter: int, confirmed: bool, e
             # A failed run owns no process transition: assets and author step stay put.
             write_workbench_step(book_dir, chapter, previous_step)
             message = f"操作没有完成（退出码 {code}）"
-            if last_output:
-                message += f"：{last_output}"
+            # S-3C 异常矩阵:坏 Key/余额不足/断网的原始异常行翻成人话再带给作者
+            clue = next(
+                (
+                    line for line in reversed(tail_lines)
+                    if re.search(r"\[\d{3}\]", line) or "LLMError" in line
+                    or "timed out" in line.lower() or "连接失败" in line
+                ),
+                last_output,
+            )
+            if clue:
+                message += f"：{humanize_llm_error(raw=clue, default=clue)}"
             _append_run_log(run_log, f"---\nstatus=failed\nreturncode={code}\nerror={message}")
             yield {"type": "error", "message": message, "returncode": code, "run_id": run_id}
         else:

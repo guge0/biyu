@@ -109,12 +109,15 @@ async def draft_cell(book: str, cell_id: str, request: DraftRequest) -> dict[str
     # S-3B 走查修复(与缺陷1同根因,按老板 premise→v4_flash 同一裁定逻辑):
     # writer 档(v4_pro)思考模式会把 600 max_tokens 全部耗在 reasoning 上,
     # content 恒空 → 草稿闸永远「模型没有返回草稿内容」。改用 v4_flash 非思考档。
+    from biyu.config import get_config_path
     from biyu.llm import ModelRegistry
 
+    from .model_alias import resolve_ui_adapter
+
     try:
-        adapter = ModelRegistry().get_adapter("v4_flash")
+        adapter, _alias = resolve_ui_adapter(ModelRegistry(get_config_path()))
     except (FileNotFoundError, KeyError, ValueError) as exc:
-        return {"ok": False, "error": f"起草模型(v4_flash)不可用：请先在连接设置保存 Key（{exc}）"}
+        return {"ok": False, "error": f"起草模型不可用：请先在连接设置保存 Key（{exc}）"}
 
     # 复用 settings.py 的读取口径拿当前格内容(不落任何写操作)
     from biyu.ui.settings import _book_dir, _cell

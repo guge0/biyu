@@ -60,6 +60,11 @@
     const label = $("version-label");
     if (!label) return;
     label.textContent = `笔驭 ${info.version}`; label.title = `构建 ${info.build} · ${info.sha}`;
+    // S-3C 浏览器模式（便携）:无 Electron 环境的便携包启动时,书架页标注模式
+    if (info.launch_mode === "browser_portable") {
+      label.textContent = `笔驭 ${info.version} · 浏览器模式（便携）`;
+      if (!document.title.includes("浏览器模式（便携）")) document.title = `${document.title} · 浏览器模式（便携）`;
+    }
     label.title = `构建 ${info.build} · ${info.sha}`;
     const update = info.update || {};
     const updateDot = $("update-dot");

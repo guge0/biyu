@@ -25,6 +25,16 @@ function log(msg) { console.log(`[biyu-shell] ${msg}`); }
 // ---------- 路径解析:开发/便携形态(仓库内) 与 打包形态(resources/) ----------
 function resolveLayout() {
   const here = __dirname;
+  // S-3C 便携平铺布局:electron-shell/ 与 biyu-sidecar.exe 同在包根(启动笔驭.bat 直调时)
+  const sibling = path.join(here, '..', 'biyu-sidecar.exe');
+  if (fs.existsSync(sibling)) {
+    return {
+      mode: 'portable-root',
+      sidecarExe: sibling,
+      homeDir: path.dirname(sibling),
+      icon: path.join(here, 'icons', 'biyu.ico'),
+    };
+  }
   const devRoot = path.resolve(here, '..', '..');
   const devSidecar = path.join(devRoot, 'packaging', 'dist', 'biyu-sidecar', 'biyu-sidecar.exe');
   if (fs.existsSync(devSidecar)) {

@@ -204,9 +204,22 @@
     $("qc-highlight-view").hidden = true;
     updateCharCount();
   });
-  $("qc-paste-btn").addEventListener("click", () => {
+  $("qc-paste-btn").addEventListener("click", async () => {
     $("qc-input").hidden = false;
     $("qc-highlight-view").hidden = true;
+    // S-3B 走查反馈:按钮文案承诺「粘贴」,就真的读剪贴板;权限拒绝/剪贴板为空再回落聚焦。
+    try {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim()) {
+          $("qc-input").value = text;
+          updateCharCount();
+          $("qc-paste-btn").textContent = "已读入剪贴板 ✓";
+          setTimeout(() => { $("qc-paste-btn").textContent = "📋 粘贴我的小说稿"; }, 1600);
+          return;
+        }
+      }
+    } catch (error) { /* 剪贴板权限被拒或不可用:按普通输入框处理 */ }
     $("qc-input").focus();
   });
   $("qc-input").addEventListener("input", updateCharCount);
@@ -230,4 +243,11 @@
   $("qc-save-overlay").addEventListener("click", (event) => {
     if (event.target === $("qc-save-overlay")) $("qc-save-overlay").hidden = true;
   });
+
+  // S-3C 浏览器模式（便携）:与其他页一致,标签页标题注明当前模式
+  fetch("/api/version").then(r => r.json()).then(info => {
+    if (info.launch_mode === "browser_portable" && !document.title.includes("浏览器模式（便携）")) {
+      document.title = document.title + " · 浏览器模式（便携）";
+    }
+  }).catch(() => {});
 })();

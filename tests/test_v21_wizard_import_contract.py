@@ -77,6 +77,9 @@ def test_wizard_premise_uses_v4_flash_alias_with_4000_budget(monkeypatch) -> Non
             return FakeResp()
 
     class FakeRegistry:
+        def __init__(self, config_path=None):  # S-3C:wizard 显式传 get_config_path()
+            pass
+
         def get_adapter(self, alias):
             captured["alias"] = alias
             return FakeAdapter()
@@ -115,6 +118,9 @@ def test_wizard_premise_survives_thinking_model_empty_content(monkeypatch) -> No
             return ThinkingResp()
 
     class FakeRegistry:
+        def __init__(self, config_path=None):  # S-3C:wizard 显式传 get_config_path()
+            pass
+
         def get_adapter(self, alias):
             return ThinkingAdapter()
 
@@ -143,6 +149,9 @@ def test_wizard_premise_with_fake_adapter(monkeypatch) -> None:
             return FakeResp()
 
     class FakeRegistry:
+        def __init__(self, config_path=None):  # S-3C:wizard 显式传 get_config_path()
+            pass
+
         def get_adapter(self, alias):
             return FakeAdapter()
 

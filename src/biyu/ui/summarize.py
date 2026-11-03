@@ -18,8 +18,10 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from biyu.config import get_config_path
 from biyu.llm import ModelRegistry
 from biyu.ui.chat import ChatManager
+from biyu.ui.model_alias import resolve_ui_adapter
 from biyu.ui.prompts_summarize import build_summarize_messages
 
 logger = logging.getLogger("biyu.ui.summarize")
@@ -87,7 +89,8 @@ def _summary_dirs(book_dir: Path) -> list[tuple[Path, str]]:
 def _get_llm_adapter() -> Any | None:
     """Get LLM adapter for summarization. Returns None if unavailable."""
     try:
-        return ModelRegistry().get_adapter("v4_flash")
+        adapter, _alias = resolve_ui_adapter(ModelRegistry(get_config_path()))
+        return adapter
     except (FileNotFoundError, KeyError, ValueError):
         logger.warning("Summarize LLM adapter not available")
         return None

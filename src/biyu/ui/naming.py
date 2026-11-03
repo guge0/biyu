@@ -15,10 +15,11 @@ import random
 from pathlib import Path
 from typing import Any
 
-from biyu.config import get_data_root
+from biyu.config import get_config_path, get_data_root
 from biyu.fingerprint.adapter import _extract_json_object
 from biyu.llm import ModelRegistry
 from biyu.ui.cost_log import write_cost_log
+from biyu.ui.model_alias import resolve_ui_adapter
 from biyu.ui.prompts_naming import build_naming_messages, is_naming_placeholder, read_paradigm_ref
 from biyu.ui.scan_cache import scan_all_cached
 
@@ -105,7 +106,8 @@ _TARGET_PLATFORM = "起点"
 def _get_naming_adapter() -> Any | None:
     """Get LLM adapter for naming. Returns None if unavailable."""
     try:
-        return ModelRegistry().get_adapter("v4_flash")
+        adapter, _alias = resolve_ui_adapter(ModelRegistry(get_config_path()))
+        return adapter
     except (FileNotFoundError, KeyError, ValueError):
         logger.warning("Naming LLM adapter not available")
         return None

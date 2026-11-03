@@ -3,6 +3,11 @@
   if (!el) return;
   fetch('/api/version').then(r => r.json()).then(info => {
     el.textContent = `笔驭 ${info.version}`; el.title = `构建 ${info.build} · ${info.sha}`;
+    // S-3C 浏览器模式（便携）:无 Electron 环境的便携包启动时,窗口标题与页内标注模式
+    if (info.launch_mode === 'browser_portable') {
+      el.textContent = `笔驭 ${info.version} · 浏览器模式（便携）`;
+      if (!document.title.includes('浏览器模式（便携）')) document.title = `${document.title} · 浏览器模式（便携）`;
+    }
     const update = info.update || {};
     if (update.available || info.update_available) {
       el.classList.add('has-update');

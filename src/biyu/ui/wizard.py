@@ -18,6 +18,8 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
+from .llm_error_copy import humanize_llm_error
+
 router = APIRouter(prefix="/api/wizard", tags=["wizard"])
 
 _GENRES = ("末世回溯", "玄幻修仙", "都市异能", "悬疑智斗", "历史权谋", "无限流", "轻小说")
@@ -74,12 +76,19 @@ def _extract_json(text: str) -> dict[str, Any]:
 async def _generate_premise(idea: str, genre: str) -> dict[str, Any]:
     # S-3B 缺陷1(老板裁定 2026-10-25):premise 改用 v4_flash 非思考档别名取 adapter。
     # writer 档(v4_pro)思考模式会把小 max_tokens 预算全部耗在 reasoning 上,content 为空。
+    # S-3C 路径修复:显式传 get_config_path()(BIYU_PROJECT_ROOT 感知)——无参默认是
+    # 源码仓相对路径,冻结/便携环境下指向不存在的 config,保存 Key 后推演仍「不可用」。
+    # S-3C 别名修复:干净机/便携包只有免 Key 目录(无 v4_flash 别名),按
+    # v4_flash → 作者选中模型 → 管线 writer 顺序回落(model_alias.resolve_ui_adapter)。
+    from biyu.config import get_config_path
     from biyu.llm import ModelRegistry
 
+    from .model_alias import resolve_ui_adapter
+
     try:
-        adapter = ModelRegistry().get_adapter("v4_flash")
+        adapter, _alias = resolve_ui_adapter(ModelRegistry(get_config_path()))
     except (FileNotFoundError, KeyError, ValueError) as exc:
-        raise ValueError(f"开书模型(v4_flash)不可用：请先在连接设置保存 Key（{exc}）") from exc
+        raise ValueError(f"开书模型不可用：请先在连接设置保存 Key（{exc}）") from exc
     user = f"一句话想法：{idea}\n题材倾向：{genre or '不限'}"
     last_error: Exception | None = None
     for _attempt in range(2):
@@ -122,7 +131,7 @@ async def wizard_premise(request: PremiseRequest) -> dict[str, Any]:
     except HTTPException:
         raise
     except Exception as exc:  # 连接失败/余额不足/输出不合法 → REQ-W1:不建任何书
-        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        return {"ok": False, "error": humanize_llm_error(exc, default=f"{type(exc).__name__}: {exc}")}
     return {"ok": True, "result": result}
 
 

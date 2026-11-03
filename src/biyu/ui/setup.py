@@ -11,6 +11,8 @@ from biyu.config import get_config_path, get_data_root
 from biyu.llm import ModelRegistry
 from biyu.secure_config import load_provider_secret, load_setup, save_setup, store_provider_secret
 
+from .llm_error_copy import humanize_llm_error
+
 router = APIRouter(prefix="/api/setup", tags=["setup"])
 
 
@@ -141,7 +143,7 @@ async def complete_setup(payload: dict[str, Any]) -> dict[str, str]:
         adapter = registry.get_adapter_for_key(model, key) if hasattr(registry, "get_adapter_for_key") else registry.get_adapter(model)
         await adapter.generate([{"role": "user", "content": "连通性检查：只回复 OK"}], max_tokens=4)
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"模型没有连通：{exc}") from exc
+        raise HTTPException(status_code=400, detail=f"模型没有连通：{humanize_llm_error(exc)}") from exc
     book = str(payload.get("book", "")).strip()
     if payload.get("create_book"):
         title = str(payload.get("book_title", "")).strip()
@@ -175,7 +177,7 @@ async def update_setup(payload: dict[str, Any]) -> dict[str, Any]:
                 {"role": "user", "content": "只回复 OK"},
             ], max_tokens=16)
         except Exception as exc:
-            raise HTTPException(status_code=400, detail=f"连不上 {base_url}：{exc}。配置没有改动。") from exc
+            raise HTTPException(status_code=400, detail=f"连不上 {base_url}：{humanize_llm_error(exc)}。配置没有改动。") from exc
         if key:
             store_provider_secret("custom", key)
         old = load_setup()
@@ -202,7 +204,7 @@ async def update_setup(payload: dict[str, Any]) -> dict[str, Any]:
         adapter = registry.get_adapter_for_key(model, test_key) if hasattr(registry, "get_adapter_for_key") else registry.get_adapter(model)
         await adapter.generate([{"role": "user", "content": "连通性检查：只回复 OK"}], max_tokens=4)
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"模型没有连通：{exc}") from exc
+        raise HTTPException(status_code=400, detail=f"模型没有连通：{humanize_llm_error(exc)}") from exc
 
     if key:
         store_provider_secret(selected["provider"], key)

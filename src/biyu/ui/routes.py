@@ -43,10 +43,12 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from biyu.config import get_data_root, get_project_root
+from biyu.config import get_config_path, get_data_root, get_project_root
 from biyu.llm import ModelRegistry
 from biyu.ui.chat_tools import run_chat_tools, run_director_tools
 from biyu.ui.env import read_env
+from biyu.ui.llm_error_copy import humanize_llm_error
+from biyu.ui.model_alias import resolve_ui_adapter
 from biyu.ui.naming import apply_name as _apply_name, generate_names as _generate_names
 from biyu.ui.orchestrator import run_propose_for_ui
 from biyu.ui.preferences import (
@@ -504,8 +506,10 @@ def _resolve_book_dir_path(book: str, data_root: Path) -> Path:
 
 def _get_chat_adapter() -> Any | None:
     """Get LLM adapter for editorial chat. Returns None if unavailable."""
+    # S-3C 别名修复:v4_flash 缺失时(免 Key 首启目录)回落作者选中模型,见 model_alias。
     try:
-        return ModelRegistry().get_adapter("v4_flash")
+        adapter, _alias = resolve_ui_adapter(ModelRegistry(get_config_path()))
+        return adapter
     except (FileNotFoundError, KeyError, ValueError):
         logger.warning("Chat LLM adapter not available; staying in placeholder mode")
         return None
@@ -700,11 +704,12 @@ async def post_chat_message(session_id: str, req: ChatSendRequest):
                     )
                     await queue.put(make_event("cost", amount=actual_cost))
 
-                except Exception:
-                    logger.exception("LLM 调用异常,降级到占位")
-                    # LLM 失败 → 降级到占位文本 + 工具结果
-                    for i in range(0, len(placeholder_text), 8):
-                        chunk = placeholder_text[i:i + 8]
+                except Exception as exc:
+                    logger.exception("LLM 调用异常,如实报错给作者")
+                    # S-3C 异常矩阵:失败要如实显示——不再假装「人格待定稿」占位,直接给人话失败卡
+                    failure_text = f"⚠️ 生成失败：{humanize_llm_error(exc, default=str(exc))}。刚才查到的资料仍在下方。"
+                    for i in range(0, len(failure_text), 8):
+                        chunk = failure_text[i:i + 8]
                         await queue.put(make_event("token", content=chunk))
                         await asyncio.sleep(0.01)
                     for tr in tool_results:
@@ -715,7 +720,7 @@ async def post_chat_message(session_id: str, req: ChatSendRequest):
                             result=tr["result"][:500],
                         ))
                     mgr.add_message(
-                        session_id, "assistant", placeholder_text,
+                        session_id, "assistant", failure_text,
                         tool_call={
                             "tools": [
                                 {"name": tr["name"], "args": tr["args"], "result": tr["result"][:500]}
