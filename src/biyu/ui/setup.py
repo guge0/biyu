@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 
 import yaml
@@ -9,6 +10,7 @@ from fastapi import APIRouter, HTTPException
 
 from biyu.config import get_config_path, get_data_root
 from biyu.llm import ModelRegistry
+from biyu.llm.base import resolve_env_vars
 from biyu.secure_config import load_provider_secret, load_setup, save_setup, store_provider_secret
 
 from .llm_error_copy import humanize_llm_error
@@ -99,13 +101,51 @@ def _configured_without_wizard() -> bool:
     return False
 
 
+_KEY_SOURCE_LABEL = {"inline": "配置文件里的 Key", "env": "环境变量里的 Key", "keyring": "现有安全存储"}
+
+
+def _is_real_key(value: object) -> bool:
+    key = str(value or "").strip()
+    return bool(key) and not key.startswith("${") and "在此填入" not in key
+
+
+def _provider_key_sources(providers: set[str]) -> dict[str, str]:
+    """每个服务商实际生效的 Key 来源:'inline' | 'env' | 'keyring' | ''。
+
+    判定顺序与 ModelRegistry._resolve_model_config 一致(配置文件内联 > 环境变量 > 系统钥匙串),
+    书架“已配 Key”和连接弹窗“API Key：已配置”由此同一口径得出(整改清单 #2)。
+    """
+    try:
+        raw = yaml.safe_load(get_config_path().read_text(encoding="utf-8")) or {}
+    except (OSError, yaml.YAMLError):
+        raw = {}
+    provider_cfgs = raw.get("providers", {}) if isinstance(raw, dict) else {}
+    sources: dict[str, str] = {}
+    for provider in sorted(providers):
+        cfg = provider_cfgs.get(provider) if isinstance(provider_cfgs, dict) else None
+        cfg = cfg if isinstance(cfg, dict) else {}
+        if "api_key" in cfg:
+            raw_value = str(cfg.get("api_key") or "").strip()
+            resolved = resolve_env_vars(raw_value)
+            if _is_real_key(resolved):
+                sources[provider] = "env" if raw_value.startswith("${") else "inline"
+            else:
+                sources[provider] = ""
+        elif cfg.get("api_key_env") and os.environ.get(str(cfg["api_key_env"]), ""):
+            sources[provider] = "env"
+        else:
+            sources[provider] = "keyring" if load_provider_secret(provider) else ""
+    return sources
+
+
 @router.get("/status")
 def setup_status() -> dict[str, Any]:
     settings = load_setup()
     selected = str(settings.get("selected_model", ""))
     catalog = _catalog()
     providers = {item["provider"] for item in catalog}
-    configured_providers = {provider: bool(load_provider_secret(provider)) for provider in sorted(providers)}
+    key_sources = _provider_key_sources(providers)
+    configured_providers = {provider: bool(source) for provider, source in key_sources.items()}
     provider = next((item["provider"] for item in catalog if item["alias"] == selected), "")
     active_provider = str(settings.get("provider", "")) or provider
     ready = bool(settings.get("complete") and (settings.get("provider") or selected) and (load_provider_secret(provider) or settings.get("provider") == "custom")) or _configured_without_wizard()
@@ -117,6 +157,7 @@ def setup_status() -> dict[str, Any]:
         "models": catalog,
         "books": _books(),
         "configured_providers": configured_providers,
+        "key_sources": key_sources,
         "providers": _provider_catalog(),
         "custom_provider": load_setup().get("custom_provider", {}),
     }
@@ -190,18 +231,20 @@ async def update_setup(payload: dict[str, Any]) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="请选择列表中的模型")
 
     key = str(payload.get("api_key", "")).strip()
-    existing_key = load_provider_secret(selected["provider"])
-    if key or existing_key:
-        storage = "新 Key（测试后保存）" if key else "现有安全存储"
-        test_key = key or existing_key
-    elif load_provider_secret(selected["provider"]):
-        storage = "现有安全存储"
-    else:
+    # 留空 = 沿用当前实际生效的 Key(可能来自配置文件/环境变量/钥匙串),
+    # 不再只看钥匙串——否则内联 Key 可用时会误报“没有配置”,或拿钥匙串里的旧 Key 去测(整改清单 #2)。
+    source = _provider_key_sources({selected["provider"]}).get(selected["provider"], "")
+    if not key and not source:
         raise HTTPException(status_code=400, detail="这个模型的服务商还没有配置 API Key")
+    storage = "新 Key（测试后保存）" if key else _KEY_SOURCE_LABEL.get(source, "现有安全存储")
 
     try:
         registry = ModelRegistry(get_config_path())
-        adapter = registry.get_adapter_for_key(model, test_key) if hasattr(registry, "get_adapter_for_key") else registry.get_adapter(model)
+        adapter = (
+            registry.get_adapter_for_key(model, key)
+            if key and hasattr(registry, "get_adapter_for_key")
+            else registry.get_adapter(model)
+        )
         await adapter.generate([{"role": "user", "content": "连通性检查：只回复 OK"}], max_tokens=4)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"模型没有连通：{humanize_llm_error(exc)}") from exc
@@ -217,8 +260,11 @@ async def update_setup(payload: dict[str, Any]) -> dict[str, Any]:
         "selected_book": str(settings.get("selected_book", "")),
         "complete": True,
     })
+    message = "连接设置已更新"
+    if key and source in {"inline", "env"}:
+        message += f"。注意：{_KEY_SOURCE_LABEL[source]}优先生效，新 Key 已存入系统钥匙串，但要先去掉那一处才会被使用"
     return {
-        "message": "连接设置已更新",
+        "message": message,
         "provider": provider_name,
         "key_configured": True,
         "secret_storage": storage,

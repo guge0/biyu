@@ -31,9 +31,13 @@
      return item?.provider || '';
    };
 
+   // Key 状态与书架同一口径:后端 key_sources 给出实际生效的来源(整改清单 #2)。
+   const KEY_SOURCE_LABEL = { inline: '配置文件', env: '环境变量', keyring: '系统钥匙串' };
    const renderKeyState = () => {
-     const configured = Boolean(snapshot?.configured_providers?.[selectedProvider()]);
-     $('setup-key-state').textContent = `API Key：${configured ? '已配置' : '未配置'}`;
+     const source = snapshot?.key_sources?.[selectedProvider()] || '';
+     const configured = Boolean(source || snapshot?.configured_providers?.[selectedProvider()]);
+     const where = KEY_SOURCE_LABEL[source];
+     $('setup-key-state').textContent = configured ? `API Key：已配置${where ? `（${where}）` : ''}` : 'API Key：未配置';
      $('setup-key').placeholder = configured ? '留空则继续使用现有 Key' : '请输入 API Key';
      if (regularMode) $('setup-key').required = !configured;
    };

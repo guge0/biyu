@@ -581,7 +581,7 @@
     } else {
       badge.textContent = "✓ 已配 Key 直连";
       badge.className = "badge ws-badge ok";
-      text.textContent = "当前已连接官方 API Key，五步写作管线与独立快检台均可全速运行。";
+      text.textContent = "已连接模型服务，五步写作管线可以直接使用。";
     }
     strip.hidden = false;
   }
