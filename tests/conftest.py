@@ -36,6 +36,11 @@ def pytest_configure(config):
     os.environ["BIYU_DATA_ROOT"] = str(_PYTEST_DATA_ROOT)
     os.environ["BIYU_TEST_DATA_ROOT"] = str(_PYTEST_DATA_ROOT)
     os.environ["PIP_NO_CACHE_DIR"] = "1"
+    # 整改清单 #11:测试绝不读写系统钥匙串与作者的 ~/.biyu 配置(S-3C 假 Key 覆盖事故)
+    os.environ["BIYU_KEYRING_DISABLED"] = "1"
+    user_config = _PYTEST_DATA_ROOT / "_user_config"
+    user_config.mkdir(parents=True, exist_ok=True)
+    os.environ.setdefault("BIYU_USER_CONFIG_DIR", str(user_config))
 
 
 def pytest_unconfigure(config):

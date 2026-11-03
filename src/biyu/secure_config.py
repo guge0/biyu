@@ -76,9 +76,24 @@ def _load_encrypted(provider: str) -> str:
     return str(values.get(provider, ""))
 
 
+def _keyring_enabled() -> bool:
+    """测试与仿真实例不碰系统钥匙串(整改清单 #11)。
+
+    S-3C 事故:BIYU_USER_CONFIG_DIR 只隔离了加密文件,钥匙串是全机共享的,
+    测试里保存的假 Key 覆盖了作者的真 Key。BIYU_KEYRING_DISABLED=1 或
+    BIYU_RUNTIME_ROLE=test 时一律只走 BIYU_USER_CONFIG_DIR 下的加密文件。
+    """
+    if os.environ.get("BIYU_KEYRING_DISABLED", "").strip() == "1":
+        return False
+    return os.environ.get("BIYU_RUNTIME_ROLE", "").strip().lower() != "test"
+
+
 def store_provider_secret(provider: str, secret: str) -> str:
     if not provider or not secret.strip():
         raise ValueError("服务商和 API Key 不能为空")
+    if not _keyring_enabled():
+        _store_encrypted(provider, secret.strip())
+        return "本地加密文件"
     try:
         import keyring
 
@@ -90,6 +105,8 @@ def store_provider_secret(provider: str, secret: str) -> str:
 
 
 def load_provider_secret(provider: str) -> str:
+    if not _keyring_enabled():
+        return _load_encrypted(provider)
     try:
         import keyring
 

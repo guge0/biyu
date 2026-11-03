@@ -245,3 +245,28 @@ def test_model_settings_button_handles_status_race_before_snapshot_load() -> Non
 
     assert "if (!snapshot)" in setup_js
     assert "正在读取连接设置，请稍候再试。" in setup_js
+
+def test_keyring_disabled_never_touches_system_keyring(tmp_path, monkeypatch) -> None:
+    """整改清单 #11:测试/仿真实例只写隔离目录下的加密文件。"""
+    import biyu.secure_config as secure
+
+    touched: list[str] = []
+    monkeypatch.setenv("BIYU_USER_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("BIYU_KEYRING_DISABLED", "1")
+    monkeypatch.setitem(sys.modules, "keyring", SimpleNamespace(
+        set_password=lambda *_args: touched.append("set"),
+        get_password=lambda *_args: touched.append("get") or "sk-real-author-key",
+    ))
+    assert secure.store_provider_secret("deepseek", "sk-invalid-s3c-401") == "本地加密文件"
+    assert secure.load_provider_secret("deepseek") == "sk-invalid-s3c-401"
+    assert touched == []
+
+
+def test_test_role_also_disables_keyring(monkeypatch) -> None:
+    import biyu.secure_config as secure
+
+    monkeypatch.delenv("BIYU_KEYRING_DISABLED", raising=False)
+    monkeypatch.setenv("BIYU_RUNTIME_ROLE", "test")
+    assert secure._keyring_enabled() is False
+    monkeypatch.setenv("BIYU_RUNTIME_ROLE", "production")
+    assert secure._keyring_enabled() is True
