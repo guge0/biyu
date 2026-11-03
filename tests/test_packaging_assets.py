@@ -76,3 +76,10 @@ def test_electron_package_declares_product_name_and_version() -> None:
     assert meta["productName"] == "笔驭"
     assert meta["version"] == "1.0.0"
     assert meta["main"] == "main.js"
+
+def test_build_refuses_dirty_tree_without_explicit_flag() -> None:
+    """整改清单 #4:包内代码必须与构建戳 sha 对得上。"""
+    text = (PK / "build_sidecar.ps1").read_text(encoding="utf-8-sig")
+    assert "status --porcelain" in text
+    assert "BIYU_ALLOW_DIRTY_BUILD" in text
+    assert '-dirty' in text

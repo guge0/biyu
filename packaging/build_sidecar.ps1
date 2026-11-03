@@ -67,6 +67,16 @@ Copy-Item -LiteralPath (Join-Path $repo 'assets') -Destination (Join-Path $distD
 # ---------- 4) 构建信息(供壳注入 BIYU_SHORT_SHA;/api/version 回显) ----------
 $shortSha = (& git -C $repo rev-parse --short=8 HEAD 2>$null)
 if ([string]::IsNullOrWhiteSpace($shortSha)) { $shortSha = 'uncommitted' }
+# 整改清单 #4:工作树有未提交改动时,包内代码与 HEAD 对不上。正式包拒绝构建;
+# 测试包须显式设 BIYU_ALLOW_DIRTY_BUILD=1,构建戳带 -dirty 后缀,保证可追溯。
+$dirty = (& git -C $repo status --porcelain --untracked-files=normal -- src packaging config prompts assets 2>$null)
+if ($dirty) {
+    if ($env:BIYU_ALLOW_DIRTY_BUILD -ne '1') {
+        throw "工作树有未提交改动(src/packaging/config/prompts/assets),拒绝打正式包。先提交;确需测试包请设 BIYU_ALLOW_DIRTY_BUILD=1。"
+    }
+    $shortSha = "$shortSha-dirty"
+    Write-Warning "正在用未提交的工作树打测试包,构建戳标为 $shortSha"
+}
 $buildDate = Get-Date -Format 'yyyyMMdd'
 if (-not $SkipVersionStamp) {
     # 无 BOM 写入:PS5.1 的 Set-Content -Encoding UTF8 会带 BOM,Node 端 JSON.parse 失败。
