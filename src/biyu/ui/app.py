@@ -139,7 +139,41 @@ def _runtime_identity() -> dict[str, object]:
         "launch_mode": os.environ.get("BIYU_LAUNCH_MODE", "").strip(),
     }
 
-app = FastAPI(title="笔驭作者工作台", version="0.2.0")
+app = FastAPI(title="笔驭作者工作台", version=__version__)
+
+
+# ---------- 本机服务防护(整改清单 #5) ----------
+# 笔驭只服务本机。校验 Host 防 DNS rebinding(外部网页把自己的域名解析到 127.0.0.1
+# 后以同源身份读书稿、调用付费生成);写操作再校验 Origin 防跨站提交。
+# 局域网访问等特殊场景用 BIYU_ALLOWED_HOSTS(逗号分隔)显式放行。
+# "testserver" 是 Starlette TestClient 的默认 Host,不是可公网解析的域名。
+_LOCAL_HOSTS = ("127.0.0.1", "localhost", "testserver")
+
+
+def _allowed_hosts() -> set[str]:
+    extra = {h.strip().lower() for h in os.environ.get("BIYU_ALLOWED_HOSTS", "").split(",") if h.strip()}
+    return set(_LOCAL_HOSTS) | extra
+
+
+def _host_name(value: str) -> str:
+    value = value.strip().lower()
+    if value.startswith("["):
+        return value.split("]", 1)[0] + "]"
+    return value.split(":", 1)[0]
+
+
+@app.middleware("http")
+async def _local_only_guard(request: Request, call_next):
+    allowed = _allowed_hosts()
+    if _host_name(request.headers.get("host", "")) not in allowed:
+        return JSONResponse({"detail": "笔驭只接受本机访问"}, status_code=400)
+    if request.method not in {"GET", "HEAD", "OPTIONS"}:
+        origin = request.headers.get("origin", "")
+        if origin and origin != "null":
+            origin_host = _host_name(origin.split("://", 1)[-1])
+            if origin_host not in allowed:
+                return JSONResponse({"detail": "拒绝来自外部网页的请求"}, status_code=403)
+    return await call_next(request)
 
 
 @app.on_event("startup")
