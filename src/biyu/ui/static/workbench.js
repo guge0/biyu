@@ -1590,30 +1590,67 @@ function renderWriteContractPanel() {
   const badge = document.getElementById('write-contract-badge');
   const source = document.getElementById('write-contract-source');
   if (!items || !badge) return;
-  let text = (current.planning || '').replace(/^(?:status|source):[^\n]*\r?\n?/gm, '').trim();
-  let label = '导演执行方案';
-  if (!text) { text = (current.outline || '').replace(/^---[\s\S]*?---\s*/, '').trim(); label = '作者细纲（跳过导演）'; }
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
-  if (!lines.length) {
-    items.innerHTML = '<p class="cp-item" style="color:var(--ink-mute)">契约要点将在细纲/方案确认后显示。</p>';
-    badge.textContent = '待定'; badge.className = 'badge amber';
-    source.textContent = '—';
-    return;
-  }
+  // 锁定状态与必检项一律以后端 planning_contract 为准(整改清单 #1/#6),不再前端推断。
+  const contract = current.planning_contract || {};
   items.replaceChildren();
-  lines.slice(0, 12).forEach((line, i) => {
+  let n = 0;
+  const addItem = (text) => {
     const row = document.createElement('div');
     row.className = 'cp-item';
     const num = document.createElement('span');
     num.className = 'cp-num';
-    num.textContent = String(i + 1).padStart(2, '0');
-    row.append(num, document.createTextNode(line));
+    num.textContent = String(++n).padStart(2, '0');
+    row.append(num, document.createTextNode(text));
     items.appendChild(row);
+  };
+  const addNote = (text, tone) => {
+    const p = document.createElement('p');
+    p.className = 'cp-item cp-note' + (tone ? ' cp-note-' + tone : '');
+    p.textContent = text;
+    items.appendChild(p);
+    return p;
+  };
+  if (contract.skipped) {
+    const outline = (current.outline || '').replace(/^---[\s\S]*?---\s*/, '').trim();
+    outline.split(/\r?\n/).map(l => l.trim().replace(/^[-*]\s+/, '')).filter(l => l && !l.startsWith('#')).slice(0, 12).forEach(addItem);
+    if (!n) addNote('细纲还是空的，去③写上本章要发生的事。', 'warn');
+    badge.textContent = '✓ 已锁定'; badge.className = 'badge ok';
+    source.textContent = '作者细纲（跳过导演）· 生成后逐条核对';
+    return;
+  }
+  const locked = Boolean(contract.locked);
+  if (locked) { badge.textContent = '✓ 已锁定'; badge.className = 'badge ok'; }
+  else if (contract.has_text) { badge.textContent = '待确认'; badge.className = 'badge amber'; }
+  else { badge.textContent = '未写方案'; badge.className = 'badge amber'; }
+  source.textContent = locked ? '已确认的本章写作方案 · 生成后逐条核对' : '方案确认后锁定，生成时按此逐条核对';
+  if (locked && contract.has_draft) addNote('方案有未确认的修改；现在生成仍按下面这份已确认的版本。', 'warn');
+  (contract.groups || []).forEach((group) => {
+    if (!group.items || !group.items.length) return;
+    const head = document.createElement('div');
+    head.className = 'cp-group';
+    head.textContent = group.label;
+    items.appendChild(head);
+    group.items.forEach(addItem);
   });
-  const locked = Boolean(current.planning || current.planning_skipped);
-  badge.textContent = locked ? '✓ 已锁定' : '草稿';
-  badge.className = locked ? 'badge ok' : 'badge amber';
-  source.textContent = label + ' · 保真闸按此逐条审计';
+  const missing = contract.missing || [];
+  if (!contract.has_text) {
+    addNote('还没有本章写作方案。去③写好并确认后，这里会列出生成时要逐条核对的要点。');
+  } else if (missing.length) {
+    addNote(`还缺：${missing.join('、')}。补齐后才能确认方案。`, 'warn');
+  } else if (!locked) {
+    addNote('要点已齐，去③点“保存并确认”后即可生成。');
+  }
+  if (!locked) {
+    const go = document.createElement('button');
+    go.type = 'button';
+    go.className = 'b2 cp-go';
+    go.textContent = '去③确认方案';
+    go.onclick = () => { prepStep = null; requestStage(0); };
+    const wrap = document.createElement('div');
+    wrap.className = 'cp-item';
+    wrap.appendChild(go);
+    items.appendChild(wrap);
+  }
 }
 
 const DENSITY_LABELS = {

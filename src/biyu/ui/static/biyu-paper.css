@@ -577,6 +577,17 @@ body.biyu-embedded nav.top-nav { display: none; }
   color: var(--ink-mute);
   width: 24px;
 }
+/* 必检项四组小标题与提示(整改清单 #1/#6) */
+.contract-panel .cp-group {
+  padding: 10px 18px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--rule);
+}
+.contract-panel .cp-note { color: var(--ink-mute); margin: 0; }
+.contract-panel .cp-note-warn { color: var(--amber); background: var(--amber-bg); }
 @media (max-width: 1080px) { .workbench-split-grid { grid-template-columns: 1fr; } }
 
 /* 决策7:Auditor 词族密度雷达卡 */

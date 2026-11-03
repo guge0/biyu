@@ -713,6 +713,49 @@ def _planning_body(text: str) -> str:
     return "\n".join(lines).lstrip("\r\n")
 
 
+_CONTRACT_GROUPS = (
+    ("must_happen", "必须发生"),
+    ("must_not_happen", "必须不发生"),
+    ("ending_state", "结尾状态"),
+    ("info_layers", "信息层级"),
+)
+
+
+def _planning_contract(
+    approved_text: str, displayed_text: str, planning_status: str, *, has_draft: bool, skipped: bool,
+) -> dict[str, Any]:
+    """④写章左栏的唯一数据源。
+
+    锁定与否只看后端方案状态(已批/跳过导演),不再由前端按"有没有方案文字"推断;
+    必检项按已确认版本解析成四组纯文本,前端不再展示 markdown 标记。
+    """
+    from biyu.checklist.parser import ChecklistMissingError, parse_checklist
+
+    approved = planning_status == "已批"
+    source = approved_text if approved else displayed_text
+    groups: list[dict[str, Any]] = []
+    missing: list[str] = []
+    if _planning_body(source).strip():
+        try:
+            spec = parse_checklist(_planning_body(source))
+            groups = [
+                {"key": key, "label": label, "items": list(getattr(spec, key))}
+                for key, label in _CONTRACT_GROUPS
+            ]
+            missing = [label for key, label in _CONTRACT_GROUPS if not getattr(spec, key)]
+        except ChecklistMissingError:
+            missing = [label for _, label in _CONTRACT_GROUPS]
+    return {
+        "status": planning_status,
+        "locked": approved or skipped,
+        "skipped": skipped,
+        "has_draft": has_draft,
+        "has_text": bool(_planning_body(source).strip()),
+        "groups": groups,
+        "missing": missing,
+    }
+
+
 def _sha(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -1374,6 +1417,10 @@ def chapter_snapshot(book_dir: Path, chapter: int, book_key: str | None = None) 
         "outline_fact_check": outline_fact_check,
         "outline_character_notice": outline_character_notice,
         "planning": displayed_planning,
+        "planning_contract": _planning_contract(
+            _read(planning), displayed_planning, planning_status,
+            has_draft=planning_draft.exists(), skipped=planning_skipped,
+        ),
         "planning_asset_notice": (
             _planning_asset_notice(book_dir, displayed_planning)
             if planning_status == "已批"
