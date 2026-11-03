@@ -460,7 +460,7 @@ def test_repaired_yaml_reaches_pipeline_adapter(
     monkeypatch.setattr(pipeline, "load_merged_voiceprint", lambda _book: {"text": ""})
     monkeypatch.setattr(pipeline, "init_db", lambda _book: None)
     monkeypatch.setattr(pipeline, "sync_characters_from_yaml", lambda _book: (0, 0))
-    monkeypatch.setattr(pipeline, "_build_context_block", lambda *_args: ("", None))
+    monkeypatch.setattr(pipeline, "_build_context_block", lambda *_args, **_kwargs: ("", None))
     monkeypatch.setattr(pipeline, "read_all_truth_files", lambda _book: {})
 
     class ReachedAdapter(Exception):

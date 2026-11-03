@@ -35,7 +35,7 @@ def _setup(monkeypatch: pytest.MonkeyPatch, planner: MagicMock) -> MagicMock:
     monkeypatch.setattr(pipeline, "init_db", lambda _: None)
     monkeypatch.setattr(pipeline, "sync_characters_from_yaml", lambda _: (0, 0))
     monkeypatch.setattr(pipeline, "load_characters_yaml", lambda _: [])
-    monkeypatch.setattr(pipeline, "_build_context_block", lambda *args: ("", None))
+    monkeypatch.setattr(pipeline, "_build_context_block", lambda *args, **kwargs: ("", None))
     monkeypatch.setattr(pipeline, "read_all_truth_files", lambda _: {})
     monkeypatch.setattr(pipeline, "build_planning_prompt", lambda **k: "planning prompt")
     return registry

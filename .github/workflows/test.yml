@@ -1,0 +1,28 @@
+name: test
+
+# 整改清单 #10:每次推送与 PR 都跑单元测试,主干必须保持全绿。
+# e2e(Playwright)与 manual(真实模型调用)按 pyproject 默认 deselect,不在 CI 里花钱。
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      BIYU_RUNTIME_ROLE: test
+      BIYU_KEYRING_DISABLED: "1"
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      - name: Unit tests
+        run: python -m pytest -q
+      - name: Lint (report only)
+        run: python -m ruff check src --exit-zero --statistics

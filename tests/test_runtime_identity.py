@@ -19,7 +19,11 @@ def test_runtime_version_exposes_checkout_identity(monkeypatch, tmp_path: Path) 
     assert payload["role"] == "笔驭"
     assert payload["checkout"] == "biyu-dev"
     assert payload["repo"] == "guge0/biyu"
-    assert payload["build"] == f"{date.today():%Y%m%d} · 00a7b752"
+    # S-3 T9 版本收口:对外 build 展示“v版本 · 日期”,提交号单独放在 sha 字段
+    from biyu import __version__
+
+    assert payload["build"] == f"v{__version__} · {date.today():%Y%m%d}"
+    assert payload["sha"] == "00a7b752"
     assert payload["data_root"].endswith(r"BiyuTestData")
 
 
