@@ -21,6 +21,9 @@ class LLMResponse:
     raw: dict | None = None
     reasoning_content: str | None = None  # R1等推理模型的思维链
     degraded: bool = False  # True=本次响应由降级模型(非主模型)生成
+    # S-4A 工具调用:OpenAI 格式 [{id, type:"function", function:{name, arguments}}]。
+    # 无工具调用时为 None;有 tool_calls 时 text 可能为空串,不算空内容失败。
+    tool_calls: list[dict] | None = None
 
 
 class GenerationError(Exception):
@@ -108,6 +111,11 @@ class LLMAdapter(ABC):
         cost = self.estimate_cost(prompt_tokens, completion_tokens)
         choices = data.get("choices", [{}])
         finish_reason = choices[0].get("finish_reason") if choices else None
+        # S-4A:统一从 choices[0].message.tool_calls 解析(OpenAI 格式,原样透传给上层)
+        message = choices[0].get("message", {}) if choices else {}
+        tool_calls = message.get("tool_calls") if isinstance(message, dict) else None
+        if not isinstance(tool_calls, list) or not tool_calls:
+            tool_calls = None
         return LLMResponse(
             text=text,
             model=data.get("model", self.model_name),
@@ -117,11 +125,15 @@ class LLMAdapter(ABC):
             cost=cost,
             finish_reason=finish_reason,
             raw=data,
+            tool_calls=tool_calls,
         )
 
     @staticmethod
     def detect_failure(resp: LLMResponse) -> str | None:
         """检测响应是否失败:None=正常;"empty"=空/纯空白;"truncated"=被截断。"""
+        if resp.tool_calls:
+            # S-4A:模型只发工具调用时 content 为空是正常形态,不算空内容失败
+            return None
         if not resp.text or not resp.text.strip():
             return "empty"
         if resp.finish_reason == "length":

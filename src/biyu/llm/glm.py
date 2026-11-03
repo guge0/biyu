@@ -71,7 +71,8 @@ class GLMAdapter(LLMAdapter):
             self._handle_error(resp)
             data = resp.json()
 
-        text = data["choices"][0]["message"]["content"]
+        # S-4A:工具调用时 content 可能为 None,统一置 ""(tool_calls 由 _build_response 解析)
+        text = data["choices"][0]["message"].get("content") or ""
         return self._build_response(data, text)
 
     async def stream(self, messages: list[dict], **kwargs) -> AsyncIterator[str]:

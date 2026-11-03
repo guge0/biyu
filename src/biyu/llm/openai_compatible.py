@@ -28,6 +28,11 @@ class OpenAICompatibleAdapter(LLMAdapter):
         payload = {"model": self.model_name, "messages": messages, "max_tokens": kwargs.get("max_tokens", self.max_tokens), "stream": False}
         if kwargs.get("temperature") is not None:
             payload["temperature"] = kwargs["temperature"]
+        # S-4A: Function calling — 透传 tools / tool_choice
+        if kwargs.get("tools"):
+            payload["tools"] = kwargs["tools"]
+            if "tool_choice" in kwargs:
+                payload["tool_choice"] = kwargs["tool_choice"]
         try:
             client_kwargs: dict = {"timeout": httpx.Timeout(connect=10, read=60, write=20, pool=10)}
             if self.proxy:
@@ -43,7 +48,9 @@ class OpenAICompatibleAdapter(LLMAdapter):
                 message = response.text
             raise LLMError(response.status_code, str(message))
         try:
-            data = response.json(); choice = data["choices"][0]; text = choice["message"].get("content", "")
+            data = response.json(); choice = data["choices"][0]
+            # S-4A:工具调用时 content 可能为 None,统一置 ""
+            text = choice["message"].get("content") or ""
         except (ValueError, KeyError, IndexError, TypeError) as exc:
             raise LLMError(response.status_code, "响应不像 OpenAI 对话接口") from exc
         return self._build_response(data, text)

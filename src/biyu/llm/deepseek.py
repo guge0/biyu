@@ -64,9 +64,11 @@ class DeepSeekAdapter(LLMAdapter):
         # R1不支持temperature等采样参数，静默忽略
         if "temperature" in kwargs and not self._is_reasoner():
             payload["temperature"] = kwargs["temperature"]
-        # Function calling: 传入 tools 参数
+        # Function calling: 传入 tools 参数(S-4A:补 tool_choice 透传)
         if "tools" in kwargs and kwargs["tools"]:
             payload["tools"] = kwargs["tools"]
+            if "tool_choice" in kwargs:
+                payload["tool_choice"] = kwargs["tool_choice"]
 
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(connect=10.0, read=180.0, write=30.0, pool=10.0),
@@ -77,7 +79,8 @@ class DeepSeekAdapter(LLMAdapter):
 
         choice = data["choices"][0]
         message = choice["message"]
-        text = message.get("content", "")
+        # S-4A:工具调用时 content 可能为 None,统一置 ""
+        text = message.get("content") or ""
         reasoning = message.get("reasoning_content")
 
         response = self._build_response(data, text)

@@ -59,6 +59,11 @@ class KimiAdapter(LLMAdapter):
             payload["thinking"] = thinking
         # Do NOT pass temperature / top_p / n / presence_penalty / frequency_penalty
         # K2.5 uses fixed values and will error on any other values
+        # S-4A: Function calling — 透传 tools / tool_choice
+        if "tools" in kwargs and kwargs["tools"]:
+            payload["tools"] = kwargs["tools"]
+            if "tool_choice" in kwargs:
+                payload["tool_choice"] = kwargs["tool_choice"]
 
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(connect=10.0, read=180.0, write=30.0, pool=10.0),
@@ -69,7 +74,8 @@ class KimiAdapter(LLMAdapter):
 
         choice = data["choices"][0]
         message = choice["message"]
-        text = message.get("content", "")
+        # S-4A:工具调用时 content 可能为 None,统一置 ""
+        text = message.get("content") or ""
         reasoning = message.get("reasoning_content")
 
         response = self._build_response(data, text)

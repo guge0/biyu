@@ -342,12 +342,14 @@ from biyu.ui.wizard import router as _wizard_router  # S-3 T4:一句话开书向
 from biyu.ui.legacy_migrate import router as _legacy_migrate_router  # S-3 T4:旧版数据根迁移
 from biyu.ui.cell_draft import router as _cell_draft_router  # S-3 T5:设定/大纲格 AI 起草(草稿闸)
 from biyu.ui.quickcheck_routes import router as _quickcheck_router  # S-3 T7:快检台(纯本地)
+from biyu.ui.agent_routes import router as _agent_router  # S-4A:责编助手引擎(无 UI)
 
 app.include_router(_ui_seed_router)
 app.include_router(_wizard_router)
 app.include_router(_legacy_migrate_router)
 app.include_router(_cell_draft_router)
 app.include_router(_quickcheck_router)
+app.include_router(_agent_router)
 # M2 章节工作台 + 审读路由(books/chapters/characters/truth_files/cost/SSE/reviews)
 app.include_router(_web_router)
 

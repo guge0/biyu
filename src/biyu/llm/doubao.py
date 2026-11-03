@@ -60,6 +60,11 @@ class DoubaoAdapter(LLMAdapter):
         }
         if "temperature" in kwargs:
             payload["temperature"] = kwargs["temperature"]
+        # S-4A: Function calling — 透传 tools / tool_choice
+        if "tools" in kwargs and kwargs["tools"]:
+            payload["tools"] = kwargs["tools"]
+            if "tool_choice" in kwargs:
+                payload["tool_choice"] = kwargs["tool_choice"]
 
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(connect=10.0, read=180.0, write=30.0, pool=10.0),
@@ -68,7 +73,8 @@ class DoubaoAdapter(LLMAdapter):
             self._handle_error(resp)
             data = resp.json()
 
-        text = data["choices"][0]["message"]["content"]
+        # S-4A:工具调用时 content 可能为 None,统一置 ""
+        text = data["choices"][0]["message"].get("content") or ""
         return self._build_response(data, text)
 
     async def stream(self, messages: list[dict], **kwargs) -> AsyncIterator[str]:
