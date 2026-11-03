@@ -75,6 +75,28 @@
 
   function renderRadar(data) {
     $("qc-score").textContent = String(data.score);
+    // 指数分档 + 样本不足提示(整改清单 #3):短段落密度波动大,明确告诉作者仅供参考。
+    let band = $("qc-score-band");
+    if (!band) {
+      band = document.createElement("span");
+      band.id = "qc-score-band";
+      band.className = "badge";
+      $("qc-score").insertAdjacentElement("afterend", band);
+    }
+    band.textContent = data.score_band || "";
+    band.className = "badge " + (data.score > 60 ? "need" : data.score > 30 ? "amber" : "ok");
+    let note = $("qc-sample-note");
+    if (!note) {
+      note = document.createElement("p");
+      note.id = "qc-sample-note";
+      note.className = "aside-hint";
+      note.style.margin = "0 0 8px";
+      $("qc-radar-rows").insertAdjacentElement("beforebegin", note);
+    }
+    note.hidden = !data.low_sample;
+    note.textContent = data.low_sample
+      ? "只有 " + data.han_chars + " 字，密度波动大，仅供参考；建议粘 " + (data.min_reliable_han || 300) + " 字以上。"
+      : "";
     const rows = $("qc-radar-rows");
     rows.replaceChildren();
     const labels = {

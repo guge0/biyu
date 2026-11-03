@@ -35,6 +35,60 @@ def test_scan_zero_hits_empty_state() -> None:
     assert out["score"] == 0
 
 
+def test_short_text_density_uses_real_length() -> None:
+    """整改清单 #3a:S-3C 截图 17 那段 102 字里有 4 处明喻,旧口径按一千字算成 4.0/千字。"""
+    text = (
+        "夜色深沉，某种意义上来说，这一切早已注定。他的眼中闪过一丝不易察觉的惊讶，"
+        "仿佛被无形的力量捃住了喉咙。不得不说，她的嘴角勾起一抹弧度，像是斗败的公鸡。"
+        "空气仿佛凝固了。时间仿佛静止了。他知道，一切都结束了。"
+    )
+    out = scan_text(text)
+    fams = {f["key"]: f for f in out["families"]}
+    han = out["han_chars"]
+    assert han < 300 and out["low_sample"] is True
+    assert fams["simile_markers"]["count"] == 4
+    assert abs(fams["simile_markers"]["per_kchar"] - round(4 / (han / 1000), 2)) < 0.01
+    assert fams["simile_markers"]["per_kchar"] > 30
+
+
+def test_score_at_threshold_is_not_worst() -> None:
+    """整改清单 #3b:三族都刚好等于阈值 → 30 分(自然上限),不再封顶 100。"""
+    from biyu.quickcheck import ai_score, score_band
+
+    fams = [
+        {"per_kchar": 3.0, "limit": 3.0},
+        {"per_kchar": 5.0, "limit": 5.0},
+        {"per_kchar": 1.0, "limit": 1.0},
+    ]
+    assert ai_score(fams) == 30
+    assert score_band(30) == "自然"
+    worse = [dict(f, per_kchar=f["limit"] * 3) for f in fams]
+    assert ai_score(worse) > 90
+    assert score_band(ai_score(worse)) == "明显 AI 味"
+
+
+def test_overlapping_terms_counted_once() -> None:
+    """整改清单 #3c:“嘴角勾起”只算套话,不再同时算一次缓冲词“嘴角”。"""
+    out = scan_text("她嘴角勾起。他嘴角微微上扬。")
+    fams = {f["key"]: f["count"] for f in out["families"]}
+    assert fams["cliche_expressions"] == 2
+    assert fams["tic_words"] == 0
+    terms = [h["term"] for h in out["hits"]]
+    assert terms == ["嘴角勾起", "嘴角微微上扬"]
+
+
+def test_chapter_audit_uses_same_dedup_counts() -> None:
+    from biyu.auditor.ai_patterns import DENSITY_GROUPS, count_group
+
+    tic = next(g for g in DENSITY_GROUPS if g.key == "tic_words")
+    assert count_group("她嘴角勾起，缓缓转身。", tic) == 1
+
+
+def test_quickcheck_page_shows_band_and_low_sample_note() -> None:
+    js = _src("quickcheck.js")
+    assert "qc-score-band" in js and "low_sample" in js
+
+
 def test_scan_highlight_classes_match_blueprint() -> None:
     """三色高亮对应词族:红波浪=缓冲词/琥珀=明喻/紫虚线=套话(图纸)。"""
     out = scan_text("缓缓 仿佛 嘴角勾起")

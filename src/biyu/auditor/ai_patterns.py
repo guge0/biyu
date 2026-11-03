@@ -58,5 +58,39 @@ DENSITY_GROUPS: tuple[DensityGroup, ...] = (
 
 
 def count_group(text: str, group: DensityGroup) -> int:
-    """统计词族在文本中的合计出现次数(按字面子串,各词独立计数)。"""
-    return sum(text.count(term) for term in group.terms)
+    """统计词族在文本中的合计出现次数(已去掉跨词族重叠,见 find_hits)。"""
+    return count_groups(text).get(group.key, 0)
+
+
+def find_hits(text: str) -> list[tuple[int, int, str, str]]:
+    """全部词族的字面命中,按位置排序,返回 (offset, length, term, group_key)。
+
+    重叠时保留更长的词:“嘴角勾起”只算套话一次,不再同时把“嘴角”算进缓冲词;
+    “嘴角微微上扬”也不再拆出“微微”。快检台与章内审计共用同一口径(整改清单 #3c)。
+    """
+    raw: list[tuple[int, int, str, str]] = []
+    for group in DENSITY_GROUPS:
+        for term in group.terms:
+            start = 0
+            while True:
+                idx = text.find(term, start)
+                if idx == -1:
+                    break
+                raw.append((idx, len(term), term, group.key))
+                start = idx + len(term)
+    raw.sort(key=lambda hit: (hit[0], -hit[1]))
+    kept: list[tuple[int, int, str, str]] = []
+    end = -1
+    for hit in raw:
+        if hit[0] >= end:
+            kept.append(hit)
+            end = hit[0] + hit[1]
+    return kept
+
+
+def count_groups(text: str) -> dict[str, int]:
+    """每个词族的命中数(去重叠后)。"""
+    counts = {group.key: 0 for group in DENSITY_GROUPS}
+    for _offset, _length, _term, key in find_hits(text):
+        counts[key] += 1
+    return counts

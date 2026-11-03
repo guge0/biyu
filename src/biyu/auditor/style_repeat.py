@@ -101,7 +101,8 @@ class StyleRepeatAuditor(BaseAuditor):
         # 词族密度检查(每千字归一,老板 2026-10 融合轮授权;阈值可被 density_limits 覆盖)
         density_limits = checker_cfg.get("density_limits", {}) or {}
         cjk_count = sum(1 for c in chapter_text if '一' <= c <= '鿿')
-        thousand_count = max(cjk_count / 1000, 1.0)
+        # 按实际字数归一(与快检台同口径,整改清单 #3a);空文本时密度必为 0
+        thousand_count = cjk_count / 1000 if cjk_count else 1.0
         density_violations = []
         density_details = {}
         for group in DENSITY_GROUPS:
