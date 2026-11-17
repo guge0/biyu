@@ -56,6 +56,9 @@ class GLMAdapter(LLMAdapter):
         }
         if "temperature" in kwargs:
             payload["temperature"] = kwargs["temperature"]
+        # S-6:透传 thinking(glm-5.x 默认开思考,回译这类机械任务要显式关掉,否则慢 7 倍且吃光输出额度)
+        if kwargs.get("thinking"):
+            payload["thinking"] = kwargs["thinking"]
         # P8-M3R 白名单修复:Function calling — 透传 tools / tool_choice
         # (核查日志 2026-07-08 夜 §3 异常 4:GLM API 支持 function-calling,
         # 但 adapter 没打通;GLM 充值后跑 editor 多轮工具前必须先修此项)

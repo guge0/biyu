@@ -11,6 +11,12 @@
     return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   }
 
+  // S-6 接线:朱雀分段视图激活时,取当前采用的全文(含作者在分段视图里的手改);
+  // 未激活时 quickcheck-zhuque.js 返回 null,走输入框原逻辑。
+  function activeText() {
+    return (window.__zqText && window.__zqText()) || $("qc-input").value;
+  }
+
   function showError(msg) {
     const banner = $("error-banner");
     banner.textContent = "✗ " + msg;
@@ -23,7 +29,7 @@
 
   // ---------- 扫描与渲染 ----------
   async function scan() {
-    const text = $("qc-input").value.trim();
+    const text = activeText().trim();
     if (!text) { showError("请先粘贴或载入一段文本。"); return; }
     $("qc-scan-btn").disabled = true;
     $("qc-scan-btn").textContent = "扫描中…";
@@ -158,7 +164,7 @@
   }
 
   async function saveAsNewBook() {
-    const text = $("qc-input").value.trim();
+    const text = activeText().trim();
     if (!text) { showError("先粘贴文本再转存。"); return; }
     const title = prompt("新书书名：", "快检台转存 " + new Date().toLocaleDateString("zh-CN"));
     if (!title || !title.trim()) return;
@@ -177,7 +183,7 @@
   }
 
   async function importTo(bookId, chapter, successMsg) {
-    const text = $("qc-input").value.trim();
+    const text = activeText().trim();
     const resp = await fetch(`/api/workbench/books/${encodeURIComponent(bookId)}/imports`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -254,7 +260,7 @@
     updateCharCount();
   });
   $("qc-copy-clean").addEventListener("click", () => {
-    if (navigator.clipboard) navigator.clipboard.writeText($("qc-input").value);
+    if (navigator.clipboard) navigator.clipboard.writeText(activeText());
     $("qc-copy-clean").textContent = "已复制 ✓";
     setTimeout(() => { $("qc-copy-clean").textContent = "📋 复制纯文本"; }, 1500);
   });

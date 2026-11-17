@@ -116,3 +116,34 @@ def load_provider_secret(provider: str) -> str:
     except Exception:
         pass
     return _load_encrypted(provider)
+
+
+def _delete_encrypted(provider: str) -> bool:
+    from cryptography.fernet import Fernet
+
+    cipher_path, key_path = _fallback_paths()
+    if not cipher_path.exists() or not key_path.exists():
+        return False
+    try:
+        values = json.loads(Fernet(key_path.read_bytes()).decrypt(cipher_path.read_bytes()).decode("utf-8"))
+    except Exception:
+        return False
+    if provider not in values:
+        return False
+    del values[provider]
+    cipher_path.write_bytes(Fernet(key_path.read_bytes()).encrypt(json.dumps(values).encode("utf-8")))
+    return True
+
+
+def delete_provider_secret(provider: str) -> bool:
+    """删除一个服务商的 Key(钥匙串与本地加密文件都清)。返回是否删到过。"""
+    removed = False
+    if _keyring_enabled():
+        try:
+            import keyring
+
+            keyring.delete_password(SERVICE, provider)
+            removed = True
+        except Exception:
+            pass
+    return _delete_encrypted(provider) or removed

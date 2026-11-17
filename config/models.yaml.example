@@ -43,6 +43,11 @@ models:
     provider: glm
     model_id: glm-4.6
     max_tokens: 8000
+  # S-6 快检台朱雀降分的改写模型(优先档;没配 GLM Key 时回落作者选的聊天模型)
+  glm-5.2:
+    provider: glm
+    model_id: glm-5.2
+    max_tokens: 8000
   doubao-1.6:
     provider: doubao
     model_id: doubao-1.6

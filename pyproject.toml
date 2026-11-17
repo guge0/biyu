@@ -24,6 +24,10 @@ dependencies = [
     "cryptography>=42.0.0",
     # P7-8: LLM 输出的 tool-call arguments JSON 兜底修复(BAD_ARGUMENTS 治理)
     "json-repair>=0.30.0",
+    # S-6: 朱雀网页报告 PDF 解析(纯 Python,无系统依赖)
+    "pypdf>=4.0.0",
+    # S-6: /api/zhuque/report 的 multipart 表单上传(FastAPI Form/File 依赖)
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]

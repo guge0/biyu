@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/styles.css?v=a1f1bf55">
   <link rel="stylesheet" href="/biyu-paper.css?v=ecdbc72d">
   <link rel="stylesheet" href="/shell.css?v=f47278a2">
+  <link rel="stylesheet" href="/quickcheck-zhuque.css">
 </head>
 <body>
   <nav class="top-nav">
@@ -48,11 +49,19 @@
                 </label>
               </div>
             </div>
-            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 14px;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-md);margin-bottom:12px;font-size:12px">
+            <!-- 图例条:本地扫描三色图例;进入朱雀视图时换成分数图例(图纸 _s6_ref/prototype) -->
+            <div id="legend-local" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 14px;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-md);margin-bottom:12px;font-size:12px">
               <span><span class="qc-hl-hedge">红波浪线</span> = 猜测缓冲词</span>
               <span><span class="qc-hl-simile">琥珀底纹</span> = 陈旧 AI 明喻</span>
               <span><span class="qc-hl-cliche">紫色虚线</span> = 网文塑料套话</span>
               <span id="qc-char-count" style="color:var(--ink-mute);margin-left:auto">字数：0</span>
+            </div>
+            <div id="legend-zq" style="display:none;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 14px;background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-md);margin-bottom:12px;font-size:12px">
+              <span><span class="zq-chip" data-tone="ok">像人写</span> 低于 0.5</span>
+              <span><span class="zq-chip" data-tone="red">疑似 AI</span> 0.5 到 0.99</span>
+              <span><span class="zq-chip" data-tone="deep">AI</span> 0.99 以上</span>
+              <span class="zq-lock">灰字 = 对白，没动</span>
+              <button class="b3 bs" type="button" id="zq-layout" style="margin-left:auto">切到左右对照</button>
             </div>
             <div class="qc-editor-box">
               <textarea id="qc-input" class="prose-input" rows="13" style="font-family:var(--serif);font-size:17px;line-height:2.0" placeholder="免建书、免填设定！把任意小说章节粘贴到这里，右侧雷达即刻免费扫描 AI 味词族密度…"></textarea>
@@ -84,13 +93,61 @@
               <div id="qc-radar-rows"><p class="aside-hint" style="margin:0">粘贴文本后点「立即体检」。</p></div>
             </div>
 
-            <!-- 工单 B 节裁剪 3:LLM 两卡占位(内测版即将开通,不带任何商业引导文案) -->
-            <div class="card" style="margin-bottom:14px;opacity:.62" aria-disabled="true">
+            <!-- ② S-6 朱雀体检与降分(替换原「内测版即将开通」占位卡;骨架照图纸 _s6_ref/prototype) -->
+            <div class="card" style="margin-bottom:14px" id="zq-card">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                <span style="font-weight:600;font-size:14.5px;color:var(--ink)">② 一键去 AI 味精修洗稿</span>
-                <span class="badge amber">内测版即将开通</span>
+                <span style="font-weight:600;font-size:14.5px;color:var(--ink)">② 朱雀体检与降分</span>
+                <span class="badge need" id="zq-badge">用你自己的 Key</span>
               </div>
-              <p class="card-sub" style="margin:0">挂载声纹、轻度/深度两档洗稿的能力正在内测打磨中，开通后此处可用。</p>
+              <div style="font-size:12px;color:var(--ink-mute)">整章判定</div>
+              <div class="zq-verdict" id="zq-verdict">还没体检</div>
+              <p class="card-sub" style="margin:0" id="zq-sub">先看朱雀会把哪几段判成 AI，再决定要不要改。</p>
+
+              <div class="zq-mode" role="radiogroup" aria-label="怎么测分">
+                <label><input type="radio" name="zq-mode" value="api" checked> <span><b>自动测</b>：用我填的朱雀 Key，全程不用管</span></label>
+                <label><input type="radio" name="zq-mode" value="web"> <span><b>我去朱雀网页测</b>：免费，每轮要手动贴一次</span></label>
+              </div>
+
+              <!-- 自动模式 -->
+              <div id="zq-api">
+                <form id="zq-key-form" class="zq-key-form" hidden>
+                  <input id="zq-key-input" type="password" autocomplete="off" placeholder="粘贴朱雀 Key（EdgeOne 控制台里复制）">
+                  <button class="b2 bs" type="submit" id="zq-key-save">保存 Key</button>
+                  <p class="aside-hint" style="margin:6px 0 0">Key 只存在你自己电脑里，不会上传、不会进日志。</p>
+                </form>
+                <div class="zq-actions">
+                  <button class="b1 bs" type="button" id="zq-check">朱雀体检</button>
+                  <button class="b1 bs" type="button" id="zq-fix" hidden>改掉红色的段</button>
+                  <button class="b2 bs" type="button" id="zq-recheck" hidden>复测整章</button>
+                  <button class="b3 bs" type="button" id="zq-reset" hidden>重新开始</button>
+                </div>
+                <p class="aside-hint" id="zq-est" style="margin:8px 0 0" hidden></p>
+                <p class="aside-hint" id="zq-progress" role="status" aria-live="polite" style="margin:8px 0 0" hidden></p>
+              </div>
+
+              <!-- 网页复核模式 -->
+              <div id="zq-web" hidden>
+                <ol class="zq-steps">
+                  <li>先让笔驭把叙述改一遍。<div class="zq-actions"><button class="b1 bs" type="button" id="zq-web-fix">开始改写</button></div></li>
+                  <li>改完后一键去朱雀测分。<div class="zq-actions"><a class="b2 bs" id="zq-open" href="https://matrix.tencent.com/ai-detect/ai_gen" target="_blank" rel="noopener">复制全文并打开朱雀</a></div><span class="aside-hint">全文已在剪贴板，到朱雀页面粘贴、点检测、下载报告。</span></li>
+                  <li>把朱雀的报告交回来，笔驭只重改还红的段。<div class="zq-drop" id="zq-drop"><span id="zq-drop-label">把报告 PDF 拖到这里，或</span> <button class="b3 bs" type="button" id="zq-pick">选择文件</button><input id="zq-file" type="file" accept="application/pdf,.pdf" hidden></div></li>
+                </ol>
+                <p class="aside-hint" id="zq-web-progress" role="status" aria-live="polite" style="margin:8px 0 0" hidden></p>
+                <p class="aside-hint" style="margin:8px 0 0">一般两三轮到 0。</p>
+              </div>
+
+              <hr style="border:none;border-top:1px solid var(--rule-soft);margin:14px 0 10px">
+              <div style="font-size:12.5px;color:var(--ink-soft)">不会被改：引号里的对白、【】里的字，和这些词</div>
+              <div class="zq-terms" id="zq-terms"></div>
+              <div id="zq-terms-edit" hidden>
+                <textarea id="zq-terms-input" rows="3" style="width:100%;min-height:64px;padding:8px 10px;border:1px solid var(--btn-border);border-radius:var(--r-sm);font-size:13px;background:var(--surface)" placeholder="一行一个：人名、地名、门派、器物名……改写时这些词原样保留"></textarea>
+                <div class="zq-actions"><button class="b2 bs" type="button" id="zq-terms-save">存好词表</button></div>
+              </div>
+              <div class="row" style="gap:8px;justify-content:space-between;flex-wrap:wrap">
+                <button class="b3 bs" type="button" id="zq-terms-toggle">编辑词表</button>
+                <span class="aside-hint" id="zq-rewriter">改写模型：</span>
+              </div>
+              <p class="aside-hint" style="margin:10px 0 0">改完能过检测，但句子会比原稿啰嗦些，读着有点像译文，建议通读顺一遍再发。</p>
             </div>
             <div class="card" style="opacity:.62" aria-disabled="true">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -124,6 +181,7 @@
 
   <script src="/cn-num.js"></script>
   <script src="/quickcheck.js?v=s3t7-1"></script>
+  <script src="/quickcheck-zhuque.js"></script>
   <script src="/shell.js?v=4c7eddac" defer></script>
 </body>
 </html>
