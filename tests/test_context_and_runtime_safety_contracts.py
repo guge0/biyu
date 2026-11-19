@@ -170,7 +170,7 @@ def test_writer_current_chapter_contract_includes_author_outline_as_precedence()
     assert current != baseline
     assert "SIGNED_CURRENT_PLAN" in current
     assert "AUTHOR_OUTLINE_ORIGINAL" in current
-    assert "以本细纲为准" in current
+    assert "作者原话，以此为准" in current
 
 
 def test_long_context_history_is_previous_full_text_only(tmp_path: Path) -> None:
