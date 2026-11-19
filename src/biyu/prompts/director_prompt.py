@@ -20,6 +20,7 @@ def build_planning_prompt(
     character_catalog: str = "",
     worldbook_catalog: str = "",
     injection_v2: bool = False,
+    author_details_locked: bool = False,
 ) -> str:
     """Build the prompt for Creator Outline Generator (创作者细纲生成器).
 
@@ -73,6 +74,12 @@ def build_planning_prompt(
 
     background_block = "\n\n".join(background_sections)
 
+    details_rule = ""
+    if author_details_locked:
+        from biyu.prompts.chapter_writer import _FRAGMENTS
+
+        details_rule = "\n" + _FRAGMENTS["author_details"]["director"]
+
     return f"""\
 你是中文网文的导演,为下一章写一张简短的场景表,给写手参考。
 作者的细纲是路线:上面的事要发生、顺序不变、事实不能错。你不改剧情,不复述路线,也不替写手定细节。
@@ -87,7 +94,7 @@ def build_planning_prompt(
 2. 按作者路线分场,路线几条大致就几场,可以合并,不能新增事件。
 3. 每场只写它的作用、情绪从哪到哪、该重写还是一笔带过。作者标了「本章最重的一场」,照标。
 4. 不发明细节:道具、数字、台词、人物的小动作、天气、钱数,作者没写的不要写进来。细节是写手和作者的事。
-5. 你觉得路线有问题,写进「给作者的话」,不要自己改,也不要悄悄略过。
+5. 你觉得路线有问题,写进「给作者的话」,不要自己改,也不要悄悄略过。{details_rule}
 
 ## 输出格式
 

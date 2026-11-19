@@ -511,6 +511,7 @@ def build_writer_prompt_v4(
     character_catalog: str = "",
     worldbook_catalog: str = "",
     history_catalog: str = "",
+    author_details_locked: bool = False,
 ) -> tuple[str, str]:
     """组装完整的 system + user prompt。
 
@@ -520,6 +521,9 @@ def build_writer_prompt_v4(
     user_prompt: Layer 1 + Layer 2 + Layer 3 + 收尾指令
     """
     system_prompt = WRITER_SYSTEM_V4
+    if author_details_locked:
+        # S-9「人定细节」开关(book.json: author_details_locked)，默认关。
+        system_prompt = f"{system_prompt.rstrip()}\n\n{_FRAGMENTS['author_details']['writer']}\n"
 
     layer1 = build_layer1_hard_rules(chapter_num, worldbook)
     layer2 = build_layer2_context(

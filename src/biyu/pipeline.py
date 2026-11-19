@@ -1769,6 +1769,7 @@ async def generate_chapter(
             character_catalog=q1_character_catalog,
             worldbook_catalog=q1_worldbook_catalog,
             injection_v2=injection_v2,
+            author_details_locked=bool(meta.get("author_details_locked")),
         )
         planning_messages = [{"role": "user", "content": planning_content}]
         if injection_v2:
@@ -1927,6 +1928,7 @@ async def generate_chapter(
             character_catalog=q1_character_catalog,
             worldbook_catalog=q1_worldbook_catalog,
             history_catalog=q1_history_catalog,
+            author_details_locked=bool(meta.get("author_details_locked")),
         )
 
         # 拆分 cacheable_prefix 和 dynamic_messages

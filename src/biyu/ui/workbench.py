@@ -283,6 +283,7 @@ async def _call_web_architect(book_dir: Path, chapter: int, feedback: str = "") 
         character_catalog=character_catalog,
         worldbook_catalog=worldbook_catalog,
         injection_v2=injection_v2,
+        author_details_locked=_author_details_locked(book_dir),
     )
     if feedback.strip():
         original_planning = (book_dir / "logs" / f"ch{chapter}" / "planning.md")
@@ -1624,6 +1625,17 @@ def set_planning_mode(book: str, chapter: int, payload: dict[str, Any]) -> dict[
     elif not skipped and step == "generation":
         write_workbench_step(book_dir, chapter, "planning")
     return chapter_snapshot(book_dir, chapter, book)
+
+
+def _author_details_locked(book_dir) -> bool:
+    """S-9「人定细节」开关：book.json 的 author_details_locked，默认关。"""
+    import json as _json
+
+    try:
+        meta = _json.loads((Path(book_dir) / "book.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return bool(meta.get("author_details_locked")) if isinstance(meta, dict) else False
 
 
 def _outline_hard_fact_issues(outline: str, plan_text: str) -> list[str]:

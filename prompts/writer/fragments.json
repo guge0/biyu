@@ -60,5 +60,9 @@
     "with_state": "- {name}（{state}）",
     "without_state": "- {name}"
   },
-  "final_instruction": "现在写第 {chapter_num} 章正文。只输出正文。"
+  "final_instruction": "现在写第 {chapter_num} 章正文。只输出正文。",
+  "author_details": {
+    "writer": "本章作者定了细节：细纲里写出的具体细节（动作、物件、原话、数字、先后顺序）都是定稿，原样用上，不换说法、不挪位置、不加修饰。你只写把它们连起来的部分，连接处用最朴素的叙述，不另造抢戏的细节。",
+    "director": "6. 本书作者在细纲里亲自定了细节，那些细节已是定稿；场景表不另加节拍，也不改写作者给的细节。"
+  }
 }
