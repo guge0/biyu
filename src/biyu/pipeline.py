@@ -445,6 +445,17 @@ def _log_cost(
         ])
 
 
+_META_MARKER_LINE = re.compile(
+    r"^[ \t]*【[^】\n]{0,20}(?:Layer|卡片|摘要|目标|设定|要求|清单|范例|规划|锚点|细纲|约束|结束|硬规则|备注|说明|本章完|正文)[^】\n]{0,20}】[ \t]*\r?\n?",
+    re.MULTILINE,
+)
+
+
+def _strip_meta_markers(text: str) -> str:
+    """删写手回显的提示词标记行（如「【写作要求】」「【Layer 3 结束】」），不碰正文里的【书内词】。"""
+    return _META_MARKER_LINE.sub("", text)
+
+
 async def _run_checklist_with_cost_log(
     *,
     book: BookConfig,
@@ -2369,8 +2380,9 @@ async def generate_chapter(
             })
 
     # ---- Save outputs ----
-    # D-05: 正则清理元标记（双保险，prompt 层已加清理规则）
-    final_text = re.sub(r'【[^】]{1,20}】', '', final_text)
+    # D-05: 清理写手回显的提示词元标记（双保险）。只删独占一行的标记，
+    # 正文里的【守成】【疾】之类书内词照留（S-9，2026-11-19）。
+    final_text = _strip_meta_markers(final_text)
 
     # ---- Auditor (T-P3-A) ----
     audit_results: list[AuditResult] = []
