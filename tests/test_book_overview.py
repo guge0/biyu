@@ -362,7 +362,11 @@ def test_overview_lives_on_book_page_and_production_nav_stays_minimal() -> None:
     book_html = Path("src/biyu/ui/static/book.html").read_text(
         encoding="utf-8"
     )
-    assert 'href="/overview.html?book=' in book_html
+    # S-10 3a-3：整书概览入口从 book.html 入口卡移入书内栏「本书 ▾」（shell.js）
+    assert 'href="/overview.html?book=' not in book_html
+    assert "/overview.html?book=" in Path(
+        "src/biyu/ui/static/shell.js"
+    ).read_text(encoding="utf-8")
 
     workbench_html = Path("src/biyu/ui/static/workbench.html").read_text(
         encoding="utf-8"

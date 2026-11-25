@@ -97,9 +97,12 @@ def test_review_toolbar_stays_visible_and_records_are_in_bottom_fold_group() -> 
 
 
 def test_mid_desktop_review_uses_overlay_to_preserve_article_width() -> None:
+    """S-10 段3a-4：滑出浮层退役，意见栏改为常驻右栏（340/300px 网格列），
+    正文列宽由 minmax(0,1fr) 自适应保持；中段宽度不再需要 overlay 方案。"""
     assert re.search(
-        r"@media \(min-width:1200px\) and \(max-width:1299px\).*?"
-        r"\.reading-layout\.reading-aside-open\{grid-template-columns:minmax\(0,1fr\)\}",
+        r"\.reading-layout,.*?"
+        r"grid-template-columns:minmax\(0,1fr\) var\(--reading-review-width\)",
         CSS,
         re.S,
     )
+    assert re.search(r"@media \(max-width:1366px\)\{[^}]*--reading-review-width:300px", CSS)

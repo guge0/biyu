@@ -128,26 +128,29 @@ def test_q2_book_navigation_and_q1_copy_export_ui_contracts() -> None:
     workbench_js = (static / "workbench.js").read_text(encoding="utf-8")
     overview = (static / "overview.html").read_text(encoding="utf-8")
     overview_js = (static / "overview.js").read_text(encoding="utf-8")
+    shell_js = (static / "shell.js").read_text(encoding="utf-8")
 
+    # S-10 3a-3：概览/好句/记忆/声纹四张次级入口卡收进书内栏「本书 ▾」（shell.js），
+    # book.html 只留主入口三卡 + 起名/改名 + 纪要。
     for label in (
         "章节工作台",
-        "整书概览",
-        "好句",
-        "起名/改名",
         "纪要",
+        "起名/改名",
         "设定集",
-        "本书记忆",
-        "本书声纹",
     ):
         assert f'<div class="entry-label">{label}</div>' in book
-    assert book.count('class="entry-card"') == 9
+    for moved, menu_label in (("整书概览", "全书概览"), ("好句", "好句"), ("本书记忆", "本书记忆"), ("本书声纹", "声纹")):
+        assert f'<div class="entry-label">{moved}</div>' not in book
+        assert menu_label in shell_js
+    assert book.count('class="entry-card"') == 5
     assert '<div class="entry-label">责编</div>' in book
     assert 'entry-card-primary' in book
     assert '跟责编聊出来的结论：否掉的方向、还没定的分歧、你的口味' in book
     assert 'id="overview-link"' not in workbench
     assert 'id="voiceprint-link"' not in workbench
-    assert 'href="/voiceprint.html?book=' in book
-    assert 'href="/memory.html?book=' in book
+    # S-10 3a-3：声纹/记忆入口从 book.html 入口卡移入书内栏「本书 ▾」（shell.js）
+    assert "/voiceprint.html?book=" in shell_js
+    assert "/memory.html?book=" in shell_js
     assert 'id="copy-chapter"' in workbench
     assert "navigator.clipboard" in workbench_js
     assert "document.execCommand('copy')" in workbench_js

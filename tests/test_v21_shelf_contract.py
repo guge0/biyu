@@ -60,7 +60,8 @@ def test_shelf_modals_skeleton() -> None:
 def test_shelf_toolbar_and_empty_state() -> None:
     """#7/#11/#12/决策5:顶栏工具行与空态三入口。"""
     html = _src("index.html")
-    assert 'id="import-works-button"' in html and "📥 导入作品" in html  # 决策6B 入口(T4 接向导)
+    # S-10 3a-2：emoji 换线条 SVG，id 与入口保留
+    assert 'id="import-works-button"' in html and "biyu-icon-import" in html  # 决策6B 入口(T4 接向导)
     assert 'id="manual-create-button"' in html and "手动建书" in html
     assert "书架是空的 · 说出一句话想法" in html
     assert 'id="create-book-empty-button"' in html
