@@ -11,8 +11,8 @@
   --ink:#262119;
   --ink-solid:#2A251C;
   --ink-soft:#5C5443;
-  --ink-mute:#8C8471;
-  --ink-faint:#B0A897;
+  --ink-mute:#6F685B;   /* S-10 3a修正：压暗到 WCAG AA */
+  --ink-faint:#7B7467;
   --rule:#E0DACC;
   --rule-soft:#EDE8DC;
   --numeral:#C3BCA9;
@@ -201,7 +201,7 @@ button{font-family:inherit;cursor:default}
   display: inline-block;
   padding: 2px 8px;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-fg);
   border-radius: 3px;
   font-size: 12px;
   margin-right: 8px;
@@ -369,8 +369,8 @@ button{font-family:inherit;cursor:default}
   display: inline-block;
   width: 12px;
   height: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
+  border: 2px solid color-mix(in srgb, var(--accent-fg) 40%, transparent);
+  border-top-color: var(--accent-fg);
   border-radius: 50%;
   animation: biyu-spin 0.7s linear infinite;
   vertical-align: middle;
@@ -1254,7 +1254,7 @@ button{font-family:inherit;cursor:default}
 .msg-user {
   align-self: flex-end;
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-fg);
   border-bottom-right-radius: 3px;
 }
 .msg-assistant {
@@ -1433,7 +1433,7 @@ button{font-family:inherit;cursor:default}
 }
 .btn-small:hover {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-fg);
   border-color: var(--accent);
 }
 
@@ -1446,7 +1446,7 @@ button{font-family:inherit;cursor:default}
   display: block;
 }
 
-.memory-page{max-width:1100px;margin:32px auto;padding:24px}.memory-grid{display:grid;gap:16px}.memory-entry,.memory-conflict{background:var(--paper,#fff);border:1px solid var(--line,#ddd);border-radius:12px;padding:16px}.memory-entry textarea{width:100%;min-height:90px;margin:8px 0}.memory-conflict{border-color:#c96b55;background:#fff5f1}.memory-conflict button{margin-right:8px}
+.memory-page{max-width:1100px;margin:32px auto;padding:24px}.memory-grid{display:grid;gap:16px}.memory-entry,.memory-conflict{background:var(--paper,#fff);border:1px solid var(--line,#ddd);border-radius:12px;padding:16px}.memory-entry textarea{width:100%;min-height:90px;margin:8px 0}.memory-conflict{border-color:color-mix(in srgb, var(--mark) 55%, var(--rule));background:var(--mark-bg)}.memory-conflict button{margin-right:8px}
 
 .modal-overlay[hidden] { display: none; }
 .setup-card {
@@ -1482,14 +1482,14 @@ button{font-family:inherit;cursor:default}
 .diagnosis-card {
   margin: 16px 0;
   padding: 16px 18px;
-  border: 1px solid #d8c9a8;
+  border: 1px solid color-mix(in srgb, var(--amber) 45%, var(--rule));
   border-radius: 12px;
-  background: #fffaf0;
+  background: var(--amber-bg);
 }
 .diagnosis-card h2 { margin: 0 0 6px; font-size: 1.05rem; }
 .diagnosis-card p { margin: 4px 0; }
 .reading-layout{overflow:hidden}
-.outline-fact-status{margin:12px 0;padding:10px 12px;border-left:2px solid var(--mark);border-radius:0;background:var(--surface);background:#fff}.outline-fact-status h3{margin:0 0 6px}.outline-fact-status ul{margin:0;padding-left:20px}.outline-fact-card{margin-top:8px;padding:9px;border-left:4px solid #ba7517;background:#fff8e8}.outline-fact-card p{margin:3px 0}.outline-fact-evidence{font-size:13px;color:var(--muted)}
+.outline-fact-status{margin:12px 0;padding:10px 12px;border-left:2px solid var(--mark);border-radius:0;background:var(--surface)}.outline-fact-status h3{margin:0 0 6px}.outline-fact-status ul{margin:0;padding-left:20px}.outline-fact-card{margin-top:8px;padding:9px;border-left:4px solid var(--amber);background:var(--amber-bg)}.outline-fact-card p{margin:3px 0}.outline-fact-evidence{font-size:13px;color:var(--muted)}
 .reading-column,.review-column{min-height:0;overflow-y:auto;scrollbar-gutter:stable}
 .reading-column,.review-column{display:flex;flex-direction:column}
 .reading-column>#chapter-read,.reading-column>#chapter-edit{flex:1 0 304px;min-height:304px}
@@ -1505,7 +1505,7 @@ button{font-family:inherit;cursor:default}
 .revision-fold>summary{display:flex;justify-content:space-between;cursor:pointer;font-size:12.5px;color:var(--ink-dim)}
 .issue-card.author-picked{border-left-color:var(--mark);background:var(--mark-bg)}
 .issue-card .issue-source{margin-left:auto;font-size:11px;color:var(--ink-dim)}
-.issue-card .picked-quote{padding:6px 8px;border:1px solid #e3dcef;border-radius:6px;background:#fff}
+.issue-card .picked-quote{padding:6px 8px;border:1px solid var(--rule-strong);border-radius:6px;background:var(--surface)}
 .issue-card textarea{width:100%;min-height:44px;box-sizing:border-box;resize:vertical}
 .diagnosis-card{position:relative}
 .diagnosis-close{position:absolute;right:8px;top:6px}
@@ -1573,7 +1573,7 @@ button{font-family:inherit;cursor:default}
   .workbench .diagnosis-card{position:sticky;bottom:0;z-index:4;flex:none;margin:8px 0 0;padding:9px 14px;background:#fffaf0}
   .workbench .diagnosis-card:not([open]){padding-bottom:9px}
   .workbench .diagnosis-card:not([open])>*:not(summary){display:none}
-  .workbench .reading-failure-card{position:sticky;bottom:0;z-index:5;display:flex;align-items:start;justify-content:space-between;gap:12px;flex:none;margin-top:8px;padding:10px 14px;border:1px solid #e8bcb6;border-radius:9px;background:#fff2f0}
+  .workbench .reading-failure-card{position:sticky;bottom:0;z-index:5;display:flex;align-items:start;justify-content:space-between;gap:12px;flex:none;margin-top:8px;padding:10px 14px;border:1px solid color-mix(in srgb, var(--mark) 35%, var(--rule));border-radius:9px;background:var(--mark-bg)}
   .workbench .reading-failure-card[hidden]{display:none}
   .workbench .reading-failure-card p{margin:4px 0 0;font-size:12.5px;color:var(--ink-dim)}
   .workbench .reading-failure-card button{border:0;background:transparent;font-size:18px}
@@ -1596,7 +1596,7 @@ button{font-family:inherit;cursor:default}
 .workbench-command-row{display:flex;align-items:center;gap:18px;min-height:54px;padding:0;border-bottom:1px solid var(--line);position:relative;z-index:20}
 .workbench-command-row .wb-title{display:flex;align-items:baseline;gap:8px;min-width:160px;max-width:min(31vw,430px);color:var(--ink)}
 .workbench-book-name{font-size:17px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.workbench-title-separator{color:var(--ink-faint)}
+.workbench-title-separator{color:var(--ink-soft)}
 .workbench-command-row .toolbar{display:flex;align-items:center;gap:6px;flex:none;flex-wrap:nowrap}
 .workbench-book-link{font-size:13px;color:var(--ink-soft);white-space:nowrap;text-decoration:none}
 .workbench-command-row .stage-bar{flex:1;min-width:390px;border-bottom:0;overflow-x:auto}
@@ -1654,7 +1654,7 @@ button{font-family:inherit;cursor:default}
 /* 留白栏 — 每页左侧 66px 竖栏，中文数字 + 单位 */
 .spread{display:flex;gap:32px}
 .margin{width:66px;flex:0 0 66px;border-right:1px solid var(--rule);padding-right:18px;text-align:right}
-.margin .num{font-family:var(--serif);font-size:34px;line-height:1.02;color:var(--numeral);font-weight:400}
+.margin .num{font-family:var(--serif);font-size:34px;line-height:1.02;color:var(--ink-mute);font-weight:400}
 .margin .unit{font-size:11px;color:var(--ink-faint);letter-spacing:.22em;margin-top:6px}
 .margin .meta{font-size:11px;color:var(--ink-faint);line-height:1.75;margin-top:22px}
 .main{flex:1;min-width:0}
@@ -1780,7 +1780,7 @@ button{font-family:inherit;cursor:default}
 
 /* S-1 工作台读稿屏留白栏：绝对定位在正文左侧 */
 .workbench .read-margin{position:absolute;left:2px;top:56px;z-index:3;pointer-events:none}
-.workbench .read-margin .num{font-family:var(--serif);font-size:34px;line-height:1.02;color:var(--numeral);font-weight:400}
+.workbench .read-margin .num{font-family:var(--serif);font-size:34px;line-height:1.02;color:var(--ink-mute);font-weight:400}
 .workbench .reading-column .panel-head{position:relative;z-index:4}
 @media (min-width:801px){
   /* 读稿页收敛 B3:留白栏下移到 panel-head 之下,不再压声纹行 */
@@ -2135,8 +2135,8 @@ hr{border:none;border-top:1px solid var(--rule);margin:26px 0 18px}
 .workbench .reading-prose>#chapter-read{border:0;border-radius:0;background:none;padding:0}
 .workbench .reading-prose>#chapter-edit{box-sizing:border-box;background:var(--surface);outline:1px dashed var(--btn-border);outline-offset:8px;padding:0 10px;resize:none}
 .workbench .reading-layout .read-margin{position:static;min-height:0;height:100%;border-right:1px solid var(--rule);padding:2px 14px 0 0;text-align:center;pointer-events:none}
-.workbench .reading-layout .read-margin .unit{display:block;margin-top:9px;font-size:11px;letter-spacing:.22em;color:var(--numeral)}
-.workbench .reading-layout .read-margin .meta{margin-top:26px;color:var(--ink-faint);font-size:12px}
+.workbench .reading-layout .read-margin .unit{display:block;margin-top:9px;font-size:11px;letter-spacing:.22em;color:var(--ink-soft)}
+.workbench .reading-layout .read-margin .meta{margin-top:26px;color:var(--ink-soft);font-size:12px}
 .workbench .reading-layout .reading-column{overflow:hidden}
 .workbench .reading-layout .reading-actions{position:static;flex:none;margin-top:12px;padding:7px 0;background:var(--card);border-top:1px solid var(--rule)}
 .workbench .reading-layout .diagnosis-card{position:relative;bottom:auto}
@@ -2176,8 +2176,8 @@ hr{border:none;border-top:1px solid var(--rule);margin:26px 0 18px}
 .workbench .run-card.reading-paper{border-radius:6px;background:#fdfbf6}
 .workbench .reading-failure-card.reading-paper{border:1px solid var(--rule);border-left:2px solid var(--mark);border-radius:6px;background:#fdfbf6}
 @media (min-width:801px) and (max-height:800px){
-  .workbench .stage-shell:has(.reading-layout:not([hidden])){overflow-y:auto}
-  .workbench .reading-layout,.workbench .reading-layout.reading-view-review,.workbench .reading-layout.reading-view-edit{height:640px;min-height:640px}
+  /* 3a修正·工单第2条：旧的 640px 定高补偿退役——它在本来的内滚方案里把操作条顶出首屏；
+     现在纸面限高(--reading-paper-max)已按视口算，这里不再需要任何定高。 */
 }
 @media (max-width:1040px){
   .workbench .reading-layout,.workbench .reading-layout.reading-view-review,.workbench .reading-layout.reading-view-edit{width:min(630px,100%);max-width:630px;grid-template-columns:minmax(0,1fr);padding-left:24px;padding-right:24px}
@@ -2200,8 +2200,10 @@ hr{border:none;border-top:1px solid var(--rule);margin:26px 0 18px}
   --reading-actions-height:44px;
   --stroke:var(--rule);
   --solid:var(--ink-solid);
-  /* 正文纸面限高：视口 - 两层栏实高(--chrome-h 由 shell.js 实测) - 工具行/操作条/评章露出量 */
-  --reading-paper-max:calc(100dvh - var(--chrome-h,124px) - 236px);
+  /* 正文纸面限高：视口 - 两层栏实高(--chrome-h 由 shell.js 实测+ResizeObserver) - 200px
+     （工具行92 + 操作条44 + 固定页脚34 + 余量）。3a修正·工单第2条：1280×665 首屏必须看得到操作条，
+     240px 下限防极端矮窗把纸面压没了。 */
+  --reading-paper-max:max(240px, calc(100dvh - var(--chrome-h,124px) - 200px));
 }
 body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 body:has(.workbench){display:flex;flex-direction:column;min-height:100dvh}
@@ -2211,12 +2213,14 @@ body:has(.workbench) main.workbench{flex:1 1 auto;min-height:0;width:100%}
 .workbench .reading-layout,
 .workbench .reading-layout.reading-view-review,
 .workbench .reading-layout.reading-view-edit{
-  width:100%;max-width:none;height:100%;min-height:0;margin:0;padding:0;
-  display:grid;gap:0 14px;position:relative;overflow:hidden;background:transparent;
+  width:100%;max-width:none;height:auto;min-height:0;margin:0;padding:0 0 40px;  /* 底部让开固定页脚 */
+  display:grid;gap:0 14px;position:relative;overflow:visible;background:transparent;
   grid-template-columns:minmax(0,1fr) var(--reading-review-width);
-  grid-template-rows:auto minmax(0,1fr) auto auto;
-  /* 意见栏只占正文行（第2行）：若跨全部行，其内容高度会摊进 auto 行把工具行/操作条撑爆 */
-  grid-template-areas:"head ." "main rail" "foot ." "summ .";
+  grid-template-rows:auto auto auto auto;
+  /* 3a修正·工单第2条：意见栏不再只占正文行——原来 rail 与正文同行，栏高(453~503px)把
+     第2行撑高，把操作条顶出 665 视口首屏。照样张：左侧文档流(head/正文/操作条/评章)自上而下，
+     意见栏独占右列跨全部行、sticky 全程跟随（也解决了 3a 遗留#2 的只 sticky 到正文行）。 */
+  grid-template-areas:"head rail" "main rail" "foot rail" "summ rail";
 }
 .workbench .reading-layout.reading-pure{--reading-actions-height:40px}
 /* 文档卡三段共边：工具行（玻璃上沿）+ 纸面正文（不透明，红线区不进玻璃）+ 操作条（玻璃下沿） */
@@ -2231,7 +2235,7 @@ body:has(.workbench) main.workbench{flex:1 1 auto;min-height:0;width:100%}
 .workbench .reading-meta-line{min-width:0;margin:0;display:flex;align-items:center;gap:9px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;font-size:12.5px}
 .workbench .reading-review-entry{flex:0 0 auto}
 .workbench .reading-decision-head>p{display:none}
-.workbench .reading-layout .reading-column{grid-area:main;display:flex;flex-direction:column;height:auto;min-height:300px;max-height:var(--reading-paper-max);padding:0;overflow:hidden;background:var(--surface);border:1px solid var(--glass-border);border-top:0;border-radius:0;position:relative}
+.workbench .reading-layout .reading-column{grid-area:main;display:flex;flex-direction:column;height:auto;min-height:0;max-height:var(--reading-paper-max);padding:0;overflow:hidden;background:var(--surface);border:1px solid var(--glass-border);border-top:0;border-radius:0;position:relative}
 .workbench .reading-prose-grid{flex:1 1 0;height:100%;min-height:0;width:100%;display:grid;grid-template-columns:66px minmax(504px,744px);justify-content:center;align-items:start;gap:20px;padding:8px 24px;overflow-x:hidden;overflow-y:auto;scrollbar-gutter:stable}
 .workbench .reading-prose{height:auto;min-height:100%;overflow:visible}
 .workbench .reading-prose>#chapter-read,.workbench .reading-prose>#chapter-edit,.workbench .reading-prose>#official-chapter{width:100%;height:100%;min-height:0;max-width:744px;max-height:none;margin:0;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","SimSun",serif;font-size:18px;line-height:1.9}
@@ -2240,13 +2244,13 @@ body:has(.workbench) main.workbench{flex:1 1 auto;min-height:0;width:100%}
 .workbench .reading-prose>#chapter-edit{padding:16px 18px;border:1px dashed var(--btn-border);border-radius:6px;background:#fdfbf6;outline:0;overflow:hidden;resize:none}
 .workbench .reading-layout .read-margin{height:100%;padding:4px 14px 0 0;border-right:1px solid var(--rule)}
 .workbench .reading-layout .read-margin .num{display:block;min-height:35px;color:var(--ink-mute)}
-/* S-10 3a-4：意见栏改成常驻右侧 sticky 栏（340px，≤1366 收 300px），栏内独立滚动 */
-.workbench .reading-layout .review-column{grid-area:rail;align-self:start;display:flex;flex-direction:column;height:auto;max-height:var(--rail-max,calc(100dvh - var(--chrome-h,124px) - 40px));min-height:0;padding:0;border:1px solid var(--glass-border);border-radius:var(--r-l);background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);overflow:hidden auto;position:sticky;top:calc(var(--chrome-h,124px) + 8px);font-family:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;font-size:13.5px;z-index:20}
+/* S-10 3a-4：意见栏独占右列跨全部行（样张 .rail 全页 sticky），栏内独立滚动 */
+.workbench .reading-layout .review-column{grid-area:rail;align-self:start;display:flex;flex-direction:column;height:auto;max-height:var(--rail-max,calc(100dvh - var(--chrome-h,124px) - 56px));min-height:0;padding:0;border:1px solid var(--glass-border);border-radius:var(--r-l);background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);overflow:hidden auto;position:sticky;top:calc(var(--chrome-h,124px) + 8px);font-family:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;font-size:13.5px;z-index:20}
 .workbench .reading-layout .review-column > #auditor-radar-card{flex:none}
 .workbench .reading-layout .review-column > .review-list-view,
 .workbench .reading-layout .review-column > .review-detail-view{flex:1 1 auto;min-height:0}
 .workbench .reading-layout #review-summary{grid-area:summ;min-width:0;align-self:start}
-.workbench .review-toolbar{position:sticky;top:0;z-index:3;flex:none;min-height:44px;padding:14px 16px 0;margin:0 0 10px;gap:8px;border-bottom:0;background:#fdfbf6}
+.workbench .review-toolbar{position:sticky;top:0;z-index:3;flex:none;min-height:44px;padding:14px 16px 0;margin:0 0 10px;gap:8px;border-bottom:0;background:var(--surface)}
 .workbench .review-toolbar details{display:none}
 .workbench .review-list-view,.workbench .review-detail-view{width:100%;height:100%;min-height:0;display:flex;flex-direction:column}
 .workbench .review-list-view{overflow-y:auto;scrollbar-gutter:stable}
@@ -2267,7 +2271,7 @@ body:has(.workbench) main.workbench{flex:1 1 auto;min-height:0;width:100%}
 .workbench .issue-list-conclusion{margin:3px 0 0;font-size:13px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
 .workbench .review-column .revision-fold{margin:0;padding:9px 0;border:0;border-top:1px solid var(--rule);border-radius:0;background:transparent}
 .workbench .review-column .sample-preview{margin:0;padding:9px 0;border:0!important;border-radius:0;background:transparent}
-.workbench .revision-actions{position:sticky;bottom:0;z-index:2;flex:none;margin:14px 0 0;padding:10px 16px 4px;border-top:1px solid var(--rule);background:#fdfbf6}
+.workbench .revision-actions{position:sticky;bottom:0;z-index:2;flex:none;margin:14px 0 0;padding:10px 16px 4px;border-top:1px solid var(--rule);background:var(--surface)}
 .workbench .revision-actions .disabled-reason:empty{display:none}
 .workbench .revision-mode{display:block;margin:0 0 8px;padding:0;border:0;border-radius:0}
 .workbench .revision-mode-title{margin:0 0 6px;font-size:12px;color:var(--ink-mute)}

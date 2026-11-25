@@ -13,6 +13,8 @@
 @font-face{font-family:'Noto Sans SC';src:url('./fonts/NotoSansSC-SemiBold.woff2') format('woff2');font-weight:600;font-display:swap}
 
 /* ---------- 令牌（默认主题：温润手稿 · 云宣） ---------- */
+/* S-10 3a修正·工单第7条：ink-mute / ink-faint / amber 压暗到 WCAG AA（原值在纸面 3.74 / 2.2 / 4.29）。
+   注意：:root 块内不写任何注释——test 按分号切段解析，注释会吞掉下一个令牌。 */
 :root{
   --paper:#F3F1EA;
   --surface:#FFFFFF;
@@ -20,8 +22,8 @@
   --ink:#1F1C18;
   --ink-solid:#26221C;
   --ink-soft:#524C42;
-  --ink-mute:#827B6E;
-  --ink-faint:#ABA496;
+  --ink-mute:#6E685C;
+  --ink-faint:#7A7366;
   --rule:rgba(38, 33, 25, 0.08);
   --rule-strong:#DED8CA;
   --rule-soft:#EFECE4;
@@ -34,7 +36,7 @@
   --outer-bg:#E5E1D6;
   --ok:#215E50;
   --ok-bg:#E4F0EC;
-  --amber:#9A641E;
+  --amber:#8A5716;
   --amber-bg:#F6EBDA;
   --bg-image:none;
   --bg-overlay-alpha:0.90;
@@ -99,9 +101,9 @@ h3{font-family:var(--sans);font-size:15px;font-weight:600;line-height:1.45}
   border-right:1px solid var(--rule-strong);
   padding-right:18px;text-align:right;
 }
-.margin-col .num{font-family:var(--serif);font-size:32px;line-height:1.05;color:var(--numeral);font-weight:600}
-.margin-col .unit{font-size:11px;color:var(--ink-faint);letter-spacing:.2em;margin-top:6px}
-.margin-col .meta{font-size:11px;color:var(--ink-faint);line-height:1.75;margin-top:20px;word-break:keep-all}
+.margin-col .num{font-family:var(--serif);font-size:32px;line-height:1.05;color:var(--ink-mute);font-weight:500}
+.margin-col .unit{font-size:11px;color:var(--ink-soft);letter-spacing:.2em;margin-top:6px}
+.margin-col .meta{font-size:11px;color:var(--ink-soft);line-height:1.75;margin-top:20px;word-break:keep-all}
 .main-col{flex:1;min-width:0}
 
 /* ---------- 标题与说明 ---------- */
@@ -154,11 +156,13 @@ button,.btn{font-family:var(--sans);font-weight:500;cursor:pointer}
 .b2:hover,.b4:hover{border-color:var(--ink-soft);color:var(--ink);background:var(--surface-subtle)}
 .b3:hover{color:var(--ink);background:var(--rule-soft)}
 .b1:hover,.primary:hover{filter:brightness(1.08)}
+/* S-10 3a修正·工单第7条：禁用态文字不再发灰到看不清（「用模板开始」主诉）——
+   仍保留禁用观感（去底、灰边），文字用 ink-soft 保证对比度 */
 button[disabled],button:disabled{
-  cursor:not-allowed;border:1px solid var(--rule);color:var(--ink-faint);
+  cursor:not-allowed;border:1px solid var(--rule);color:var(--ink-soft);
   background:transparent!important;transform:none;box-shadow:none;filter:none;
 }
-.b1:disabled,.primary:disabled{background:var(--ink-mute)!important;color:var(--accent-fg);border:none}
+.b1:disabled,.primary:disabled{background:var(--ink-soft)!important;color:var(--accent-fg);border:none}
 .b3:disabled,.tertiary:disabled{border:none}
 .reason{font-size:12px;color:var(--ink-mute);margin:10px 0 0;line-height:1.65}
 .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
@@ -485,10 +489,10 @@ hr,.hr{height:1px;background:var(--rule-strong);border:none;margin:24px 0 18px}
   justify-content: center;
   padding: 3px 10px;
   border-radius: 6px;
-  background: var(--ink-solid);
-  color: #FAF8F3;
+  background: var(--accent);
+  color: var(--accent-fg);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: .04em;
 }
 .tier-step-badge.tier-director-badge { background: var(--mark); }

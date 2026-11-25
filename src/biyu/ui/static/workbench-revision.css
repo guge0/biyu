@@ -1,7 +1,7 @@
 .aside-hint { color: var(--muted); font-size: 13px; }
 .check-summary { padding: 8px 10px; background: #f1efe8; border-radius: 8px; margin-bottom: 8px; }
 .issue-list { display: grid; gap: 8px; }
-.issue-card { border: 1px solid var(--line); border-left: 4px solid #ba7517; border-radius: 9px; padding: 10px; background: #fff; }
+.issue-card { border: 1px solid var(--line); border-left: 4px solid var(--amber); border-radius: 9px; padding: 10px; background: var(--surface); }
 .issue-card.block { border-left-color: var(--mark); }
 .issue-card-head { display: flex; gap: 7px; align-items: center; }
 .issue-card h4 { margin: 0; }

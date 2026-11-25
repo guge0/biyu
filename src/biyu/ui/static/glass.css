@@ -15,17 +15,19 @@
   --r-s:8px; --r-m:12px; --r-l:16px; --r-btn:999px;
 }
 
-/* ---------- 玻璃令牌（亮色 6 套白玻璃 / dark 暗玻璃；值与 THEME_PRESETS 一致） ---------- */
+/* ---------- 玻璃令牌（亮色 6 套白玻璃 / dark 暗玻璃；值与 THEME_PRESETS 一致） ----------
+   3a修正·工单第6条：全局栏/书内栏/弹窗原用 0.85 不透明——几乎是实心白，透不出背景色块。
+   照样张 B 收到 .55–.65：栏/弹窗 .62（亮）·.58（暗），卡片 .55，blur(18px) saturate(1.2)。 */
 :root{
   --glass-bg:rgba(255, 255, 255, 0.55);      /* 卡片玻璃面 */
-  --glass-strong:rgba(255, 255, 255, 0.85);  /* 全局栏 / 弹窗 / 抽屉（保对比度） */
+  --glass-strong:rgba(255, 255, 255, 0.62);  /* 全局栏 / 书内栏 / 弹窗（样张 --bar-bg） */
   --glass-border:rgba(255, 255, 255, 0.70);
   --glass-blur:18px;
   --glass-shadow:0 8px 32px rgba(40, 36, 28, 0.10);
 }
 html[data-theme="dark"]{
   --glass-bg:rgba(34, 31, 28, 0.55);
-  --glass-strong:rgba(30, 28, 26, 0.86);
+  --glass-strong:rgba(30, 28, 26, 0.58);
   --glass-border:rgba(255, 255, 255, 0.10);
   --glass-shadow:0 8px 32px rgba(0, 0, 0, 0.35);
 }
@@ -35,21 +37,25 @@ html[data-theme="dark"]{
   html[data-theme="dark"]{ --glass-bg:rgba(34, 31, 28, 0.96); --glass-strong:rgba(30, 28, 26, 0.96); }
 }
 
-/* ---------- 页面背景：无壁纸时用柔彩雾面渐变，色相跟主题令牌走 ----------
+/* ---------- 页面背景：无壁纸时用柔彩雾面渐变（每主题三团色，样张量级） ----------
    壁纸（xuan/mist/bamboo/自定义上传）优先：shell.js 的 --bg-image 有图时压在渐变上层，
-   「遮罩/模糊」滑块照旧作用于壁纸层；无壁纸（data-bg="none"）时护眼蒙层让位给渐变。 */
+   「遮罩/模糊」滑块照旧作用于壁纸层；无壁纸（data-bg="none"）时护眼蒙层让位给渐变。
+   3a修正·工单第6条：老板选 B 就是选色块——原 13–38% 的混色几乎看不见、暗色整片黑。
+   三团色改为每主题派生令牌 --glass-blob-a/b/c（default/dark 直接取样张色，其余按主题色相派生），
+   透明度照样张：亮色 .45/.45/.40，暗色 .30/.35/.30。 */
 :root{
+  --glass-blob-a:#D6AA8C; --glass-blob-b:#96B4AA; --glass-blob-c:#C8BED7; /* JS 未跑时兜底=default */
   --glass-page-bg:
-    radial-gradient(900px 600px at 12% 8%, color-mix(in srgb, var(--mark) 16%, transparent), transparent 62%),
-    radial-gradient(800px 700px at 88% 18%, color-mix(in srgb, var(--numeral) 38%, transparent), transparent 62%),
-    radial-gradient(1000px 700px at 58% 102%, color-mix(in srgb, var(--ink-faint) 26%, transparent), transparent 64%),
+    radial-gradient(900px 600px at 12% 8%, color-mix(in srgb, var(--glass-blob-a) 45%, transparent), transparent 60%),
+    radial-gradient(800px 700px at 88% 20%, color-mix(in srgb, var(--glass-blob-b) 45%, transparent), transparent 60%),
+    radial-gradient(1000px 700px at 60% 100%, color-mix(in srgb, var(--glass-blob-c) 40%, transparent), transparent 60%),
     var(--outer-bg);
 }
 html[data-theme="dark"]{
   --glass-page-bg:
-    radial-gradient(900px 600px at 12% 8%, color-mix(in srgb, var(--mark) 13%, transparent), transparent 62%),
-    radial-gradient(800px 700px at 88% 18%, color-mix(in srgb, var(--numeral) 20%, transparent), transparent 62%),
-    radial-gradient(1000px 700px at 58% 102%, color-mix(in srgb, var(--ink-faint) 14%, transparent), transparent 64%),
+    radial-gradient(900px 600px at 12% 8%, color-mix(in srgb, var(--glass-blob-a) 30%, transparent), transparent 60%),
+    radial-gradient(800px 700px at 88% 20%, color-mix(in srgb, var(--glass-blob-b) 35%, transparent), transparent 60%),
+    radial-gradient(1000px 700px at 60% 100%, color-mix(in srgb, var(--glass-blob-c) 30%, transparent), transparent 60%),
     var(--outer-bg);
 }
 .biyu-shell-bg-wallpaper{ background-image:var(--bg-image, none), var(--glass-page-bg); }
@@ -69,15 +75,18 @@ html[data-theme="dark"] .destructive{ background:rgba(255, 255, 255, 0.05); }
 .field,input[type="text"],input[type="password"],input[type="number"],input[type="url"],
 textarea,select:not([multiple]){ border-radius:var(--r-m); }
 
-/* ---------- 卡片玻璃面（半透明 + 白描边 + 大投影；不加 backdrop-filter：
-   卡片底下是静态渐变，真模糊只有性能成本没有观感差；浮在内容上的
-   栏 / 弹窗 / 抽屉才用真模糊，见 3a-3/3a-5） ---------- */
+/* ---------- 卡片玻璃面（半透明 + 白描边 + 大投影；3a修正·工单第6条：照样张 .card 补真模糊） ---------- */
 .card,.input-card,.book-card,.stat,.list,.stage-panel,.contract-tier-box,
 .contract-panel,.toolbar,.auditor-radar-card{
   background:var(--glass-bg);
   border-color:var(--glass-border);
   box-shadow:var(--glass-shadow);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
 }
+/* 正文纸面与不透明稿纸区不吃玻璃（红线，见文末） */
+.prose,#chapter-read,#official-chapter,.reading-prose>#chapter-read,.reading-prose>#official-chapter,
+#chapter-edit,.editing-pane{ backdrop-filter:none; -webkit-backdrop-filter:none; }
 
 /* ---------- 字重锁 400/500：收敛历史 600/700（audit fw500 计数对应项） ---------- */
 h1,h2,h3,h4,.card-title,.page-title,.shelf-title,
@@ -107,7 +116,7 @@ button.b2.current::before,button.b2[aria-pressed="true"]::before{ font-weight:50
 .biyu-nav-links{display:flex;align-items:center;gap:2px;min-width:0}
 .biyu-nav-btn{padding:6px 12px;border-radius:var(--r-btn);font-size:var(--text-sm);color:var(--ink-soft);white-space:nowrap;border-bottom:none;display:inline-flex;align-items:center;gap:6px;background:transparent;box-shadow:none}
 .biyu-nav-btn:hover{background:var(--rule-soft);color:var(--ink);border-bottom:none}
-.biyu-nav-btn.current{color:var(--ink);font-weight:500;background:var(--accent);border-bottom:none}
+.biyu-nav-btn.current{color:var(--accent-fg);font-weight:500;background:var(--accent);border-bottom:none}
 .biyu-quickcheck-pill{color:var(--mark);background:var(--mark-bg)}
 .biyu-quickcheck-pill:hover,.biyu-quickcheck-pill.current{background:var(--mark);color:var(--accent-fg)}
 .biyu-quickcheck-pill .biyu-gicon{width:14px;height:14px}
@@ -133,8 +142,27 @@ button.b2.current::before,button.b2[aria-pressed="true"]::before{ font-weight:50
 .biyu-crumb .wb-title strong{overflow:hidden;text-overflow:ellipsis}
 .biyu-chapnav{display:flex;align-items:center;gap:4px;flex:none}
 .biyu-chapnav .chapter-num{width:54px;height:30px;text-align:center;padding:2px 6px}
+/* 3a修正·工单第1条：章切换直接放书内栏，不要外层白卡（样张 .chap 是裸 flex + .btn sm 胶囊钮） */
+.biyu-bookbar .biyu-chapnav{height:auto;min-height:0;padding:0;background:transparent;border:0;box-shadow:none;border-radius:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+.biyu-bookbar .biyu-chapnav .sep{display:none}
+.biyu-bookbar .biyu-chapnav .b3{
+  height:30px;padding:0 12px;font-size:var(--text-sm);font-weight:400;color:var(--ink-soft);
+  background:rgba(255,255,255,.45);border:1px solid var(--rule);border-radius:var(--r-btn);box-shadow:none;
+}
+.biyu-bookbar .biyu-chapnav .b3:hover{color:var(--ink);border-color:var(--ink-mute)}
+.biyu-bookbar .biyu-chapnav .b3:disabled{color:var(--ink-soft);background:transparent;border-color:var(--rule);cursor:not-allowed}
+html[data-theme="dark"] .biyu-bookbar .biyu-chapnav .b3{background:rgba(255,255,255,.05)}
+/* 书名即链接（#workbench-book-link 移到书名上）：衬线、随 bbar 尺寸、点书名回书页 */
+.workbench-book-title-link{display:inline-flex;align-items:baseline;min-width:0;font-family:var(--serif);font-size:var(--text-lg);color:var(--ink);text-decoration:none;border-bottom:none;white-space:nowrap}
+.workbench-book-title-link:hover{border-bottom:none;color:var(--mark)}
+.workbench-book-title-link .workbench-book-name{font-size:inherit;font-weight:400;overflow:hidden;text-overflow:ellipsis}
+.biyu-crumb .wb-chap-meta{font-size:var(--text-xs);color:var(--ink-soft);white-space:nowrap}
+.biyu-bookbar .reading-readonly-tag{font-size:var(--text-xs);color:var(--mark);border:1px solid currentColor;border-radius:var(--r-s);padding:0 5px}
+/* 3a修正·工单第4条/第1条：页脚右侧运行时身份标（从书内栏移来；版本号在 Q 群药丸外面） */
+.biyu-runtime-identity{position:relative;display:inline-flex;align-items:center;gap:4px;font-size:var(--text-xs);color:var(--ink-mute);white-space:nowrap;cursor:pointer}
+.biyu-runtime-identity:hover{color:var(--ink-soft)}
 .biyu-bookmenu{position:relative;flex:none}
-.biyu-caret{color:var(--ink-faint);font-size:11px}
+.biyu-caret{color:var(--ink-soft);font-size:11px}
 .biyu-bookmenu-list{
   position:absolute;right:0;top:calc(100% + 6px);z-index:150;min-width:136px;padding:6px 0;
   border:1px solid var(--glass-border);border-radius:var(--r-m);background:var(--glass-strong);
@@ -176,6 +204,27 @@ button.b2.current::before,button.b2[aria-pressed="true"]::before{ font-weight:50
 /* ---------- 3a-4 收尾小修：审查报告长 token 断行、留白栏章号在 Firefox 的行高裁切 ---------- */
 .report-pane li,.report-pane p,.issue-detail blockquote{ overflow-wrap:anywhere; }
 .read-margin .num{ line-height:1.2; }
+
+/* ---------- 3a修正·工单第5条：返修清单标题一行不折行（样张 .rhead b{white-space:nowrap}，
+   按钮缩成纯文字小钮；340px 栏宽下「本轮返修清单 · N 项」+三钮同排一行） ---------- */
+.workbench .review-toolbar{flex-wrap:nowrap;gap:4px;padding:12px 10px 0;margin-bottom:8px}
+.workbench .review-toolbar #review-position{flex:none;white-space:nowrap;font-size:12.5px}
+.workbench .review-toolbar .review-bulk-actions{display:flex;gap:2px;min-width:0}
+.workbench .review-toolbar .review-bulk-actions .b3{
+  flex:none;height:24px;padding:0 4px;font-size:11px;font-weight:400;white-space:nowrap;
+  border:0;background:transparent;color:var(--ink-soft);
+}
+.workbench .review-toolbar .review-bulk-actions .b3:hover{color:var(--mark);background:transparent}
+
+/* ---------- 3a修正·工单第2条（后半）：其它阶段的主按钮同理常驻 ----------
+   ①–④ 阶段面板（细纲/方案/生成）内容超一屏时面板内滚，「保存并确认」等主操作行
+   sticky 在面板底边，不滚到底看不见（样张 .act 做法）。 */
+.stage-panel>.action-row{
+  position:sticky;bottom:0;z-index:5;
+  background:var(--glass-strong);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  padding:10px 0 4px;border-top:1px solid var(--rule-soft);
+}
 
 /* ---------- 3a-5 全站弹窗与抽屉统一（样张_Key配置 硬规则） ----------
    宽 min(640px, 100vw-32px)；高 max-height calc(100vh - 48px)；
