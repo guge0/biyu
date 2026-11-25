@@ -317,8 +317,12 @@ def test_reading_chrome_collapses_only_for_idle_pure_reading() -> None:
     assert re.search(r"reading-chrome-hidden[^}]*\{[^}]*transform:translateY", css)
     assert "transition:transform .18s" in css
     assert "@media (prefers-reduced-motion:reduce)" in css
-    assert re.search(r"#adopt-button\{[^}]*background:none[^}]*border:1px solid var\(--stroke\)", css)
-    assert re.search(r"#adopt-button:not\(:disabled\):hover.*?background:var\(--solid\)", css)
+    # S-10 段3b 工单第1条：「采用」是全屏唯一实心主按钮（--accent 底，走全局 .b1 着色）——
+    # 旧读稿栏幽灵描边（background:none + var(--stroke) 描边 + :hover 实底翻转）退役；
+    # 操作条 32px 行高合同保留。
+    assert re.search(r"#adopt-button\{[^}]*background:none", css) is None
+    assert re.search(r"#adopt-button\{[^}]*border:1px solid var\(--stroke\)", css) is None
+    assert re.search(r"#adopt-button:disabled\{[^}]*background:none", css) is None
     assert re.search(r"\.revision-mode-options\{[^}]*width:max-content", css)
     assert re.search(r"\.reading-actions-main>#adopt-button\{[^}]*height:32px", css)
     assert re.search(r"\.reading-actions-main>#save-chapter\{[^}]*height:32px", css)
