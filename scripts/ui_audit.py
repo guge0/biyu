@@ -1,31 +1,43 @@
-"""S-10 段1 全页面 UI 走查：截图 + 自动检测显示问题。
+"""S-10 段3a 全页面 UI 走查（升级版）：截图 + 自动检测显示问题。
 
-矩阵：16 个静态页 × 视口 1366×768 / 1920×1080 / 2560×1440 × deviceScaleFactor 1 / 1.25 / 1.5
-     × 主题 default / dark（经拦截 GET /api/ui/prefs 注入，不写服务端）。
-自动检测：横向溢出、关键导航元素重叠、文字溢出容器、>96px 图标、未加样式裸元素、JS 异常。
+矩阵（工单 3a-1）：
+- 引擎：chromium(channel="chrome") + firefox（老板默认浏览器是 Firefox）
+- 视口用真实 CSS 尺寸，不再用 deviceScaleFactor 模拟缩放：
+  1280×665（DPR 2，老板 2560 屏 200% 缩放的真实形态）/ 1536×864 / 1920×1080 / 2560×1440
+- 主题：default、dark 跑全部页面；其余 5 套各跑 index/book/workbench 的 1280 一档
+- 书：中文 id 测试书「死亡回溯」（数据根副本 BiyuTestRoots/s10_audit_data，服务 8091）；
+  workbench 带 &chapter=1（该书内容最全的一章，见交付说明）
+自动检测：横向溢出、关键导航元素重叠、文字溢出容器、>96px 图标、未加样式裸元素、
+          可见弹窗/抽屉超视口（底边/右边越界）、font-weight>500 文字元素计数(P2)、JS 异常。
 
 安全：所有非 GET 的 /api 请求一律拦截（同 click_sweep.py），不触发模型调用、不写书。
 用法：
-  python scripts/ui_audit.py [base_url] [截图输出目录]
-输出：<截图目录>/ui_audit.json + 走查清单.md；退出码 = P0 问题总数（封顶 125）。
+  python scripts/ui_audit.py [base_url] [截图输出目录] [--pages a.html,b.html] [--quick]
+  --quick：只跑 1280 与 1920 两档、只 default 主题（两引擎都跑），每步快速自检用。
+输出：<截图目录>/ui_audit.json；退出码 = P0 问题总数（封顶 125）。
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 import time
 from pathlib import Path
+from urllib.parse import quote
 
 from playwright.sync_api import sync_playwright
 
-BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8090").rstrip("/")
-OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else Path(r"E:\webnovel\_biyu交付记录\2026-11-25\S-10\截图")
-OUT.mkdir(parents=True, exist_ok=True)
+BASE = "http://127.0.0.1:8090"
+OUT = Path(r"E:\webnovel\_biyu交付记录\2026-11-25\S-10\截图")
 
-BOOK = "siwanghuisu"  # 标准测试书（死亡回归），ch1 有 11 个版本
-VIEWPORTS = [(1366, 768), (1920, 1080), (2560, 1440)]
-SCALES = [(1, "100"), (1.25, "125"), (1.5, "150")]
-THEMES = ["default", "dark"]
+BOOK = "死亡回溯"  # 中文 id 测试书（siwanghuisu 的副本），书相关页带 ?book=死亡回溯
+WORKBENCH_CHAPTER = 1  # siwanghuisu 只有 ch1 有完整内容（候选稿+正式稿+方案），ch4 不存在
+VIEWPORTS = [(1280, 665, 2), (1536, 864, 1), (1920, 1080, 1), (2560, 1440, 1)]
+QUICK_VIEWPORTS = [(1280, 665, 2), (1920, 1080, 1)]
+THEMES_ALL = ["default", "dark"]
+THEMES_EXTRA = ["lingshu", "parchment", "celadon", "stone", "pure"]
+THEME_EXTRA_PAGES = {"index.html", "book.html", "workbench.html"}
+ENGINES = ("chromium", "firefox")
 # 书相关页带 ?book=；good-sentences / voiceprint / settings 也读 book 参数
 BOOK_PAGES = {"book.html", "overview.html", "workbench.html", "memory.html", "summaries.html",
               "editor.html", "propose.html", "voiceprint.html", "good-sentences.html", "settings.html"}
@@ -37,15 +49,17 @@ DETECT_JS = r"""
     return r.width > 4 && r.height > 4 && s.display !== 'none' && s.visibility !== 'hidden'; };
   const name = el => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') +
     (el.classList.length ? '.' + String(el.classList[0]) : '');
-  const out = { overflowX: 0, navOverlaps: [], textOverflows: [], bigIcons: [], naked: [], nakedLinks: 0 };
+  const de = document.documentElement, bd = document.body;
+  const vw = de.clientWidth, vh = de.clientHeight;
+  const out = { overflowX: 0, navOverlaps: [], textOverflows: [], bigIcons: [], naked: [], nakedLinks: 0,
+    dialogOverflows: [], heavyFontCount: 0, heavyFonts: [] };
 
   // 1) 横向溢出
-  const de = document.documentElement, bd = document.body;
   out.overflowX = Math.max(de.scrollWidth - de.clientWidth, bd ? bd.scrollWidth - bd.clientWidth : 0);
 
-  // 2) 关键导航元素重叠（工单点名的三层：全局标题栏 / 回书·章节浮条 / 阶段条 / 顶栏按钮组）
-  const NAV_SEL = ['.biyu-titlebar', '.biyu-win-left', '.biyu-win-right', 'nav.top-nav',
-    '.workbench-header', '.workbench-chapter-nav', '.stage-bar', 'header .toolbar',
+  // 2) 关键导航元素重叠（全局栏 / 书内栏 / 阶段条 / 各页自带导航条）
+  const NAV_SEL = ['.biyu-titlebar', '.biyu-win-left', '.biyu-win-right', '.biyu-bookbar',
+    'nav.top-nav', '.workbench-header', '.workbench-chapter-nav', '.stage-bar', 'header .toolbar',
     'header nav', 'nav', '.top-bar', '.breadcrumb'].join(', ');
   const navs = [...document.querySelectorAll(NAV_SEL)].filter(vis)
     .filter(el => el.getBoundingClientRect().height < 220); // 导航条不会高过一屏三分之一
@@ -96,17 +110,67 @@ DETECT_JS = r"""
         text: (el.innerText || el.value || el.getAttribute('aria-label') || '').slice(0, 24) });
     }
   }
+
+  // 6) 可见弹窗/抽屉超视口（工单 3a-1 新增）：底边 ≤ 视口高、右边 ≤ 视口宽。
+  //    全屏遮罩层（≈视口大小）不算弹窗本体，量的是它里面那张对话框。
+  const DLG_SEL = '[class*="overlay"],[class*="modal"],[class*="dialog"],[class*="drawer"],[role="dialog"]';
+  for (const el of document.querySelectorAll(DLG_SEL)) {
+    if (!vis(el)) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width >= vw * 0.98 && r.height >= vh * 0.98) continue; // 全屏遮罩
+    const bottomOver = Math.round(r.bottom - vh), rightOver = Math.round(r.right - vw);
+    if (bottomOver > 2 || rightOver > 2) out.dialogOverflows.push({ el: name(el),
+      bottomOver, rightOver, rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)] });
+  }
+
+  // 7) 字重 >500 的文字元素计数（工单 3a-1 新增，P2）：字重锁 400/500，只统计带直接文字的元素
+  for (const el of document.querySelectorAll('body *')) {
+    if (!vis(el)) continue;
+    const w = parseFloat(getComputedStyle(el).fontWeight);
+    if (!(w > 500)) continue;
+    const hasText = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+    if (!hasText) continue;
+    out.heavyFontCount++;
+    if (out.heavyFonts.length < 10) out.heavyFonts.push({ el: name(el), w,
+      text: (el.textContent || '').trim().slice(0, 20) });
+  }
   return out;
 }
 """
 
 
-def combo_label(page_file: str, vw: int, vh: int, dsf: float, theme: str) -> str:
-    return f"{page_file.removesuffix('.html')}_{vw}x{vh}_z{int(dsf * 100)}_{theme}"
+def parse_args():
+    ap = argparse.ArgumentParser(description="S-10 段3a UI 走查")
+    ap.add_argument("base", nargs="?", default=BASE, help="服务地址，走查用 8091")
+    ap.add_argument("out", nargs="?", default=str(OUT), help="截图输出目录")
+    ap.add_argument("--pages", default="", help="只跑这些页（逗号分隔文件名，如 index.html,book.html）")
+    ap.add_argument("--quick", action="store_true", help="只跑 1280 与 1920、只 default 主题")
+    return ap.parse_args()
 
 
-def audit_page(ctx, url: str, page_file: str, vw: int, vh: int, dsf: float, theme: str) -> dict:
-    label = combo_label(page_file, vw, vh, dsf, theme)
+def combo_label(page_file: str, vw: int, vh: int, dpr: int, theme: str) -> str:
+    return f"{page_file.removesuffix('.html')}_{vw}x{vh}_dpr{dpr}_{theme}"
+
+
+def page_url(page_file: str) -> str:
+    url = f"/{page_file}"
+    if page_file in BOOK_PAGES:
+        url += f"?book={quote(BOOK)}"
+        if page_file == "workbench.html":
+            url += f"&chapter={WORKBENCH_CHAPTER}"
+    return url
+
+
+def launch_engine(p, engine: str):
+    if engine == "chromium":
+        try:
+            return p.chromium.launch(headless=True, channel="chrome")
+        except Exception:
+            return p.chromium.launch(headless=True)
+    return p.firefox.launch(headless=True)
+
+
+def audit_page(ctx, url: str, label: str) -> dict:
     page = ctx.new_page()
     errors: list[str] = []
     page.on("pageerror", lambda e: errors.append(str(e)[:200]))
@@ -120,12 +184,13 @@ def audit_page(ctx, url: str, page_file: str, vw: int, vh: int, dsf: float, them
         return found
     except Exception as exc:
         return {"url": url, "shot": str(OUT / f"{label}.jpg"), "fatal": str(exc)[:200], "pageerrors": errors,
-                "overflowX": 0, "navOverlaps": [], "textOverflows": [], "bigIcons": [], "naked": [], "nakedLinks": 0}
+                "overflowX": 0, "navOverlaps": [], "textOverflows": [], "bigIcons": [], "naked": [],
+                "nakedLinks": 0, "dialogOverflows": [], "heavyFontCount": 0, "heavyFonts": []}
     finally:
         page.close()
 
 
-def severity(page_file: str, finding: dict) -> str:
+def severity(finding: dict) -> str:
     """P0=影响可用性/就是老板截图里那类问题；P1=明显碍眼或伤交互；P2=小瑕疵。"""
     if finding.get("fatal"):
         return "P0"
@@ -135,6 +200,8 @@ def severity(page_file: str, finding: dict) -> str:
         return "P0"
     if finding["navOverlaps"]:
         return "P0"
+    if finding["dialogOverflows"]:
+        return "P0"
     if finding["bigIcons"]:
         return "P1"
     if finding["overflowX"] > 0:
@@ -142,58 +209,92 @@ def severity(page_file: str, finding: dict) -> str:
     if any(t["el"].split(".")[0].lstrip("#") in ("button", "a", "select", "input", "label") or
            t["el"].startswith(("button", "a#", "select", "input")) for t in finding["textOverflows"]):
         return "P1"
-    if finding["textOverflows"] or finding["naked"]:
+    if finding["textOverflows"] or finding["naked"] or finding["heavyFontCount"]:
         return "P2"
     return ""
 
 
+def build_combos(pages: list[str], quick: bool) -> list[dict]:
+    combos = []
+    viewports = QUICK_VIEWPORTS if quick else VIEWPORTS
+    for page_file in pages:
+        for engine in ENGINES:
+            for vw, vh, dpr in viewports:
+                themes = ["default"] if quick else THEMES_ALL
+                for theme in themes:
+                    combos.append({"page": page_file, "engine": engine, "vw": vw, "vh": vh,
+                                   "dpr": dpr, "theme": theme})
+            # 其余 5 套主题各跑 index/book/workbench 的 1280 一档（quick 不跑）
+            if not quick and page_file in THEME_EXTRA_PAGES:
+                for theme in THEMES_EXTRA:
+                    combos.append({"page": page_file, "engine": engine, "vw": 1280, "vh": 665,
+                                   "dpr": 2, "theme": theme})
+    return combos
+
+
 def main() -> int:
-    pages = sorted(p.name for p in (Path(__file__).resolve().parent.parent / "src" / "biyu" / "ui" / "static").glob("*.html"))
-    print(f"页面 {len(pages)} 个 × 视口 {len(VIEWPORTS)} × 缩放 {len(SCALES)} × 主题 {len(THEMES)}"
-          f" = {len(pages) * len(VIEWPORTS) * len(SCALES) * len(THEMES)} 组合；输出 {OUT}")
+    args = parse_args()
+    global BASE, OUT
+    BASE = args.base.rstrip("/")
+    OUT = Path(args.out)
+    OUT.mkdir(parents=True, exist_ok=True)
+
+    static_dir = Path(__file__).resolve().parent.parent / "src" / "biyu" / "ui" / "static"
+    pages = sorted(p.name for p in static_dir.glob("*.html"))
+    if args.pages:
+        wanted = [p.strip() for p in args.pages.split(",") if p.strip()]
+        missing = [p for p in wanted if p not in pages]
+        if missing:
+            print(f"--pages 里有静态目录不存在的页：{missing}"); return 2
+        pages = sorted(wanted)
+
+    combos = build_combos(pages, args.quick)
+    print(f"页面 {len(pages)} 个 × 引擎 {len(ENGINES)} × 视口 {len(set((c['vw'], c['vh']) for c in combos))}"
+          f" × 主题（含 5 套附加主题三页档）= {len(combos)} 组合；输出 {OUT}")
     results = []
     t0 = time.time()
     with sync_playwright() as p:
+        browsers = {name: launch_engine(p, name) for name in ENGINES}
         try:
-            browser = p.chromium.launch(headless=True)
-        except Exception:
-            browser = p.chromium.launch(headless=True, channel="chrome")
-        for page_file in pages:
-            url = BASE + "/" + page_file
-            if page_file in BOOK_PAGES:
-                url += f"?book={BOOK}"
-            for vw, vh in VIEWPORTS:
-                for dsf, _ in SCALES:
-                    for theme in THEMES:
-                        # 每组合全新 context：主题经拦截 GET /api/ui/prefs 注入，非 GET 一律拦（不写服务端）
-                        ctx = browser.new_context(viewport={"width": vw, "height": vh}, device_scale_factor=dsf)
-                        ctx.on("dialog", lambda d: d.dismiss())
-                        prefs = {"theme": theme, "custom": None,
-                                 "background": {"type": "none", "preset": None, "file": None, "overlay": 90.0, "blur": 0}}
+            for c in combos:
+                page_file, engine = c["page"], c["engine"]
+                vw, vh, dpr, theme = c["vw"], c["vh"], c["dpr"], c["theme"]
+                label = combo_label(page_file, vw, vh, dpr, theme)
+                if engine != ENGINES[0]:
+                    label = f"{engine[:1]}_{label}"
+                # 每组合全新 context：主题经拦截 GET /api/ui/prefs 注入，非 GET 一律拦（不写服务端）
+                ctx = browsers[engine].new_context(viewport={"width": vw, "height": vh},
+                                                   device_scale_factor=dpr)
+                ctx.on("dialog", lambda d: d.dismiss())
+                prefs = {"theme": theme, "custom": None,
+                         "background": {"type": "none", "preset": None, "file": None, "overlay": 90.0, "blur": 0}}
 
-                        def route(rule):
-                            req = rule.request
-                            if req.method != "GET":
-                                return rule.abort()
-                            if "/api/ui/prefs" in req.url:
-                                return rule.fulfill(status=200, content_type="application/json",
-                                                    body=json.dumps(prefs))
-                            return rule.continue_()
+                def route(rule):
+                    req = rule.request
+                    if req.method != "GET":
+                        return rule.abort()
+                    if "/api/ui/prefs" in req.url:
+                        return rule.fulfill(status=200, content_type="application/json",
+                                            body=json.dumps(prefs))
+                    return rule.continue_()
 
-                        ctx.route("**/api/**", route)
-                        r = audit_page(ctx, url, page_file, vw, vh, dsf, theme)
-                        r.update(page=page_file, vw=vw, vh=vh, dsf=dsf, theme=theme)
-                        results.append(r)
-                        ctx.close()
-                        sev = severity(page_file, r)
-                        print(f"[{sev or 'ok'}] {combo_label(page_file, vw, vh, dsf, theme)}"
-                              f" ofX={r['overflowX']} nav={len(r['navOverlaps'])} txt={len(r['textOverflows'])}"
-                              f" icon={len(r['bigIcons'])} naked={r['nakedLinks'] + len(r['naked'])}"
-                              f" err={len(r['pageerrors'])} ({time.time() - t0:.0f}s)", flush=True)
-        browser.close()
+                ctx.route("**/api/**", route)
+                r = audit_page(ctx, BASE + page_url(page_file), label)
+                r.update(page=page_file, engine=engine, vw=vw, vh=vh, dpr=dpr, theme=theme)
+                results.append(r)
+                ctx.close()
+                sev = severity(r)
+                print(f"[{sev or 'ok'}] {label}"
+                      f" ofX={r['overflowX']} nav={len(r['navOverlaps'])} txt={len(r['textOverflows'])}"
+                      f" icon={len(r['bigIcons'])} dlg={len(r['dialogOverflows'])}"
+                      f" fw500={r['heavyFontCount']} naked={r['nakedLinks'] + len(r['naked'])}"
+                      f" err={len(r['pageerrors'])} ({time.time() - t0:.0f}s)", flush=True)
+        finally:
+            for b in browsers.values():
+                b.close()
 
     (OUT / "ui_audit.json").write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
-    p0 = sum(1 for r in results if severity(r["page"], r) == "P0")
+    p0 = sum(1 for r in results if severity(r) == "P0")
     print(f"\n完成 {len(results)} 组合，P0 {p0}；明细 {OUT / 'ui_audit.json'}")
     return min(p0, 125)
 
