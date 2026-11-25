@@ -1042,6 +1042,9 @@ function render({preserveDirty=false}={}) {
 }
 async function fetchSnapshot({auto=false}={}) {
   const book = $('book').value, chapter = Number($('chapter').value);
+  // S-10 3a修正（点击巡检抓到）：书籍列表还没载入时（重载后前几百毫秒）book 为空串，
+  // focus 事件/轮询会打出 /books//chapters/1 吃 404 并弹「Not Found」错误条——空值直接跳过
+  if (!book || !Number.isFinite(chapter) || chapter < 1) return current;
   const incoming = await (await api(`/books/${encodeURIComponent(book)}/chapters/${chapter}`)).json();
   const unchanged = ['outline_sha','planning_sha','chapter_sha','report_sha','verdict_sha','positive_sha','negative_sha'].every(key => incoming[key] === current[key]) && JSON.stringify(incoming.axes) === JSON.stringify(current.axes) && JSON.stringify(incoming.setup_restore_notice) === JSON.stringify(current.setup_restore_notice) && incoming.stale === current.stale && incoming.review_stale === current.review_stale && incoming.memory_dirty === current.memory_dirty && incoming.running_action === current.running_action;
   if (auto && unchanged) return;
