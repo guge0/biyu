@@ -416,7 +416,7 @@
     // 工具名
     const nameLine = document.createElement("div");
     nameLine.className = "tool-call-name";
-    nameLine.innerHTML = "<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-tool"/></svg>" + esc(tc.name || "工具调用");
+    nameLine.innerHTML = '<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-tool"/></svg>' + esc(tc.name || "工具调用");
     card.appendChild(nameLine);
 
     // 参数摘要(始终显)

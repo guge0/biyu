@@ -395,7 +395,7 @@
     // 死海/荒漠显风险警示
     if (isRisk) {
       warn.hidden = false;
-      warn.innerHTML = "<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg> 象限定性为「" + esc(rb.quadrant) +
+      warn.innerHTML = '<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg> 象限定性为「' + esc(rb.quadrant) +
         "」:供给侧或需求侧存在明显弱势,建议结合行业经验慎重判断。";
     } else {
       warn.hidden = true;
