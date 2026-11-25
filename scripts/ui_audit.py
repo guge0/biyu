@@ -10,7 +10,10 @@
 自动检测：横向溢出、关键导航元素重叠、文字溢出容器、>96px 图标、未加样式裸元素、
           可见弹窗/抽屉超视口（底边/右边越界）、font-weight>500 文字元素计数(P2)、JS 异常、
           可见错误条 / role=alert 文字（3a修正·中途抽查第1条，P0）、
-          可见文字与有效背景的对比度 <4.5（正文）/ <3（≥18px 大字，WCAG AA；3a修正第7条，P1）。
+          可见文字与有效背景的对比度 <4.5（正文）/ <3（≥18px 大字，WCAG AA；3a修正第7条，P1）、
+          玻璃背景真实生效（3b 第0条，P0）：背景层 computed backgroundImage 含 radial-gradient、
+          空白处 3 点 1×1 clip 截图取真实像素与 --paper 色差 ≥18（至少一点）、栏/卡玻璃面
+          alpha<0.8 且 backdrop-filter 含 blur；走查矩阵恒为无壁纸渐变态。
 主题注入（3a修正）：不再依赖 shell.js 拉 /api/ui/prefs——那要等 /api/books（走查副本上首拉 2s+），
           截图早于主题应用，矩阵的主题维度会是假的。改为 add_init_script 预写
           localStorage['biyu-theme-css']（与 shell.js cacheThemeTokens 同格式），theme-boot 首帧回放；
@@ -203,6 +206,25 @@ DETECT_JS = r"""
     if (out.heavyFonts.length < 10) out.heavyFonts.push({ el: name(el), w,
       text: (el.textContent || '').trim().slice(0, 20) });
   }
+
+  // 6d) 玻璃背景真实生效断言（3b 工单第0条，P0）：
+  //     ①背景层 computed backgroundImage 含 radial-gradient（此前整条声明被末层纯色炸掉，恒为 none）；
+  //     ②栏/卡玻璃面 alpha<0.8 且 backdrop-filter 含 blur（玻璃退实心即失败）。
+  //     ③像素采样（空白处 3 点与 --paper 色差 ≥18）由 Python 侧 1×1 clip 截图完成，这里给点位。
+  //     走查矩阵背景恒为无壁纸（prefs background.type=none），断言只对渐变态；壁纸态另行验证。
+  out.glass = { wallpaperBg: null,
+    points: [[6, 6], [Math.max(vw - 6, 6), 6], [Math.round(vw / 2), Math.max(vh - 52, 60)]],
+    surfaces: [], wallpaperMissing: false };
+  const wp = document.querySelector('.biyu-shell-bg-wallpaper');
+  if (wp) out.glass.wallpaperBg = getComputedStyle(wp).backgroundImage;
+  else out.glass.wallpaperMissing = true;
+  for (const sel of ['.biyu-titlebar', '.biyu-bookbar', '.card', '.input-card', '.book-card', '.stage-panel', '.toolbar']) {
+    const el = document.querySelector(sel);
+    if (!el || !vis(el)) continue;
+    const s = getComputedStyle(el);
+    out.glass.surfaces.push({ sel, bg: s.backgroundColor, bf: s.backdropFilter || s.webkitBackdropFilter || '' });
+    if (out.glass.surfaces.length >= 3) break;
+  }
   return out;
 }
 """
@@ -264,6 +286,91 @@ def theme_tokens_css(theme: str) -> str:
 _THEME_PRESETS: dict | None = None
 
 
+def _decode_png_first_pixel(png: bytes) -> tuple | None:
+    """解码 1×1 CSS 像素 clip 截图（DPR 2 时是 2×2 物理像素的 PNG），返回左上角物理像素 RGB。
+    只支持 8bit RGB/RGBA 非交错 PNG；完整实现 Sub/Up/Average/Paeth 滤波还原（3b 工单第0条：
+    自检要量真实渲染像素，不再只看截图；无 Pillow，PNG 自解）。"""
+    import struct
+    import zlib
+    pos = 8
+    idat = b""
+    meta = None
+    while pos + 8 <= len(png):
+        ln = struct.unpack(">I", png[pos:pos + 4])[0]
+        typ = png[pos + 4:pos + 8]
+        data = png[pos + 8:pos + 8 + ln]
+        if typ == b"IHDR":
+            meta = struct.unpack(">IIBBBBB", data[:13])
+        elif typ == b"IDAT":
+            idat += data
+        elif typ == b"IEND":
+            break
+        pos += 12 + ln
+    if not meta:
+        return None
+    w, _h, depth, ctype, _comp, _filt, interlace = meta
+    if depth != 8 or interlace != 0 or ctype not in (2, 6) or w < 1:
+        return None
+    ch = 3 if ctype == 2 else 4
+    raw = zlib.decompress(idat)
+    stride = w * ch
+    prev = bytearray(stride)
+    pos = 0
+    line = None
+    for _row in range(_h):
+        f = raw[pos]
+        pos += 1
+        line = bytearray(raw[pos:pos + stride])
+        pos += stride
+        if f == 1:  # Sub
+            for i in range(ch, stride):
+                line[i] = (line[i] + line[i - ch]) & 255
+        elif f == 2:  # Up
+            for i in range(stride):
+                line[i] = (line[i] + prev[i]) & 255
+        elif f == 3:  # Average
+            for i in range(stride):
+                left = line[i - ch] if i >= ch else 0
+                line[i] = (line[i] + ((left + prev[i]) >> 1)) & 255
+        elif f == 4:  # Paeth
+            for i in range(stride):
+                a = line[i - ch] if i >= ch else 0
+                b = prev[i]
+                c = prev[i - ch] if i >= ch else 0
+                pp = a + b - c
+                pa, pb, pc = abs(pp - a), abs(pp - b), abs(pp - c)
+                pr = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
+                line[i] = (line[i] + pr) & 255
+        prev = line
+    if line is None:
+        return None
+    px = bytes(line[0:ch])
+    return (px[0], px[1], px[2])
+
+
+def _hex_to_rgb(h: str | None) -> tuple | None:
+    if not h:
+        return None
+    h = h.strip().lstrip("#")
+    if len(h) != 6:
+        return None
+    try:
+        return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+    except ValueError:
+        return None
+
+
+def _alpha_of(css_color: str | None) -> float | None:
+    """rgba(...) 取 alpha；rgb(...) 视为 1；解析不了返回 None。"""
+    import re as _re
+    if not css_color:
+        return None
+    m = _re.search(r"rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)", css_color)
+    if not m:
+        return None
+    return float(m.group(4)) if m.group(4) is not None else 1.0
+
+
 def audit_page(ctx, url: str, label: str, theme_paper: str | None = None) -> dict:
     page = ctx.new_page()
     errors: list[str] = []
@@ -286,7 +393,29 @@ def audit_page(ctx, url: str, label: str, theme_paper: str | None = None) -> dic
                     " return el && el.innerText.trim().length > 50; }", timeout=8000)
             except Exception:
                 pass
+        if "index.html" in url:  # 3b：书架停在「加载中」就截图，玻璃断言找不到卡片（3a修正单的老坑）
+            try:
+                page.wait_for_function(
+                    "() => { const l = document.querySelector('#book-list .loading-placeholder');"
+                    " const list = document.getElementById('book-list');"
+                    " const empty = document.getElementById('empty-shelf');"
+                    " return !l && list && (list.children.length > 0 || (empty && !empty.hidden)); }",
+                    timeout=9000)
+            except Exception:
+                pass
         found = page.evaluate(DETECT_JS)
+        # 3b 第0条：空白处 3 点真实渲染像素 vs --paper 色差（走查矩阵恒为无壁纸渐变态）
+        glass = found.get("glass")
+        if glass and theme_paper:
+            paper = _hex_to_rgb(theme_paper)
+            glass["pixels"] = []
+            if paper:
+                for px, py in glass.get("points", []):
+                    rgb = _decode_png_first_pixel(
+                        page.screenshot(clip={"x": px, "y": py, "width": 1, "height": 1}, type="png"))
+                    if rgb:
+                        dist = sum((a - b) ** 2 for a, b in zip(rgb, paper)) ** 0.5
+                        glass["pixels"].append({"point": [px, py], "rgb": list(rgb), "dist": round(dist, 1)})
         shot = OUT / f"{label}.jpg"
         page.screenshot(path=str(shot), type="jpeg", quality=80)
         found.update(url=url, shot=str(shot), pageerrors=errors, theme_late=theme_late)
@@ -295,7 +424,7 @@ def audit_page(ctx, url: str, label: str, theme_paper: str | None = None) -> dic
         return {"url": url, "shot": str(OUT / f"{label}.jpg"), "fatal": str(exc)[:200], "pageerrors": errors,
                 "overflowX": 0, "navOverlaps": [], "textOverflows": [], "bigIcons": [], "naked": [],
                 "nakedLinks": 0, "dialogOverflows": [], "heavyFontCount": 0, "heavyFonts": [],
-                "alerts": [], "lowContrast": []}
+                "alerts": [], "lowContrast": [], "glass": {}}
     finally:
         page.close()
 
@@ -316,6 +445,16 @@ def severity(finding: dict) -> str:
         return "P0"  # 3a修正·中途抽查第1条：页面内可见错误条 = P0
     if finding.get("theme_late"):
         return "P0"  # 3a修正第8条：等了 6s 主题还没落到 :root，矩阵主题维度不可信
+    g = finding.get("glass") or {}  # 3b 第0条：玻璃背景真实生效，三条断言全 P0
+    if g.get("wallpaperMissing") or not g.get("wallpaperBg") or "radial-gradient" not in str(g.get("wallpaperBg")):
+        return "P0"
+    dists = [p.get("dist", 0) for p in g.get("pixels", [])]
+    if not dists or max(dists) < 18:
+        return "P0"
+    for sfc in g.get("surfaces", []):
+        alpha = _alpha_of(sfc.get("bg"))
+        if alpha is None or alpha >= 0.8 or "blur" not in str(sfc.get("bf", "")).lower():
+            return "P0"
     if finding.get("lowContrast"):
         return "P1"  # 3a修正第7条：对比度不足 WCAG AA
     if finding["bigIcons"]:
@@ -405,12 +544,15 @@ def main() -> int:
                 results.append(r)
                 ctx.close()
                 sev = severity(r)
+                gl = r.get("glass") or {}
+                pix = ",".join(str(p.get("dist")) for p in gl.get("pixels", [])) or "-"
                 print(f"[{sev or 'ok'}] {label}"
                       f" ofX={r['overflowX']} nav={len(r['navOverlaps'])} txt={len(r['textOverflows'])}"
                       f" icon={len(r['bigIcons'])} dlg={len(r['dialogOverflows'])}"
                       f" alert={len(r.get('alerts', []))} contrast={len(r.get('lowContrast', []))}"
                       f" fw500={r['heavyFontCount']} naked={r['nakedLinks'] + len(r['naked'])}"
                       f" err={len(r['pageerrors'])}"
+                      f" glass={len(gl.get('surfaces', []))}px{pix}"
                       f"{' THEME-LATE' if r.get('theme_late') else ''} ({time.time() - t0:.0f}s)", flush=True)
         finally:
             for b in browsers.values():

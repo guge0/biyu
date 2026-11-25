@@ -42,22 +42,36 @@ html[data-theme="dark"]{
    「遮罩/模糊」滑块照旧作用于壁纸层；无壁纸（data-bg="none"）时护眼蒙层让位给渐变。
    3a修正·工单第6条：老板选 B 就是选色块——原 13–38% 的混色几乎看不见、暗色整片黑。
    三团色改为每主题派生令牌 --glass-blob-a/b/c（default/dark 直接取样张色，其余按主题色相派生），
-   透明度照样张：亮色 .45/.45/.40，暗色 .30/.35/.30。 */
+   透明度照样张：亮色 .45/.45/.40，暗色 .30/.35/.30。
+   3b·工单第0条根因1：background-image 列表里不允许纯色，末层 var(--outer-bg) 是纯色时
+   **整条声明作废**（computed backgroundImage = none，全站没色团）——末层改写为
+   linear-gradient(var(--outer-bg), var(--outer-bg))，底色照画但不炸列表。 */
 :root{
   --glass-blob-a:#D6AA8C; --glass-blob-b:#96B4AA; --glass-blob-c:#C8BED7; /* JS 未跑时兜底=default */
   --glass-page-bg:
     radial-gradient(900px 600px at 12% 8%, color-mix(in srgb, var(--glass-blob-a) 45%, transparent), transparent 60%),
     radial-gradient(800px 700px at 88% 20%, color-mix(in srgb, var(--glass-blob-b) 45%, transparent), transparent 60%),
     radial-gradient(1000px 700px at 60% 100%, color-mix(in srgb, var(--glass-blob-c) 40%, transparent), transparent 60%),
-    var(--outer-bg);
+    linear-gradient(var(--outer-bg), var(--outer-bg));
 }
 html[data-theme="dark"]{
   --glass-page-bg:
     radial-gradient(900px 600px at 12% 8%, color-mix(in srgb, var(--glass-blob-a) 30%, transparent), transparent 60%),
     radial-gradient(800px 700px at 88% 20%, color-mix(in srgb, var(--glass-blob-b) 35%, transparent), transparent 60%),
     radial-gradient(1000px 700px at 60% 100%, color-mix(in srgb, var(--glass-blob-c) 30%, transparent), transparent 60%),
-    var(--outer-bg);
+    linear-gradient(var(--outer-bg), var(--outer-bg));
 }
+/* 3b·工单第0条根因2：html/body 的不透明底色把负 z 背景层全盖住了——根层叠上下文里，
+   z-index:-2/-1 的 fixed 背景层画在 body 自身背景**之下**，body 不透明则壁纸与渐变永远不可见。
+   根层一律透明；同一份 --glass-page-bg 同时画在 html 画布上兜底（shell.js 未跑/报错时
+   页面也是雾面色不是白板，attachment:fixed 让色团视口锚定不随滚动）；壁纸层（z=-2）盖在画布上，
+   有壁纸时壁纸图在上、色团垫底，「遮罩/模糊」滑块照旧只作用于壁纸层。 */
+html{
+  background-color:transparent;
+  background-image:var(--glass-page-bg);
+  background-attachment:fixed;
+}
+body{ background:transparent; }
 .biyu-shell-bg-wallpaper{ background-image:var(--bg-image, none), var(--glass-page-bg); }
 html[data-bg="none"] .biyu-shell-bg-overlay{ opacity:0; }
 
