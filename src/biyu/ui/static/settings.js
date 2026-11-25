@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),book=params.get('book');let snapshot=null,current=null,editing=false,creatingCharacter=false,busy=false;const encoded=encodeURIComponent(book||'');
+const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),book=params.get('book');let snapshot={cells:[],characters:[]},current=null,editing=false,creatingCharacter=false,busy=false;const encoded=encodeURIComponent(book||'');
 $('workbench-link').href=`/workbench.html?book=${encoded}`;$('voiceprint-link').href=`/voiceprint.html?book=${encoded}`;
 function error(message){const banner=$('error-banner');banner.textContent=message;banner.hidden=false;}
 async function api(path,options={}){const response=await fetch(path,{headers:{'Content-Type':'application/json'},...options});const payload=await response.json().catch(()=>({}));if(!response.ok){const detail=payload.detail||{};throw Object.assign(new Error(detail.message||detail||'操作没有完成，请稍后再试。'),{status:response.status});}return payload;}

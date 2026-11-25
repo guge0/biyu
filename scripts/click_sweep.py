@@ -27,6 +27,7 @@ PAGES = [
 BOOK_PAGES = ["/book.html?book={b}", "/overview.html?book={b}", "/workbench.html?book={b}",
               "/memory.html?book={b}", "/summaries.html?book={b}", "/editor.html?book={b}",
               "/propose.html?book={b}"]
+MAX_BUTTONS = 40  # 每页最多点 60 个，控制总时长
 SKIP_TEXT = ("删除", "彻底", "移到回收站", "退出", "下载", "导出")
 
 
@@ -35,10 +36,14 @@ def sweep_page(page, url: str) -> dict:
     page.on("pageerror", lambda e: errors.append(str(e)[:300]))
     page.goto(url, wait_until="domcontentloaded", timeout=20000)
     page.wait_for_timeout(1200)
-    count = page.evaluate("document.querySelectorAll('button').length")
-    clicked, skipped, navigated = 0, 0, []
+    count = min(page.evaluate("document.querySelectorAll('button').length"), MAX_BUTTONS)
+    clicked, skipped, navigated, blocked = 0, 0, [], []
     for i in range(count):
         try:
+            # 每次重新载入：上一个按钮打开的抽屉/弹窗会挡住后面的按钮
+            if i:
+                page.goto(url, wait_until="domcontentloaded", timeout=20000)
+                page.wait_for_timeout(500)
             btn = page.locator("button").nth(i)
             if not btn.is_visible() or not btn.is_enabled():
                 continue
@@ -47,20 +52,19 @@ def sweep_page(page, url: str) -> dict:
                 skipped += 1
                 continue
             before = page.url
-            btn.click(timeout=2000, no_wait_after=True)
+            try:
+                btn.click(timeout=2000, no_wait_after=True)
+            except Exception:
+                blocked.append(text)  # 可见可用却点不到（被遮挡）
+                continue
             page.wait_for_timeout(250)
             clicked += 1
             if page.url != before:
                 navigated.append(f"{text} -> {page.url}")
-                page.goto(url, wait_until="domcontentloaded", timeout=20000)
-                page.wait_for_timeout(800)
-            else:
-                page.keyboard.press("Escape")
         except Exception:  # 元素在点击过程中消失/被遮挡：不算错误
             continue
-    page.remove_listener("pageerror", lambda e: None)
     return {"url": url, "buttons": count, "clicked": clicked, "skipped": skipped,
-            "navigated": navigated, "pageerrors": errors}
+            "navigated": navigated, "blocked": blocked, "pageerrors": errors}
 
 
 def main() -> int:
@@ -96,6 +100,7 @@ def main() -> int:
         bad += bool(errs)
         flag = "FAIL" if errs else "ok  "
         print(f"[{flag}] {r['url'].replace(BASE, '')}  clicked={r.get('clicked', 0)}/{r.get('buttons', 0)}"
+              + (f"  blocked={r['blocked'][:4]}" if r.get('blocked') else "")
               + (f"  errors={errs[:2]}" if errs else ""))
     print(f"\n{len(results) - bad}/{len(results)} 页无 JS 异常；明细 {OUT / 'click_sweep.json'}")
     return bad

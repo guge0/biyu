@@ -1,7 +1,7 @@
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 let book = params.get('book') || '';
-let state = null;
+let state = {}; // S-7f：未读到数据时按钮不抛异常
 let pendingImport = null;
 let latestImportOutcome = null;
 
