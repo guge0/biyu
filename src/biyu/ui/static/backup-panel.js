@@ -46,12 +46,13 @@
     detail.removeAttribute("role");
     detail.setAttribute("role", "status");
     auto.checked = Boolean(status.enabled);
-    directory.value = status.destination || "";
+    if (document.activeElement !== directory) directory.value = status.destination || "";
     const running = status.state === "running";
     panel.setAttribute("aria-busy", String(running));
     run.disabled = running;
     auto.disabled = running;
     choose.disabled = running;
+    directory.disabled = running;
 
     if (running) {
       line.textContent = "正在备份…";
@@ -165,6 +166,16 @@
     }
   }
 
+  async function openDirectory() {
+    try {
+      await request("/api/backup/open-directory", { method: "POST" });
+    } catch (error) {
+      const detail = $("backup-detail");
+      detail.textContent = error.message;
+      detail.classList.add("backup-detail-failed");
+    }
+  }
+
   async function pollRun() {
     const status = await loadStatus();
     if (status?.state === "running") {
@@ -210,6 +221,11 @@
     $("backup-auto")?.addEventListener("change", saveSettings);
     $("backup-choose-directory")?.addEventListener("click", chooseDirectory);
     $("backup-run")?.addEventListener("click", runNow);
+    $("backup-open-directory")?.addEventListener("click", openDirectory);
+    $("backup-directory")?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") { event.preventDefault(); saveSettings(); }
+    });
+    $("backup-directory")?.addEventListener("change", saveSettings);
     $("trash-book-cancel")?.addEventListener("click", () => finishTrash(false));
     $("trash-book-confirm")?.addEventListener("click", () => finishTrash(true));
     $("backup-overlay")?.addEventListener("click", (event) => { if (event.target === event.currentTarget) closePanel(); });

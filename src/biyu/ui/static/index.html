@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
+  <script src="/theme-boot.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>笔驭作者工作台 · 书架</title>
   <link rel="stylesheet" href="/styles.css?v=a1f1bf55">
@@ -199,13 +200,14 @@
         <span class="backup-switch-track" aria-hidden="true"><span></span></span>
         <span>自动备份</span>
       </label>
-      <p class="backup-hint">打开之后，每次启动笔驭备一次，另外每天凌晨 3:15 备一次；电脑当时不可用会在之后补备。</p>
+      <p class="backup-hint">打开之后，每次启动笔驭备一次；笔驭一直开着的话，每 24 小时再备一次。</p>
       <label class="backup-directory-label" for="backup-directory">备份到</label>
       <div class="backup-directory-row">
-        <input id="backup-directory" type="text" readonly>
+        <input id="backup-directory" type="text" spellcheck="false" placeholder="比如 D:\BiyuBackup" aria-describedby="backup-directory-hint">
         <button id="backup-choose-directory" class="btn-secondary" type="button">选个位置</button>
+        <button id="backup-open-directory" class="btn-secondary" type="button">打开文件夹</button>
       </div>
-      <p class="backup-hint">留最近 7 天，另外每周留一份，共 4 周。</p>
+      <p id="backup-directory-hint" class="backup-hint">也可以直接把路径粘贴进输入框，按回车保存。留最近 7 天，另外每周留一份，共 4 周。</p>
       <div id="backup-detail" class="backup-detail" role="status" aria-live="polite">备份状态读取中…</div>
       <div class="modal-actions">
         <button id="backup-run" class="btn-secondary" type="button">现在备份一次</button>

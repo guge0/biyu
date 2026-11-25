@@ -18,6 +18,10 @@ function Stop-Fail {
 }
 
 try {
+    # S-7e：不经过「启动笔驭.bat」直接运行本脚本时也带上包内 MinGit（建书/保存的本地历史要用 git）
+    $bundledGit = Join-Path $Root 'git\cmd'
+    if (Test-Path -LiteralPath (Join-Path $bundledGit 'git.exe')) { $env:PATH = "$bundledGit;$env:PATH" }
+
     # ---------- 0) 包完整性自检(杀软隔离/解压不完整 → 人话报错,不闪退) ----------
     $exe = Join-Path $Root 'biyu-sidecar.exe'
     $internal = Join-Path $Root '_internal'

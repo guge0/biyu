@@ -2355,8 +2355,10 @@ def _guard_version(path: Path, base_sha: str | None) -> None:
 
 def _commit_official_edit(path: Path, chapter: int) -> None:
     """Commit only the official chapter, never adjacent reports or staged owner assets."""
-    from biyu.git_helper import repo_root_for_book
+    from biyu.git_helper import git_available, repo_root_for_book
 
+    if not git_available():  # S-7e：没有 git 只是不记历史，保存本身已完成
+        return
     root = repo_root_for_book(path.parent.parent)
     relative = path.resolve().relative_to(root).as_posix()
     add = subprocess.run(["git", "add", "--", str(relative)], cwd=root, capture_output=True, text=True, encoding="utf-8")

@@ -245,6 +245,43 @@ async def z1_startup_backup() -> None:
     asyncio.create_task(_run())
 
 
+async def _in_app_daily_backup_loop() -> None:
+    """S-7e：便携包没有 Windows 计划任务，笔驭开着时每小时看一次，超过 24 小时没备就补备。"""
+    from datetime import datetime, timedelta
+
+    from biyu.backup_service import get_backup_status, load_backup_settings, run_backup
+    from biyu.config import get_data_root
+    from biyu.secure_config import user_config_dir
+
+    while True:
+        await asyncio.sleep(3600)
+        try:
+            settings = load_backup_settings()
+            if not settings.enabled:
+                continue
+            scope = "test" if os.environ.get("BIYU_RUNTIME_ROLE") == "test" else "production"
+            destination = Path(settings.destination)
+            status = get_backup_status(destination, scope=scope, status_dir=user_config_dir())
+            last = status.last_backup_at
+            if last:
+                last_dt = datetime.fromisoformat(last)
+                now = datetime.now(last_dt.tzinfo) if last_dt.tzinfo else datetime.now()
+                if now - last_dt < timedelta(hours=24):
+                    continue
+            await asyncio.to_thread(
+                run_backup, get_data_root(), destination, scope=scope, reason="daily", status_dir=user_config_dir()
+            )
+        except Exception:
+            continue
+
+
+@app.on_event("startup")
+async def z2_in_app_daily_backup() -> None:
+    if os.environ.get("BIYU_RUNTIME_ROLE") == "test":
+        return
+    asyncio.create_task(_in_app_daily_backup_loop())
+
+
 @app.on_event("startup")
 async def s3_seed_sample_book() -> None:
     """S-3 安装版首启:空书架幂等种入示例书《死亡回溯》(BIYU_SEED_SAMPLE_BOOK=1 时)。

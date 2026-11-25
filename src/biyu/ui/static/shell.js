@@ -59,6 +59,7 @@
   }
 
   function schedulePersist() {
+    cacheThemeTokens();
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(persistPrefs, 350);
   }
@@ -1078,10 +1079,21 @@
     }
   }
 
+  // S-7f：缓存最终主题令牌，<head> 里的回放脚本据此在首帧就上色，不再先白后变
+  const THEME_CACHE_KEY = 'biyu-theme-css';
+  function cacheThemeTokens() {
+    try { localStorage.setItem(THEME_CACHE_KEY, document.documentElement.style.cssText); } catch (_) { /* 隐私模式等 */ }
+  }
+  function hasCachedTheme() {
+    try { return !!localStorage.getItem(THEME_CACHE_KEY); } catch (_) { return false; }
+  }
+
   function boot() {
     mountShell();
-    applyThemeTokens(state.themeKey);
-    applyBackgroundTokens();
+    if (!hasCachedTheme()) {
+      applyThemeTokens(state.themeKey);
+      applyBackgroundTokens();
+    }
     loadContext()
       .then(loadPrefs)
       .then(() => {
@@ -1091,6 +1103,7 @@
         applyBackgroundTokens();
         syncThemeInputs();
         syncBackgroundInputs();
+        cacheThemeTokens();
         const statusBarPath = document.getElementById('biyu-sb-data-root');
         if (statusBarPath) {
           statusBarPath.textContent = state.dataRoot

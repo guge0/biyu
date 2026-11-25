@@ -61,7 +61,12 @@ def _backup_root() -> Path:
 
 def _trash_root() -> Path:
     # Recycle-bin data must not disappear when the snapshot destination changes.
-    return Path(os.environ.get("BIYU_TRASH_ROOT", r"D:\BiyuBackup"))
+    configured = os.environ.get("BIYU_TRASH_ROOT", "").strip()
+    if configured:
+        return Path(configured)
+    from biyu.backup_service import default_backup_root
+
+    return Path(default_backup_root())
 
 
 def _actor(actor: str) -> None:
@@ -102,7 +107,8 @@ def _status_payload() -> dict[str, object]:
         "destination": settings.destination,
         "schedule_state": settings.schedule_state,
         "schedule_error": settings.schedule_error,
-        "next_backup_at": next_backup_at() if settings.enabled else None,
+        # S-7e：便携包（in_app）没有「凌晨 3:15」计划任务，不能显示一个不存在的下次时间
+        "next_backup_at": next_backup_at() if settings.enabled and settings.schedule_state != "in_app" else None,
         "retention": {"daily": 7, "weekly": 4},
     })
     if _running():
@@ -119,8 +125,10 @@ def _sync_daily_schedule(enabled: bool) -> tuple[str, str | None]:
         return ("test", None)
     project_root = _project_root()
     script = project_root / "scripts" / "install_biyu_backup_task.ps1"
-    if not script.is_file():
-        return ("failed", "找不到自动备份安装脚本，请重新安装笔驭")
+    if getattr(sys, "frozen", False) or not script.is_file():
+        # S-7e：便携包没有 Windows 计划任务脚本。改用「笔驭开着时自己定时备份」，
+        # 由 app.py 的启动备份 + 每小时检查完成，不再报「请重新安装」。
+        return ("in_app" if enabled else "disabled", None)
     command = [
         "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script),
         "-PythonPath", sys.executable, "-ProjectRoot", str(project_root),
@@ -157,13 +165,19 @@ def backup_status() -> dict[str, object]:
 def backup_settings(payload: BackupSettingsBody) -> dict[str, object]:
     if _running():
         raise HTTPException(409, "正在备份，完成后再改设置")
-    destination = Path(payload.destination.strip()).expanduser()
+    destination = Path(payload.destination.strip().strip('"')).expanduser()
     if not payload.destination.strip() or not destination.is_absolute():
-        raise HTTPException(400, "请选择完整的备份路径")
+        raise HTTPException(400, "请填完整的备份路径，比如 D:\\BiyuBackup")
     source = get_data_root().resolve()
     resolved = destination.resolve()
     if resolved == source or source in resolved.parents:
         raise HTTPException(400, "备份位置不能放在书稿目录里面")
+    if not destination.exists() and destination.parent.exists():
+        # S-7e：手动填的新文件夹（上一级存在）直接建好，不让作者再去资源管理器新建
+        try:
+            destination.mkdir()
+        except OSError:
+            pass
     try:
         validate_backup_destination(destination)
     except RuntimeError as exc:
@@ -192,20 +206,42 @@ def backup_settings(payload: BackupSettingsBody) -> dict[str, object]:
 def backup_choose_directory() -> dict[str, str | None]:
     if os.name != "nt":
         raise HTTPException(501, "当前系统不能打开 Windows 文件夹选择器")
+    # S-7e：以前对话框常常弹在浏览器后面，前端一直显示「选择中…」像卡死。
+    # 现在用一个置顶的空窗口做 owner，强制对话框在最前；并加 5 分钟超时。
     script = (
+        "[Console]::OutputEncoding=[Text.Encoding]::UTF8;"
         "Add-Type -AssemblyName System.Windows.Forms;"
+        "$o=New-Object System.Windows.Forms.Form;$o.TopMost=$true;$o.ShowInTaskbar=$false;"
+        "$o.StartPosition='CenterScreen';$o.Width=1;$o.Height=1;$o.Opacity=0;$o.Show();$o.Activate();"
         "$d=New-Object System.Windows.Forms.FolderBrowserDialog;"
         "$d.Description='选择笔驭备份位置';$d.ShowNewFolderButton=$true;"
-        "if($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK){$d.SelectedPath}"
+        "if($d.ShowDialog($o) -eq [System.Windows.Forms.DialogResult]::OK){$d.SelectedPath};$o.Close()"
     )
-    completed = subprocess.run(
-        ["powershell.exe", "-NoProfile", "-STA", "-Command", script],
-        capture_output=True, text=True, encoding="utf-8", errors="replace",
-    )
+    try:
+        completed = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-STA", "-Command", script],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise HTTPException(504, "选文件夹的窗口太久没响应，可以直接在输入框里填路径") from exc
+    except OSError as exc:
+        raise HTTPException(503, "文件夹选择器没有打开成功，可以直接在输入框里填路径") from exc
     if completed.returncode != 0:
-        raise HTTPException(503, "文件夹选择器没有打开成功")
-    selected = completed.stdout.strip()
+        raise HTTPException(503, "文件夹选择器没有打开成功，可以直接在输入框里填路径")
+    selected = completed.stdout.strip().splitlines()[-1].strip() if completed.stdout.strip() else ""
     return {"destination": selected or None}
+
+
+@router.post("/api/backup/open-directory")
+def backup_open_directory() -> dict[str, str]:
+    """S-7e：「打开备份文件夹」，让作者亲眼看到备份真的在。"""
+    target = Path(load_backup_settings().destination)
+    if not target.is_dir():
+        raise HTTPException(404, f"备份文件夹还不存在：{target}（先备份一次）")
+    if os.name != "nt":
+        raise HTTPException(501, "当前系统不能打开资源管理器")
+    os.startfile(str(target))  # type: ignore[attr-defined]
+    return {"opened": str(target)}
 
 
 @router.post("/api/backup/run", status_code=202)

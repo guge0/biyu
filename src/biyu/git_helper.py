@@ -8,8 +8,45 @@ commit message 前缀约定:
 """
 from __future__ import annotations
 
+import logging
+import os
+import shutil
 import subprocess
+import sys
 from pathlib import Path
+
+_log = logging.getLogger("biyu.git_helper")
+
+
+def ensure_git_on_path() -> str | None:
+    """S-7e：PATH 里没有 git 时，把便携包自带的 MinGit（<包根>\\git\\cmd）加进 PATH。
+
+    便携包由「启动笔驭.bat」加 PATH；绕过 bat 启动（或 bat 被改）时这里兜底。
+    子进程（CLI）继承 os.environ，所以一处处理即可覆盖全部 ["git", ...] 调用。
+    返回可用的 git 路径；都找不到返回 None。
+    """
+    found = shutil.which("git")
+    if found:
+        return found
+    roots = [Path(sys.executable).resolve().parent]
+    if getattr(sys, "_MEIPASS", None):
+        roots.append(Path(sys._MEIPASS).resolve().parent)  # type: ignore[attr-defined]
+    project_root = os.environ.get("BIYU_PROJECT_ROOT", "").strip()
+    if project_root:
+        roots.append(Path(project_root))
+    for root in roots:
+        candidate = root / "git" / "cmd" / "git.exe"
+        if candidate.is_file():
+            os.environ["PATH"] = str(candidate.parent) + os.pathsep + os.environ.get("PATH", "")
+            return str(candidate)
+    return None
+
+
+def git_available() -> bool:
+    return ensure_git_on_path() is not None
+
+
+ensure_git_on_path()
 
 
 def _repo_root(book_dir: Path | None = None) -> Path:
@@ -17,10 +54,13 @@ def _repo_root(book_dir: Path | None = None) -> Path:
     start = (book_dir or Path(__file__).resolve().parents[2]).resolve()
     if start.is_file():
         start = start.parent
-    result = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"], cwd=str(start),
-        capture_output=True, text=True, encoding="utf-8", errors="replace",
-    )
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"], cwd=str(start),
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+        )
+    except FileNotFoundError as exc:  # S-7e：没有 git
+        raise RuntimeError("找不到 git，没有本地版本历史") from exc
     if result.returncode != 0:
         raise RuntimeError(f"找不到书稿所属的本地版本仓: {start}")
     return Path(result.stdout.strip()).resolve()
@@ -37,10 +77,13 @@ def source_repo_toplevel_containing(path: Path) -> Path | None:
     path = Path(path)
     if not path.is_dir():
         return None
-    probe = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"], cwd=str(path),
-        capture_output=True, text=True, encoding="utf-8", errors="replace",
-    )
+    try:
+        probe = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"], cwd=str(path),
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+        )
+    except FileNotFoundError:  # S-7e：没有 git 就不可能在源码仓里
+        return None
     if probe.returncode != 0:
         return None
     root = Path(probe.stdout.strip()).resolve()
@@ -73,6 +116,10 @@ def ensure_local_repository(data_root: Path) -> Path:
     """
     data_root = data_root.expanduser().resolve()
     data_root.mkdir(parents=True, exist_ok=True)
+    if not git_available():
+        # S-7e：没有 git 不影响建书和写作，只是没有本地版本历史。
+        _log.warning("找不到 git，跳过本地版本库：%s", data_root)
+        return data_root
     probe = subprocess.run(
         ["git", "rev-parse", "--show-toplevel"], cwd=str(data_root),
         capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -96,14 +143,17 @@ def ensure_local_repository(data_root: Path) -> Path:
 def _run_git(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess:
     """Run a git command and return the result. Raises on failure."""
     cwd = cwd or _repo_root()
-    result = subprocess.run(
-        ["git", *args],
-        cwd=str(cwd),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-    )
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=str(cwd),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except FileNotFoundError as exc:  # S-7e：没有 git 时转成可捕获的 RuntimeError，调用方按「提交失败」处理
+        raise RuntimeError("找不到 git，本次没有记入本地版本历史") from exc
     if result.returncode != 0:
         raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
     return result

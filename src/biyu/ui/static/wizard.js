@@ -4,6 +4,13 @@
 
   const $ = (id) => document.getElementById(id);
   const GENRES = ["末世回溯", "玄幻修仙", "都市异能", "悬疑智斗", "历史权谋", "无限流", "轻小说"];
+  // S-7e：服务端 500 返回的是纯文本/HTML，直接 resp.json() 会抛英文 JSON 解析错误
+  async function readJson(resp) {
+    const raw = await resp.text();
+    try { return JSON.parse(raw); } catch (_) {
+      throw new Error("服务出错了（状态码 " + resp.status + "），请点页脚「反馈」导出诊断包发给我们");
+    }
+  }
   const state = { step: 1, idea: "", genre: "", tier: "3000", titles: [], titleIdx: 0, busy: false };
 
   function show(step) {
@@ -28,9 +35,11 @@
     btn.type = "button";
     btn.className = "b2 bs";
     btn.textContent = g;
+    btn.dataset.genre = g;
+    btn.setAttribute("aria-pressed", "false");
     btn.addEventListener("click", () => {
       state.genre = state.genre === g ? "" : g;
-      [...genreWrap.children].forEach((b) => b.classList.toggle("current", b.textContent === state.genre));
+      [...genreWrap.children].forEach((b) => { const on = (b.dataset.genre || b.textContent) === state.genre; b.classList.toggle("current", on); b.setAttribute("aria-pressed", String(on)); });
     });
     genreWrap.appendChild(btn);
   });
@@ -38,7 +47,7 @@
     btn.addEventListener("click", () => {
       $("wizard-idea").value = btn.dataset.idea;
       state.genre = btn.dataset.genre;
-      [...genreWrap.children].forEach((b) => b.classList.toggle("current", b.textContent === state.genre));
+      [...genreWrap.children].forEach((b) => { const on = (b.dataset.genre || b.textContent) === state.genre; b.classList.toggle("current", on); b.setAttribute("aria-pressed", String(on)); });
     });
   });
   $("wizard-tiers").addEventListener("click", (event) => {
@@ -63,7 +72,7 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idea: state.idea, genre: state.genre, word_tier: state.tier }),
       });
-      const body = await resp.json();
+      const body = await readJson(resp);
       if (!resp.ok || !body.ok) throw new Error(body.detail || body.error || "推演失败");
       fillResult(body.result);
       show(3);
@@ -122,7 +131,7 @@
           vol1: $("wizard-vol1").value,
         }),
       });
-      const body = await resp.json();
+      const body = await readJson(resp);
       if (!resp.ok || !body.ok) throw new Error(body.detail || "建书失败");
       location.href = "/workbench.html?book=" + encodeURIComponent(body.id) + "&chapter=1";
     } catch (exc) {
@@ -160,7 +169,7 @@
           genre: $("wizard-manual-genre").value,
         }),
       });
-      const body = await resp.json();
+      const body = await readJson(resp);
       if (!resp.ok) throw new Error(body.detail || "新书没有创建成功");
       location.href = "/settings.html?book=" + encodeURIComponent(body.id);
     } catch (exc) {

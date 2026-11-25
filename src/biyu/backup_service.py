@@ -8,7 +8,7 @@ import re
 import shutil
 import threading
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterator, Literal
@@ -16,10 +16,20 @@ from typing import Any, Iterator, Literal
 from biyu.secure_config import user_config_dir
 
 
+def default_backup_root() -> str:
+    """S-7e：没有 D 盘的机器（很多笔记本）不能默认写 D:\\，退到用户目录。"""
+    configured = os.environ.get("BIYU_BACKUP_ROOT", "").strip()
+    if configured:
+        return configured
+    if os.name == "nt" and Path("D:\\").exists():
+        return r"D:\BiyuBackup"
+    return str(Path.home() / "BiyuBackup")
+
+
 @dataclass
 class BackupSettings:
     enabled: bool = False
-    destination: str = r"D:\BiyuBackup"
+    destination: str = field(default_factory=default_backup_root)
     source_path: str = ""
     schedule_state: str = "disabled"
     schedule_error: str | None = None
@@ -91,7 +101,7 @@ def load_backup_settings() -> BackupSettings:
     except (OSError, ValueError, TypeError):
         return BackupSettings(
             enabled=os.environ.get("BIYU_AUTO_BACKUP") == "1",
-            destination=os.environ.get("BIYU_BACKUP_ROOT", r"D:\BiyuBackup"),
+            destination=default_backup_root(),
             source_path=os.environ.get("BIYU_DATA_ROOT", ""),
         )
 
