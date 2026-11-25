@@ -8,7 +8,13 @@
 - 书：中文 id 测试书「死亡回溯」（数据根副本 BiyuTestRoots/s10_audit_data，服务 8091）；
   workbench 带 &chapter=1（该书内容最全的一章，见交付说明）
 自动检测：横向溢出、关键导航元素重叠、文字溢出容器、>96px 图标、未加样式裸元素、
-          可见弹窗/抽屉超视口（底边/右边越界）、font-weight>500 文字元素计数(P2)、JS 异常。
+          可见弹窗/抽屉超视口（底边/右边越界）、font-weight>500 文字元素计数(P2)、JS 异常、
+          可见错误条 / role=alert 文字（3a修正·中途抽查第1条，P0）、
+          可见文字与有效背景的对比度 <4.5（正文）/ <3（≥18px 大字，WCAG AA；3a修正第7条，P1）。
+主题注入（3a修正）：不再依赖 shell.js 拉 /api/ui/prefs——那要等 /api/books（走查副本上首拉 2s+），
+          截图早于主题应用，矩阵的主题维度会是假的。改为 add_init_script 预写
+          localStorage['biyu-theme-css']（与 shell.js cacheThemeTokens 同格式），theme-boot 首帧回放；
+          截图前再 wait --paper 等于该主题预设值，主题没落地不算过。
 
 安全：所有非 GET 的 /api 请求一律拦截（同 click_sweep.py），不触发模型调用、不写书。
 用法：
@@ -20,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -128,6 +135,63 @@ DETECT_JS = r"""
       bottomOver, rightOver, rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)] });
   }
 
+  // 6b) 可见错误条 / role=alert 文字（3a修正·中途抽查第1条，P0）：
+  //     页面内被捕获后渲染出的错误条，pageerror 抓不到。role=status 的提示条（记忆未更新等
+  //     一次性说明）不算错误，.notice-banner 同理。
+  out.alerts = [];
+  for (const el of document.querySelectorAll('.error-banner, [role="alert"]')) {
+    if (el.getAttribute('role') === 'status' || el.classList.contains('notice-banner')) continue;
+    if (!vis(el)) continue;
+    const t = (el.innerText || '').replace(/\s+/g, ' ').trim();
+    if (t) out.alerts.push({ el: name(el), text: t.slice(0, 90) });
+  }
+
+  // 6c) 对比度（3a修正第7条，P1）：可见文字 vs 有效背景 <4.5（正文）/ <3（≥18px）。
+  //     有效背景 = 自身起沿祖先链把半透明底色逐层合成，直到不透明层；带背景图/渐变的元素算不了，跳过。
+  const parseC = c => { const m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/.exec(c || '');
+    return m ? { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] } : null; };
+  const lum = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
+  const over = (top, bot) => ({ r: top.r * top.a + bot.r * (1 - top.a),
+    g: top.g * top.a + bot.g * (1 - top.a), b: top.b * top.a + bot.b * (1 - top.a), a: 1 });
+  const effBg = el => {
+    const layers = [];
+    let node = el;
+    while (node && node.nodeType === 1) {
+      const bs = getComputedStyle(node);
+      const bi = bs.backgroundImage;
+      if (bi && bi !== 'none' && !/^linear-gradient\(rgba\(0, 0, 0, 0\)/.test(bi)) return null; // 图/渐变底，算不了
+      const b = parseC(bs.backgroundColor);
+      if (b && b.a > 0) { layers.push(b); if (b.a >= 1) break; }
+      node = node.parentElement;
+    }
+    if (!layers.length) return null;
+    let bg = layers.pop(); // 最深一层
+    while (layers.length) bg = over(layers.pop(), bg);
+    return bg;
+  };
+  out.lowContrast = [];
+  const reported = new Set();
+  for (const el of all) {
+    if (!vis(el)) continue;
+    if (!el.childNodes.length || ![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim())) continue;
+    const s = getComputedStyle(el);
+    const fg = parseC(s.color), bg = effBg(el);
+    if (!fg || !bg) continue;
+    const l1 = lum(fg), l2 = lum(bg);
+    const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    const px = parseFloat(s.fontSize), big = px >= 18;
+    const floor = big ? 3 : 4.5;
+    if (ratio >= floor) continue;
+    const key = s.color + '|' + s.fontSize + '|' + (el.innerText || '').trim().slice(0, 12);
+    if (reported.has(key)) continue;
+    reported.add(key);
+    if (out.lowContrast.length < 14) out.lowContrast.push({ el: name(el),
+      text: (el.innerText || '').replace(/\s+/g, ' ').slice(0, 24), px, ratio: +ratio.toFixed(2),
+      fg: s.color, bg: `rgb(${Math.round(bg.r)},${Math.round(bg.g)},${Math.round(bg.b)})` });
+  }
+  out.lowContrast.sort((a, b) => a.ratio - b.ratio);
+
   // 7) 字重 >500 的文字元素计数（工单 3a-1 新增，P2）：字重锁 400/500，只统计带直接文字的元素
   for (const el of document.querySelectorAll('body *')) {
     if (!vis(el)) continue;
@@ -175,22 +239,56 @@ def launch_engine(p, engine: str):
     return p.firefox.launch(headless=True)
 
 
-def audit_page(ctx, url: str, label: str) -> dict:
+def theme_tokens_css(theme: str) -> str:
+    """从 shell.js 的 THEME_PRESETS（S1 标记段）拼出与 cacheThemeTokens 同格式的 cssText。
+
+    3a修正（工单第8条）：走查矩阵的主题此前经 /api/ui/prefs 注入，但 shell.js 的 boot 要先等
+    /api/books（走查副本上首拉 2s+）才应用主题，截图早于应用——主题维度是假的。
+    现改为直接预写 localStorage['biyu-theme-css']，theme-boot 在 <head> 首帧同步回放。
+    """
+    global _THEME_PRESETS
+    if _THEME_PRESETS is None:
+        shell = (Path(__file__).resolve().parent.parent / "src" / "biyu" / "ui" / "static" / "shell.js") \
+            .read_text(encoding="utf-8")
+        m = re.search(r"/\*S1-THEME-BEGIN\*/(.*?)/\*S1-THEME-END\*/", shell, re.S)
+        if not m:
+            raise RuntimeError("shell.js 里找不到 THEME_PRESETS 标记段")
+        _THEME_PRESETS = json.loads(m.group(1))
+    preset = _THEME_PRESETS.get(theme) or _THEME_PRESETS["default"]
+    css = "".join(f"{k}: {v}; " for k, v in preset.items() if k.startswith("--"))
+    # applyBackgroundTokens 的默认背景（无壁纸）：与 shell.js 无壁纸分支一致
+    css += "--bg-image: none; --bg-overlay-alpha: 0.90; --bg-blur: 0px;"
+    return css
+
+
+_THEME_PRESETS: dict | None = None
+
+
+def audit_page(ctx, url: str, label: str, theme_paper: str | None = None) -> dict:
     page = ctx.new_page()
     errors: list[str] = []
     page.on("pageerror", lambda e: errors.append(str(e)[:200]))
     try:
         page.goto(url, wait_until="load", timeout=25000)
         page.wait_for_timeout(1800 if "book=" in url else 1200)
+        theme_late = False
+        if theme_paper:  # 主题必须真的落到 :root 才算数（不再只信 prefs 注入）
+            try:
+                page.wait_for_function(
+                    "expected => getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() === expected",
+                    arg=theme_paper, timeout=6000)
+            except Exception:
+                theme_late = True
         found = page.evaluate(DETECT_JS)
         shot = OUT / f"{label}.jpg"
         page.screenshot(path=str(shot), type="jpeg", quality=80)
-        found.update(url=url, shot=str(shot), pageerrors=errors)
+        found.update(url=url, shot=str(shot), pageerrors=errors, theme_late=theme_late)
         return found
     except Exception as exc:
         return {"url": url, "shot": str(OUT / f"{label}.jpg"), "fatal": str(exc)[:200], "pageerrors": errors,
                 "overflowX": 0, "navOverlaps": [], "textOverflows": [], "bigIcons": [], "naked": [],
-                "nakedLinks": 0, "dialogOverflows": [], "heavyFontCount": 0, "heavyFonts": []}
+                "nakedLinks": 0, "dialogOverflows": [], "heavyFontCount": 0, "heavyFonts": [],
+                "alerts": [], "lowContrast": []}
     finally:
         page.close()
 
@@ -207,6 +305,12 @@ def severity(finding: dict) -> str:
         return "P0"
     if finding["dialogOverflows"]:
         return "P0"
+    if finding.get("alerts"):
+        return "P0"  # 3a修正·中途抽查第1条：页面内可见错误条 = P0
+    if finding.get("theme_late"):
+        return "P0"  # 3a修正第8条：等了 6s 主题还没落到 :root，矩阵主题维度不可信
+    if finding.get("lowContrast"):
+        return "P1"  # 3a修正第7条：对比度不足 WCAG AA
     if finding["bigIcons"]:
         return "P1"
     if finding["overflowX"] > 0:
@@ -267,12 +371,15 @@ def main() -> int:
                 label = combo_label(page_file, vw, vh, dpr, theme)
                 if engine != ENGINES[0]:
                     label = f"{engine[:1]}_{label}"
-                # 每组合全新 context：主题经拦截 GET /api/ui/prefs 注入，非 GET 一律拦（不写服务端）
+                # 每组合全新 context：主题靠预写 localStorage（theme-boot 首帧回放）+ prefs 注入双保险；
+                # 非 GET 一律拦（不写服务端）
                 ctx = browsers[engine].new_context(viewport={"width": vw, "height": vh},
                                                    device_scale_factor=dpr)
                 ctx.on("dialog", lambda d: d.dismiss())
                 prefs = {"theme": theme, "custom": None,
                          "background": {"type": "none", "preset": None, "file": None, "overlay": 90.0, "blur": 0}}
+                ctx.add_init_script(
+                    "try{localStorage.setItem('biyu-theme-css'," + json.dumps(theme_tokens_css(theme)) + ")}catch(e){}")
 
                 def route(rule):
                     req = rule.request
@@ -284,7 +391,8 @@ def main() -> int:
                     return rule.continue_()
 
                 ctx.route("**/api/**", route)
-                r = audit_page(ctx, BASE + page_url(page_file), label)
+                r = audit_page(ctx, BASE + page_url(page_file), label,
+                               theme_paper=(_THEME_PRESETS or {}).get(theme, {}).get("--paper"))
                 r.update(page=page_file, engine=engine, vw=vw, vh=vh, dpr=dpr, theme=theme)
                 results.append(r)
                 ctx.close()
@@ -292,15 +400,18 @@ def main() -> int:
                 print(f"[{sev or 'ok'}] {label}"
                       f" ofX={r['overflowX']} nav={len(r['navOverlaps'])} txt={len(r['textOverflows'])}"
                       f" icon={len(r['bigIcons'])} dlg={len(r['dialogOverflows'])}"
+                      f" alert={len(r.get('alerts', []))} contrast={len(r.get('lowContrast', []))}"
                       f" fw500={r['heavyFontCount']} naked={r['nakedLinks'] + len(r['naked'])}"
-                      f" err={len(r['pageerrors'])} ({time.time() - t0:.0f}s)", flush=True)
+                      f" err={len(r['pageerrors'])}"
+                      f"{' THEME-LATE' if r.get('theme_late') else ''} ({time.time() - t0:.0f}s)", flush=True)
         finally:
             for b in browsers.values():
                 b.close()
 
     (OUT / "ui_audit.json").write_text(json.dumps(results, ensure_ascii=False, indent=1), encoding="utf-8")
     p0 = sum(1 for r in results if severity(r) == "P0")
-    print(f"\n完成 {len(results)} 组合，P0 {p0}；明细 {OUT / 'ui_audit.json'}")
+    p1 = sum(1 for r in results if severity(r) == "P1")
+    print(f"\n完成 {len(results)} 组合，P0 {p0} / P1 {p1}；明细 {OUT / 'ui_audit.json'}")
     return min(p0, 125)
 
 

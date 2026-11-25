@@ -3,10 +3,13 @@
 安全：所有非 GET 的 /api 请求一律拦截（abort），不会调模型、不会花钱、不会改书。
 所以「保存/生成」类按钮在这里只验证「点了不崩、有反馈」，不验证功能本身。
 
+S-10 段3a修正（中途抽查第1条）：每次点击后检测页面内可见的错误条 / role=alert 文字
+（pageerror 抓不到页面捕获后渲染的错误条），出现即该页记失败。
+
 用法：
   python scripts/click_sweep.py http://127.0.0.1:8084 [输出目录] [--engine chromium|firefox]
   --engine：S-10 段3a 起可指定浏览器引擎（老板默认浏览器是 Firefox，验收要求两引擎都跑）。
-需要 playwright（开发环境已装）。退出码 = 出 pageerror 的页数。
+需要 playwright（开发环境已装）。退出码 = 出 pageerror 或错误条的页数。
 """
 from __future__ import annotations
 
@@ -38,6 +41,20 @@ BOOK_PAGES = ["/book.html?book={b}", "/overview.html?book={b}", "/workbench.html
 MAX_BUTTONS = 40  # 每页最多点 60 个，控制总时长
 SKIP_TEXT = ("删除", "彻底", "移到回收站", "退出", "下载", "导出")
 
+# 可见错误条 / role=alert（3a修正·中途抽查第1条）。role=status 的说明条与 .notice-banner 不算错误。
+ALERT_JS = """() => {
+  const vis = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el);
+    return r.width > 4 && r.height > 4 && s.display !== 'none' && s.visibility !== 'hidden'; };
+  const found = [];
+  document.querySelectorAll('.error-banner, [role="alert"]').forEach(el => {
+    if (el.getAttribute('role') === 'status' || el.classList.contains('notice-banner')) return;
+    if (!vis(el)) return;
+    const t = (el.innerText || '').replace(/\\s+/g, ' ').trim();
+    if (t) found.push(t.slice(0, 120));
+  });
+  return found;
+}"""
+
 
 def sweep_page(page, url: str) -> dict:
     errors: list[str] = []
@@ -45,13 +62,29 @@ def sweep_page(page, url: str) -> dict:
     page.goto(url, wait_until="domcontentloaded", timeout=20000)
     page.wait_for_timeout(1200)
     count = min(page.evaluate("document.querySelectorAll('button').length"), MAX_BUTTONS)
-    clicked, skipped, navigated, blocked = 0, 0, [], []
+    clicked, skipped, navigated, blocked, alerts = 0, 0, [], [], []
+    seen_alerts = set()
+
+    def collect_alerts(context: str) -> None:
+        try:
+            texts = page.evaluate(ALERT_JS)
+        except Exception:
+            return
+        for t in texts:
+            key = t[:60]
+            if key in seen_alerts:
+                continue
+            seen_alerts.add(key)
+            alerts.append(f"[{context}] {t}")
+
+    collect_alerts("载入后")
     for i in range(count):
         try:
             # 每次重新载入：上一个按钮打开的抽屉/弹窗会挡住后面的按钮
             if i:
                 page.goto(url, wait_until="domcontentloaded", timeout=20000)
                 page.wait_for_timeout(500)
+                collect_alerts("载入后")
             btn = page.locator("button").nth(i)
             if not btn.is_visible() or not btn.is_enabled():
                 continue
@@ -67,12 +100,13 @@ def sweep_page(page, url: str) -> dict:
                 continue
             page.wait_for_timeout(250)
             clicked += 1
+            collect_alerts(f"点了「{text}」后")
             if page.url != before:
                 navigated.append(f"{text} -> {page.url}")
         except Exception:  # 元素在点击过程中消失/被遮挡：不算错误
             continue
     return {"url": url, "buttons": count, "clicked": clicked, "skipped": skipped,
-            "navigated": navigated, "blocked": blocked, "pageerrors": errors}
+            "navigated": navigated, "blocked": blocked, "pageerrors": errors, "alerts": alerts}
 
 
 def main() -> int:
@@ -108,12 +142,14 @@ def main() -> int:
     bad = 0
     for r in results:
         errs = r.get("pageerrors") or ([r["fatal"]] if r.get("fatal") else [])
-        bad += bool(errs)
-        flag = "FAIL" if errs else "ok  "
+        alerts = r.get("alerts") or []
+        bad += bool(errs or alerts)
+        flag = "FAIL" if (errs or alerts) else "ok  "
         print(f"[{flag}] {r['url'].replace(BASE, '')}  clicked={r.get('clicked', 0)}/{r.get('buttons', 0)}"
               + (f"  blocked={r['blocked'][:4]}" if r.get('blocked') else "")
-              + (f"  errors={errs[:2]}" if errs else ""))
-    print(f"\n{len(results) - bad}/{len(results)} 页无 JS 异常；明细 {OUT / 'click_sweep.json'}")
+              + (f"  errors={errs[:2]}" if errs else "")
+              + (f"  alerts={alerts[:2]}" if alerts else ""))
+    print(f"\n{len(results) - bad}/{len(results)} 页无 JS 异常且无错误条；明细 {OUT / 'click_sweep.json'}")
     return bad
 
 
