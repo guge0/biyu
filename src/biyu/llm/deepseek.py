@@ -64,6 +64,9 @@ class DeepSeekAdapter(LLMAdapter):
         # R1不支持temperature等采样参数，静默忽略
         if "temperature" in kwargs and not self._is_reasoner():
             payload["temperature"] = kwargs["temperature"]
+        # S-8-3:透传 thinking(deepseek-v4系默认开思考,机械任务不关掉会把 max_tokens 吃光,content 全空)
+        if kwargs.get("thinking"):
+            payload["thinking"] = kwargs["thinking"]
         # Function calling: 传入 tools 参数(S-4A:补 tool_choice 透传)
         if "tools" in kwargs and kwargs["tools"]:
             payload["tools"] = kwargs["tools"]
@@ -96,6 +99,9 @@ class DeepSeekAdapter(LLMAdapter):
         }
         if "temperature" in kwargs and not self._is_reasoner():
             payload["temperature"] = kwargs["temperature"]
+        # S-8-3:透传 thinking(同 generate,关思考的调用方走流式也得带上)
+        if kwargs.get("thinking"):
+            payload["thinking"] = kwargs["thinking"]
 
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(connect=10.0, read=180.0, write=30.0, pool=10.0),

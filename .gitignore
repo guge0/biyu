@@ -1,5 +1,7 @@
 # Private runtime data and credentials
 data/
+# ...但 S-8-1 的示范对与 Humanizer-zh 资产是随包分发的源文件,必须入库
+!src/biyu/zhuque/data/
 config/models.yaml
 *.env
 **/api_key*

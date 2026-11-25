@@ -1,8 +1,18 @@
 """S-6 · 守卫与风险标注契约:mask/unmask 往返;clean;guard 每条规则一正一反;
-r12 真实坏例子(英文残留/半角逗号/昌千户/并段)做反例;risk_marks 三类。"""
+r12 真实坏例子(英文残留/半角逗号/昌千户/并段)做反例;risk_marks 三类。
+S-8-1 追加:dedash;破折号/段中丢句号/示范泄漏三条新守卫。"""
 from __future__ import annotations
 
-from biyu.zhuque.guards import clean, guard, lock_words, mask, risk_marks, strip_slots, unmask
+from biyu.zhuque.guards import (
+    clean,
+    dedash,
+    guard,
+    lock_words,
+    mask,
+    risk_marks,
+    strip_slots,
+    unmask,
+)
 
 TEXT = "常野躺在草料堆上。“已攒：三钱二分。”蓝光透出【守成】两个楷字。"
 
@@ -207,6 +217,78 @@ def test_guard_length_band() -> None:
 def test_guard_truncated_draft_reports_final_punct_first() -> None:
     # 截断稿同时丢句号又超篇幅:报更具体的「句末标点」
     assert guard("巷口的灯笼一盏接一盏地灭了。", "巷口的灯笼一盏接一", []) == "句末标点"
+
+
+# ---------- dedash:确定性去破折号(r15 的 fix) ----------
+
+def test_dedash_variants() -> None:
+    assert dedash("他走了——又回来。") == "他走了，又回来。"
+    assert dedash("灯灭了—屋里黑了。") == "灯灭了，屋里黑了。"
+    assert dedash("门开了--风灌进来。") == "门开了，风灌进来。"
+    assert dedash("三连———一起换。") == "三连，一起换。"       # ——+ 整段一起换
+    assert dedash("他走了，，又回来。") == "他走了，又回来。"   # 收拾 ，，
+    assert dedash("他走了，。又回来。") == "他走了。又回来。"   # 收拾 ，。
+
+
+def test_dedash_keeps_plain_text() -> None:
+    assert dedash("常野数了三遍账。") == "常野数了三遍账。"
+
+
+# ---------- S-8-1 新守卫:每条一正一反 ----------
+
+def test_guard_no_new_dashes() -> None:
+    masked = "他走了——又回来。"
+    # 反:改后比原文多出破折号(dedash 后正常应为 0)
+    assert guard(masked, "他走了——回来——又走了。", []) == "破折号"
+    # 正:改后一个破折号都没有
+    assert guard(masked, "他走了，又回来。", []) == ""
+
+
+def test_guard_dash_not_flagged_when_fewer_than_source() -> None:
+    # 原文有破折号、改后减半:不拦(只拦「多于原文」)
+    assert guard("门开——风进来——灯灭了。", "门开，风就灌进来，灯也灭了。", []) == ""
+
+
+def test_guard_sentence_ends_lost_mid_paragraph() -> None:
+    masked = "他数账。他挑水。他喂马。天黑了才歇。"
+    # 反:原段 4 个句末标点,改后只剩 1 个(不到一半);段末句号还在,
+    # 先过「句末标点」规则,才轮到逐段计数的「段中丢句号」
+    assert guard(masked, "他数账，他挑水，他喂马，天黑了才歇。", []) == "段中丢句号"
+    # 正:4 → 2 个,正好一半(「不到一半」才拦),放行
+    assert guard(masked, "他数账。他挑水，他喂马，天黑了才歇。", []) == ""
+
+
+def test_guard_long_punctuation_free_run() -> None:
+    # 段末句号在、段内计数也不足 3,只有「80 字以上无句读长串」能拦:
+    # 逗号不算句读,整段只有句尾一个句号 = 一条 100 字长串
+    masked = "他数账，他挑水，他喂马。"
+    run = "他数账，" * 25  # 100 字,零句读,结尾落在逗号上
+    assert guard(masked, run, []) == "段中丢句号"
+    # 正:原文也有同量级长串时不拦
+    assert guard(run, run, []) == ""
+
+
+def test_guard_exemplar_leak() -> None:
+    exemplar = "他猫着腰钻进柴房，把半袋糙米挪到墙角，又用干草盖住了麻袋口。"
+    masked = "常野推开柴房的门，里面堆着喂马的草料。"
+    # 反:输出里搬了示范的片段(12 字以上),且这段不在输入里
+    leaked = "常野推开柴房的门，他猫着腰钻进柴房，把半袋糙米挪到墙角，又用干草盖住了麻袋口。"
+    assert guard(masked, leaked, [], exemplars=[exemplar]) == "示范泄漏"
+    # 正:输出与示范的重合片段同样出现在输入里(改写自输入,不是抄示范)
+    assert guard(masked, "常野推开柴房的门，里头堆着喂马的草料。", [], exemplars=[exemplar]) == ""
+
+
+def test_guard_short_exemplar_overlap_not_flagged() -> None:
+    # 重合不足 12 字(「草料的门口」5 字)不算泄漏
+    exemplar = "他把草料的门口堵上了。"
+    assert guard("常野看看草料的门口。", "常野看了看草料的门口。", [], exemplars=[exemplar]) == ""
+
+
+def test_guard_length_switch_for_deai() -> None:
+    """length=False 跳过篇幅带(去 AI 味按块改写,合法增删超过 0.7–1.7)。"""
+    masked = "他挑水，喂马，数账，天黑才歇。"
+    assert guard(masked, "他挑水，喂马。" * 8, []) == "篇幅"
+    assert guard(masked, "他挑水，喂马。" * 8, [], length=False) == ""
 
 
 # ---------- 回译全链:clean → guard → unmask ----------

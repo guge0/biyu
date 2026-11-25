@@ -17,17 +17,21 @@
     mode: "api",           // api | web
     windows: [],
     verdict: null,
-    smooth: null,
+    polish: null,          // {kept, tried}:第三层小手术的采用统计
     reportInfo: null,      // 网页复核:{red, total} 报告回读后
     hasKey: false,
     rewriter: null,
     terms: [],
     side: false,
     open: {}, reverted: {}, edited: {},
-    job: null, progress: null,
+    job: null, jobKind: null, progress: null,
     fixPending: false, estimate: null,
     webTargets: null,
+    deaiSep: null,          // 去AI味分块的分隔符(空行或换行),拼回全文用
   };
+
+  // 引擎层事件 layer → 给作者看的层名(降分进度逐窗显示)
+  const LAYER_NAMES = { zhzh: "中文改写", bt: "回译兜底", polish: "小手术" };
 
   // ---------- 基础工具 ----------
 
@@ -77,7 +81,9 @@
   const effective = (w) => (S.edited[w.order] != null ? S.edited[w.order]
     : S.reverted[w.order] ? w.before : w.after);
   function currentText() {
-    return S.windows.length ? S.windows.map(effective).join("") : input.value;
+    if (!S.windows.length) return input.value;
+    // 去AI味的块按段落分隔符切分、块本身不含分隔符,拼回时要补上
+    return S.windows.map(effective).join(S.deaiSep || "");
   }
   // quickcheck.js 的接线口:朱雀视图激活时取当前全文;未激活返回 null 走原逻辑
   window.__zqText = () => (S.stage === "empty" || !S.windows.length ? null : currentText());
@@ -108,23 +114,39 @@
     return "人工 " + pct("0") + "% · 疑似 " + pct("2") + "% · AI " + pct("1") + "%";
   }
 
+  // 改后各层窗数汇总:中文改写 X 窗、回译 Y 窗、需手改 Z 窗
+  function layerSummary() {
+    const kept = S.windows.filter((w) => w.changed && !isManual(w) && !S.reverted[w.order]);
+    return {
+      zhzh: kept.filter((w) => w.layer === "zhzh").length,
+      bt: kept.filter((w) => w.layer === "bt").length,
+      manual: S.windows.filter(isManual).length,
+    };
+  }
+
   function renderVerdict() {
     let verdict = "还没体检";
     let sub = "先看朱雀会把哪几段判成 AI，再决定要不要改。";
     if (S.stage === "fixing") {
-      verdict = "正在处理";
+      verdict = S.jobKind === "deai" ? "正在去 AI 味" : "正在处理";
       sub = "可以先去做别的，改完会停在这里。";
+    } else if (S.stage === "done" && S.jobKind === "deai") {
+      verdict = "去 AI 味完成";
+      const changed = S.windows.filter((w) => w.changed && !S.reverted[w.order]).length;
+      sub = "改好 " + changed + " 块、保留原文 " + (S.windows.length - changed) + " 块。通读一遍，顺手了再点「复制全文」。";
     } else if (S.mode === "web") {
       if (S.reportInfo) {
         verdict = S.reportInfo.red > 0
           ? "报告读完了：还有 " + S.reportInfo.red + " 段在 0.5 以上"
           : "报告读完了：全部片段都低于 0.5";
         sub = S.reportInfo.red > 0
-          ? "点「只重改还红的 " + S.reportInfo.red + " 段」再来一轮，或直接复制全文去发。"
+          ? "点「只重改还红的 " + S.reportInfo.red + " 段」再来一轮，或对仍红的段用回译再改；也可以直接复制全文去发。"
           : "这版可以去发了，发前记得通读一遍。";
       } else if (S.stage === "done") {
         verdict = "改完一轮，去朱雀测分";
-        sub = "点上面的「复制全文并打开朱雀」，测完把报告拖回来。";
+        const ls = layerSummary();
+        sub = "中文改写 " + ls.zhzh + " 窗、回译 " + ls.bt + " 窗、需手改 " + ls.manual + " 窗。"
+          + "点上面的「复制全文并打开朱雀」，测完把报告拖回来。";
       }
     } else if (S.stage === "checked" && S.verdict) {
       verdict = ratioLine(S.verdict.labels_ratio);
@@ -132,10 +154,10 @@
       sub = S.windows.length ? "共 " + S.windows.length + " 段，" + red + " 段会被判成 AI。" : "";
     } else if (S.stage === "done" && S.verdict) {
       verdict = ratioLine(S.verdict.labels_ratio);
-      const ok = S.windows.filter((w) => w.changed && !isManual(w) && !S.reverted[w.order]).length;
-      const manual = S.windows.filter(isManual).length;
-      const smoothNote = S.smooth && S.smooth.total ? " 顺稿采用 " + S.smooth.kept + "/" + S.smooth.total + " 窗。" : "";
-      sub = "改好 " + ok + " 段；" + (manual ? manual + " 段没过线，需要你手改。" : "没有需要手改的段。") + smoothNote;
+      const ls = layerSummary();
+      const polishNote = S.polish && S.polish.tried
+        ? " 小手术采用 " + S.polish.kept + "/" + S.polish.tried + " 窗。" : "";
+      sub = "中文改写 " + ls.zhzh + " 窗、回译 " + ls.bt + " 窗、需手改 " + ls.manual + " 窗。" + polishNote;
     }
     $("zq-verdict").textContent = verdict;
     $("zq-sub").textContent = sub;
@@ -167,15 +189,28 @@
       : (S.stage === "empty" ? "开始改写" : "再改一轮");
     $("zq-web-fix").textContent = webLabel;
     $("zq-web-fix").disabled = S.stage === "fixing";
+    // S-8-2 二轮回译:报告回读后仍红的窗才给,首轮仍是中文改写(zhzh)
+    const btReady = S.mode === "web" && S.reportInfo && S.reportInfo.red > 0 && S.stage !== "fixing";
+    $("zq-web-fix-bt").hidden = !btReady;
+    $("zq-web-fix-bt").textContent = "对仍红的 " + (S.reportInfo ? S.reportInfo.red : 0) + " 段用回译再改";
+    // 独立去 AI 味:不碰朱雀,随时可点(跑着别的任务时先等它完)
+    $("zq-deai").disabled = S.stage === "fixing";
+    $("zq-deai-copy").hidden = !(S.jobKind === "deai" && S.stage === "done");
     $("zq-badge").textContent = S.hasKey ? "已用自己的 Key" : "用你自己的 Key";
   }
 
   function progressLine() {
     const p = S.progress || {};
     if (p.phase === "outer") return "第 " + (p.pass_no || 1) + " 遍检查：共 " + (p.windows ?? "?") + " 窗，要改 " + (p.red ?? "?") + " 窗…";
-    if (p.phase === "window") return "正在改写并逐段复测：已过线 " + (p.pass || 0) + " 段，正在改第 " + (p.index || 1) + " 段（共 " + (p.total ?? "?") + " 段）…";
-    if (p.phase === "smooth") return "正在顺稿去翻译腔…";
-    if (p.phase === "done") return "改完了。";
+    if (p.phase === "window") {
+      const layer = LAYER_NAMES[p.layer] ? "（" + LAYER_NAMES[p.layer] + "）" : "";
+      if (S.jobKind === "deai") {
+        return "正在去 AI 味：第 " + ((p.done || 0) + 1) + " 块（共 " + (p.total ?? "?") + " 块）…";
+      }
+      return "正在改写并逐段复测：已过线 " + (p.pass || 0) + " 段，正在改第 " + (p.index || 1) + " 段" + layer + "（共 " + (p.total ?? "?") + " 段）…";
+    }
+    if (p.phase === "polish") return "正在顺稿去翻译腔…";
+    if (p.phase === "done") return S.jobKind === "deai" ? "去完了。" : "改完了。";
     return "正在启动改写…";
   }
 
@@ -232,7 +267,7 @@
     }
     if (done && w.changed && w.conf == null) {
       c.dataset.tone = "ok";
-      c.textContent = "已改写 · 待朱雀复测";
+      c.textContent = S.jobKind === "deai" ? "已去 AI 味" : "已改写 · 待朱雀复测";
       return c;
     }
     c.dataset.tone = toneOf(w.conf);
@@ -249,14 +284,18 @@
 
   function progressLabelFor(w) {
     if (S.stage !== "fixing" || !S.progress) return null;
-    const queue = S.mode === "web"
+    const queue = S.mode === "web" || S.jobKind === "deai"
       ? (S.webTargets || S.windows.map((x) => x.order))
       : S.windows.filter((x) => (x.conf ?? 0) >= FIXABLE).map((x) => x.order);
     const idx = queue.indexOf(w.order);
     if (idx < 0) return null;
     const done = S.progress.done || 0;
     if (idx < done) return "已处理";
-    if (idx === done) return "改写中…";
+    if (idx === done) {
+      const layer = LAYER_NAMES[S.progress.layer];
+      if (layer) return layer + "中…";       // 中文改写 / 回译兜底 / 小手术
+      return S.jobKind === "deai" ? "去味中…" : "改写中…";
+    }
     return "排队中";
   }
 
@@ -305,7 +344,12 @@
     head.appendChild(chipFor(w));
     if (S.stage === "fixing") {
       const p = progressLabelFor(w);
-      if (p) head.appendChild(el("span", "", p));
+      if (p) head.appendChild(el("span", "zq-layer-now", p));
+    }
+    // S-8-2 结果标注:回译稿醒目提示通读;小手术采用的小标
+    if (done && changed && !rev && !isManual(w)) {
+      if (w.layer === "bt") head.appendChild(el("span", "zq-bt-badge", "回译稿·请重点通读"));
+      if (w.polished) head.appendChild(el("span", "zq-polish-chip", "已小手术"));
     }
     if (showAfter) {
       const tools = el("div", "zq-win-tools");
@@ -388,7 +432,7 @@
 
   function applyFixResult(result) {
     S.verdict = result.verdict || null;
-    S.smooth = result.smooth || null;
+    S.polish = result.polish || null;
     const rowsByAfter = new Map();
     (result.rows || []).forEach((row) => rowsByAfter.set(row.after, row));
     S.windows = (result.windows || []).map((w) => {
@@ -399,13 +443,15 @@
           order: w.order, start: w.start, end: w.end, conf: w.conf,
           before: row.before, after: row.after, s0: row.s0, s1: row.s1,
           changed: row.after !== row.before, status: row.status,
+          layer: row.layer || "", polished: !!row.polished,
           attempts: row.attempts || [], risks: row.risks || [], best_try: row.best_try,
         };
       }
       return normalizeCheckWindow(w);
     });
     S.open = {}; S.reverted = {}; S.edited = {};
-    S.fixPending = false; S.estimate = null; S.progress = null; S.job = null;
+    S.fixPending = false; S.estimate = null; S.progress = null; S.job = null; S.jobKind = "fix";
+    S.deaiSep = null;
     S.stage = "done";
     render();
   }
@@ -423,12 +469,31 @@
         before: row.before, after: row.after, s0: row.s0, s1: row.s1,
         conf: changed ? null : (prevScores.get(normText(row.after)) ?? null),
         changed, status: row.status,
+        layer: row.layer || "", polished: !!row.polished,
         attempts: row.attempts || [], risks: row.risks || [], best_try: row.best_try,
       };
     });
     S.reportInfo = null;
     S.webTargets = null;
-    S.progress = null; S.job = null;
+    S.progress = null; S.job = null; S.jobKind = "fix-blind";
+    S.deaiSep = null;
+    S.open = {}; S.reverted = {}; S.edited = {};
+    S.stage = "done";
+    render();
+  }
+
+  function applyDeaiResult(result) {
+    // 去 AI 味结果也走改前/改后对照视图;没有测分,conf 一律空
+    S.windows = (result.rows || []).map((row) => ({
+      order: row.order, start: null, end: null,
+      before: row.before, after: row.after, s0: null, s1: null, conf: null,
+      changed: row.after !== row.before, status: row.status,
+      layer: row.layer || "", polished: !!row.polished,
+      attempts: row.attempts || [], risks: row.risks || [], best_try: row.best_try,
+    }));
+    S.verdict = null; S.polish = null;
+    S.reportInfo = null; S.webTargets = null;
+    S.progress = null; S.job = null; S.jobKind = "deai";
     S.open = {}; S.reverted = {}; S.edited = {};
     S.stage = "done";
     render();
@@ -480,6 +545,7 @@
       }
       const r = await postJson("/api/zhuque/fix", { text, terms: S.terms, estimate_only: false });
       S.job = r.job_id;
+      S.jobKind = "fix";
       S.stage = "fixing";
       S.progress = null;
       render();
@@ -489,21 +555,42 @@
     }
   }
 
-  async function blindFix() {
+  async function blindFix(layer) {
     const text = currentText().trim();
     if (!text) { showErrorZq("先在左边粘贴章节文本。"); return; }
     if (!S.rewriter || !S.rewriter.available) { showErrorZq("还没配降 AI 率用的模型 Key（推荐智谱 glm-5.2）：到书架页「Key / 模型」保存，或点「怎么申请？」看步骤。"); return; }
     try {
+      // 首轮中文改写(zhzh);报告回读后对仍红的窗二轮回译(bt)
       const r = await postJson("/api/zhuque/fix-blind", {
-        text, terms: S.terms, targets: S.webTargets,
+        text, terms: S.terms, targets: S.webTargets, layer: layer || "zhzh",
       });
       S.job = r.job_id;
+      S.jobKind = "fix-blind";
       S.stage = "fixing";
       S.progress = null;
       render();
       pollJob();
     } catch (e) {
       showErrorZq(e.message || String(e));
+    }
+  }
+
+  async function doDeai() {
+    const text = currentText().trim();
+    if (!text) { showErrorZq("先在左边粘贴章节文本。"); return; }
+    if (!S.rewriter || !S.rewriter.available) { showErrorZq("改写模型不可用：先去书架页右上「换 Key / 换模型」保存 Key。"); return; }
+    try {
+      // 后端按段落分隔符分块(有空调空行,没空退单换行),拼回全文用同一口径
+      S.deaiSep = text.includes("\n\n") ? "\n\n" : "\n";
+      const r = await postJson("/api/zhuque/deai", { text, terms: S.terms });
+      S.job = r.job_id;
+      S.jobKind = "deai";
+      S.stage = "fixing";
+      S.progress = null;
+      render();
+      pollJob();
+    } catch (e) {
+      showErrorZq(e.message || String(e)); // 402 时这里就是后端 detail 原文
     }
   }
 
@@ -514,6 +601,7 @@
         const r = await api("/api/zhuque/jobs/" + S.job);
         if (r.status === "running") {
           S.progress = r.progress;
+          if (r.kind) S.jobKind = r.kind;
           render();
           setTimeout(tick, 1500);
           return;
@@ -526,6 +614,7 @@
           return;
         }
         if (r.kind === "fix-blind") applyBlindResult(r.result);
+        else if (r.kind === "deai") applyDeaiResult(r.result);
         else applyFixResult(r.result);
       } catch (e) {
         showErrorZq(e.message || String(e));
@@ -556,10 +645,10 @@
     // 重新开始:把当前采用的全文(含手改)放回输入框,回本地扫描态
     input.value = currentText();
     S.stage = "empty";
-    S.windows = []; S.verdict = null; S.smooth = null; S.reportInfo = null;
+    S.windows = []; S.verdict = null; S.polish = null; S.reportInfo = null;
     S.open = {}; S.reverted = {}; S.edited = {};
-    S.fixPending = false; S.estimate = null; S.progress = null; S.job = null;
-    S.webTargets = null;
+    S.fixPending = false; S.estimate = null; S.progress = null; S.job = null; S.jobKind = null;
+    S.webTargets = null; S.deaiSep = null;
     render();
     updateCharCountLocal();
   }
@@ -568,10 +657,10 @@
     // 载入新文本(示例/粘贴/拖文件)或本地扫描时:只清朱雀态,不动输入框与画布
     if (S.stage === "empty") return;
     S.stage = "empty";
-    S.windows = []; S.verdict = null; S.smooth = null; S.reportInfo = null;
+    S.windows = []; S.verdict = null; S.polish = null; S.reportInfo = null;
     S.open = {}; S.reverted = {}; S.edited = {};
-    S.fixPending = false; S.estimate = null; S.progress = null; S.job = null;
-    S.webTargets = null;
+    S.fixPending = false; S.estimate = null; S.progress = null; S.job = null; S.jobKind = null;
+    S.webTargets = null; S.deaiSep = null;
     $("legend-zq").style.display = "none";
     $("legend-local").style.display = "flex";
     renderVerdict();
@@ -615,7 +704,12 @@
   $("zq-fix").addEventListener("click", onFixClick);
   $("zq-recheck").addEventListener("click", recheck);
   $("zq-reset").addEventListener("click", resetToInput);
-  $("zq-web-fix").addEventListener("click", blindFix);
+  $("zq-web-fix").addEventListener("click", () => blindFix("zhzh"));
+  $("zq-web-fix-bt").addEventListener("click", () => blindFix("bt"));
+  $("zq-deai").addEventListener("click", doDeai);
+  $("zq-deai-copy").addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(currentText()); } catch (_e) { /* 剪贴板被拒时靠手动复制 */ }
+  });
 
   $("zq-key-form").addEventListener("submit", async (event) => {
     event.preventDefault();

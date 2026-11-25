@@ -114,6 +114,13 @@
                 <label><input type="radio" name="zq-mode" value="web"> <span><b>我去朱雀网页测</b>：免费，每轮要手动贴一次</span></label>
               </div>
 
+              <!-- S-8-2 独立去 AI 味(不碰朱雀、不需要朱雀 Key,放降 AI 率旁边) -->
+              <div class="zq-deai-row">
+                <button class="b2 bs" type="button" id="zq-deai">✨ 去 AI 味</button>
+                <button class="b3 bs" type="button" id="zq-deai-copy" hidden>📋 复制全文</button>
+              </div>
+              <p class="aside-hint" style="margin:4px 0 0">去 AI 味只让文字读着更顺、少机器腔，不保证降低检测分；不碰朱雀、不用朱雀 Key，用的是上面显示的改写模型。</p>
+
               <!-- 自动模式 -->
               <div id="zq-api">
                 <form id="zq-key-form" class="zq-key-form" hidden>
@@ -136,7 +143,8 @@
                 <ol class="zq-steps">
                   <li>先让笔驭把叙述改一遍。<div class="zq-actions"><button class="b1 bs" type="button" id="zq-web-fix">开始改写</button></div></li>
                   <li>改完后一键去朱雀测分。<div class="zq-actions"><a class="b2 bs" id="zq-open" href="https://matrix.tencent.com/ai-detect/ai_gen" target="_blank" rel="noopener">复制全文并打开朱雀</a></div><span class="aside-hint">全文已在剪贴板，到朱雀页面粘贴、点检测、下载报告。</span></li>
-                  <li>把朱雀的报告交回来，笔驭只重改还红的段。<div class="zq-drop" id="zq-drop"><span id="zq-drop-label">把报告 PDF 拖到这里，或</span> <button class="b3 bs" type="button" id="zq-pick">选择文件</button><input id="zq-file" type="file" accept="application/pdf,.pdf" hidden></div></li>
+                  <li>把朱雀的报告交回来，笔驭只重改还红的段。<div class="zq-drop" id="zq-drop"><span id="zq-drop-label">把报告 PDF 拖到这里，或</span> <button class="b3 bs" type="button" id="zq-pick">选择文件</button><input id="zq-file" type="file" accept="application/pdf,.pdf" hidden></div>
+                    <div class="zq-actions"><button class="b1 bs" type="button" id="zq-web-fix-bt" hidden>对仍红的段用回译再改</button></div></li>
                 </ol>
                 <p class="aside-hint" id="zq-web-progress" role="status" aria-live="polite" style="margin:8px 0 0" hidden></p>
                 <p class="aside-hint" style="margin:8px 0 0">一般两三轮到 0。</p>
