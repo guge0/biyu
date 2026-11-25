@@ -15,8 +15,8 @@ from biyu.prompts.chapter_writer import build_layer3_constraints
 @pytest.mark.parametrize("tier", [2000, 3000, 4000])
 def test_layer3_renders_each_tier_as_floor(tier: int) -> None:
     result = build_layer3_constraints(min_words=tier)
-    assert f"本章至少 {tier} 中文字符" in result
-    assert "上不设限" in result
+    assert f"本章不少于 {tier} 字" in result
+    assert "不超过" not in result
 
 
 def test_write_cmd_forwards_min_words_to_pipeline(tmp_path, monkeypatch) -> None:

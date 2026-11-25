@@ -118,5 +118,5 @@ def test_signed_writer_and_planning_text_installed_verbatim() -> None:
     assert "返修模式只有两种：" in writer
     assert "【深度重写】以作者整体意见统领重写" in writer
     assert "不得新增方案之外的重要事件、设定、人物决定或伏笔回收" in writer
-    assert "6. **不要把普通表演动作写成验收计数。**" in planning
-    assert "普通表演动作写作用与情绪变化，不写第几次动作或必须出现几次" in planning
+    assert "不发明细节:道具、数字、台词、人物的小动作" in planning
+    assert "必须发生:最多 5 条" in planning

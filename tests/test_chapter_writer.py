@@ -189,13 +189,13 @@ def test_layer2_no_constraint_keywords():
 
 
 def test_layer3_contains_punctuation_rule():
-    """Layer 3 必须包含破折号约束与句式红线(2026-10 融合轮改口径)。"""
+    """Layer 3 必须包含破折号约束与句式红线(2026-11 S-9 签字口径:正文一律不用破折号)。"""
     result = build_layer3_constraints(min_words=3000)
     assert "破折号" in result
-    assert "仅限对话戛然停顿" in result
-    assert "全章最多 2 处" in result
-    assert "本章至少 3000" in result
-    assert "不得为凑字数" in result
+    assert "正文不用破折号" in result
+    assert "不是 X，而是 Y" in result
+    assert "本章不少于 3000" in result
+    assert "不加新事件" in result
 
 
 def test_present_characters_injected_into_layer2():
@@ -303,4 +303,4 @@ def test_full_prompt_layers_in_order():
     )
 
     # 收尾指令
-    assert "现在开始写第 1 章正文" in user_prompt
+    assert "现在写第 1 章正文" in user_prompt

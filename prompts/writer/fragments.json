@@ -1,10 +1,10 @@
 {
   "markers": {
-    "layer1_begin": "【Layer 1 硬规则 - 违反这些 = 废稿】",
+    "layer1_begin": "【Layer 1 基本事实】",
     "layer1_end": "【Layer 1 结束】",
-    "layer2_begin": "【Layer 2 导演分镜与上下文 — 按此执行】",
+    "layer2_begin": "【Layer 2 本书资料、作者细纲与导演场景表】",
     "layer2_end": "【Layer 2 结束】",
-    "layer3_begin": "【Layer 3 写作约束 - 写完前自检】",
+    "layer3_begin": "【Layer 3 写作约束】",
     "layer3_end": "【Layer 3 结束】"
   },
   "layer1": {
@@ -13,10 +13,9 @@
     "death_rule": "{index}. 已死亡角色不得有任何活动、台词、动作"
   },
   "layer2_intro": [
-    "下面这份【导演分镜】是导演(Architect)读了作者的章节细纲之后,为本章写的分镜脚本。",
-    "戏核 = 本章存在的唯一理由,所有笔墨围绕戏核展开。",
-    "笔墨分配:关键处展开(文笔细一些),过渡处节制(简练带过)。",
-    "sub-md(剧情简介)已由 Architect 转化为本分镜,你不需要再读 sub-md。"
+    "下面是本书资料、作者细纲和导演场景表。",
+    "作者细纲是路线，以它为准；导演场景表说明这章为了什么、哪场最重，供参考。",
+    "资料是备查的，不必每条都写进正文。"
   ],
   "sections": {
     "worldbook": "# 世界观",
@@ -25,9 +24,9 @@
     "truth": "# 故事现状",
     "prev_tail": "# 上一章末段(衔接锚点)",
     "history": "# 历史章节",
-    "outline": "# 创作者细纲",
+    "outline": "# 导演场景表（参考）",
     "planning": "# 本章规划",
-    "author_outline": "# 本章作者细纲（作者原话；与导演方案不一致时，以本细纲为准）"
+    "author_outline": "# 本章作者细纲（作者原话，以此为准）"
   },
   "tier_labels": {
     "protagonist": "主角",
@@ -61,5 +60,9 @@
     "with_state": "- {name}（{state}）",
     "without_state": "- {name}"
   },
-  "final_instruction": "现在开始写第 {chapter_num} 章正文。只输出正文,不要输出元信息。"
+  "final_instruction": "现在写第 {chapter_num} 章正文。只输出正文。",
+  "author_details": {
+    "writer": "本章作者定了细节：细纲里写出的具体细节（动作、物件、原话、数字、先后顺序）都是定稿，原样用上，不换说法、不挪位置、不加修饰。你只写把它们连起来的部分，连接处用最朴素的叙述，不另造抢戏的细节。",
+    "director": "6. 本书作者在细纲里亲自定了细节，那些细节已是定稿；场景表不另加节拍，也不改写作者给的细节。"
+  }
 }

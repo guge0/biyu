@@ -25,9 +25,8 @@ def test_writer_prompt_uses_floor_only_length_contract() -> None:
     """2026-10 老板裁定:篇幅只设下限、不设上限,档位即本章下限。"""
     text = open("prompts/writer/layer3.md", encoding="utf-8").read()
 
-    assert "本章至少 {min_words}" in text
-    assert "上不设限" in text
-    assert "不得为凑字数" in text
+    assert "本章不少于 {min_words} 字" in text
+    assert "不加新事件" in text
     assert "max_words" not in text
     assert "不超过" not in text
 
