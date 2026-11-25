@@ -2,8 +2,8 @@
 
 
 /* ===== 读稿页收敛(2026-08-08)读稿定夺屏局部样式 ===== */
-/* A3 禁用外观:透明描边(覆盖全局 .b1:disabled 灰底),仅本屏 */
-.workbench .b1:disabled{background:transparent!important;border:1px solid var(--rule);color:var(--ink-soft)}
+/* A3 禁用外观(透明描边)已按 S-10 段3b 工单第1条退役：主按钮禁用态回到全局实心灰底
+   （biyu-paper.css .b1:disabled），「采用」等主操作不再变成幽灵描边钮。 */
 .planning-empty-note{font-size:14px;color:var(--ink-mute);line-height:1.9;border:1px dashed var(--rule);border-radius:8px;padding:20px;margin:10px 0;max-width:34em}
 .architect-cost-line{margin:12px 0 2px;font-size:13px;color:var(--ink-soft)}.architect-cost-line em{font-style:normal;color:var(--ink);font-weight:500}
 .planning-run-card{background:var(--surface-subtle);border:1px solid var(--rule);border-radius:10px;padding:16px 18px;margin:12px 0;max-width:34em}.planning-run-card h3,.planning-reject-card h3{margin:0 0 8px;font-size:14px;font-weight:500}.planning-run-card ol{margin:0;padding-left:18px;color:var(--ink-soft);font-size:13px;line-height:1.9}.planning-run-card li.now{color:var(--ink);font-weight:500}.planning-run-card p{margin:10px 0 0;font-size:12px;color:var(--ink-mute)}
