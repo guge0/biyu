@@ -177,6 +177,90 @@ button.b2.current::before,button.b2[aria-pressed="true"]::before{ font-weight:50
 .report-pane li,.report-pane p,.issue-detail blockquote{ overflow-wrap:anywhere; }
 .read-margin .num{ line-height:1.2; }
 
+/* ---------- 3a-5 全站弹窗与抽屉统一（样张_Key配置 硬规则） ----------
+   宽 min(640px, 100vw-32px)；高 max-height calc(100vh - 48px)；
+   标题与按钮行常驻（sticky 顶/底），中间内容滚动；
+   玻璃面 --glass-strong，遮罩统一轻模糊（纸感蒙层退役）。 */
+.modal-overlay,.biyu-modal-overlay,.workbench .modal-overlay{
+  background:rgba(24, 20, 16, 0.22);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+}
+.modal,.setup-card,.biyu-modal,.import-modal,
+.adopt-slip,.regenerate-slip,.history-slip{
+  width:min(640px, 100vw - 32px);max-width:640px;max-height:calc(100vh - 48px);
+  background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:var(--r-l);
+  box-shadow:var(--glass-shadow);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
+/* 通用卡（h3 题头 + 内容 + .modal-actions）：题头/按钮行 sticky 常驻，中间滚 */
+.modal{ display:flex;flex-direction:column;overflow-y:auto; }
+.modal h3{
+  position:sticky;top:0;z-index:1;margin:-28px -30px 10px;padding:26px 30px 10px;
+  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  border-radius:var(--r-l) var(--r-l) 0 0;
+}
+.modal .modal-actions{
+  position:sticky;bottom:0;z-index:1;margin:auto -30px -28px;padding:16px 30px 26px;margin-top:auto;
+  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  border-top:1px solid var(--rule-soft);border-radius:0 0 var(--r-l) var(--r-l);
+}
+.modal > p{ flex:none; }
+/* setup-card（新建书/备份/领Key锦囊/钤印/回收站确认等表单卡，h2 题头） */
+.setup-card{ display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden; }
+.setup-card h2{
+  position:sticky;top:0;z-index:1;margin:-28px -30px 10px;padding:26px 30px 10px;
+  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  border-radius:var(--r-l) var(--r-l) 0 0;
+}
+.setup-card .modal-actions{
+  position:sticky;bottom:0;z-index:1;margin:auto -30px -28px;padding:16px 30px 26px;margin-top:auto;
+  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  border-top:1px solid var(--rule-soft);border-radius:0 0 var(--r-l) var(--r-l);
+}
+/* Key / 模型连接（#setup-overlay）：样张_Key配置 的排布——题头与按钮行常驻，表体滚 */
+#setup-overlay .setup-card{
+  width:min(640px, 100vw - 32px);max-width:640px;max-height:calc(100vh - 48px);
+  border-radius:var(--r-l);background:var(--glass-strong);border:1px solid var(--glass-border);
+  box-shadow:var(--glass-shadow);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
+#setup-overlay .setup-card h2{
+  position:sticky;top:0;z-index:1;margin:-28px -30px 10px;padding:26px 44px 10px 30px;
+  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  border-radius:var(--r-l) var(--r-l) 0 0;
+}
+#setup-overlay .setup-card .modal-actions{
+  position:sticky;bottom:0;z-index:1;margin:auto -30px -28px;padding:16px 30px 26px;
+  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  border-top:1px solid var(--rule-soft);border-radius:0 0 var(--r-l) var(--r-l);
+}
+/* 备份面板（原 520 宽、方角硬编码一并进统一规则） */
+.setup-card.backup-panel{ width:min(640px, 100vw - 32px);max-width:640px;border-radius:var(--r-l)!important; }
+/* 壳弹窗（导入向导 / 反馈）：shell.css 旧 88vh 限制并入统一规则 */
+.biyu-modal{ display:flex;flex-direction:column;overflow-y:auto;max-height:calc(100vh - 48px);padding:24px 26px; }
+.biyu-modal h2{
+  position:sticky;top:0;z-index:1;margin:-24px -26px 12px;padding:22px 26px 12px;
+  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  border-radius:var(--r-l) var(--r-l) 0 0;
+}
+.biyu-modal .biyu-modal-actions{
+  position:sticky;bottom:0;z-index:1;margin:auto -26px -24px;padding:14px 26px 22px;margin-top:auto;
+  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  border-top:1px solid var(--rule-soft);border-radius:0 0 var(--r-l) var(--r-l);
+}
+/* 工作台三张专用 slip：结构已合（头/尾 flex:none + 列表内滚），并入统一尺寸与玻璃面 */
+.workbench .adopt-slip{ width:min(640px, 100vw - 32px);max-height:calc(100vh - 48px);background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:var(--r-l);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2); }
+.workbench .regenerate-slip{ width:min(640px, 100vw - 32px);background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:var(--r-l);box-shadow:var(--glass-shadow);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2); }
+.workbench .history-slip{ width:min(640px, 100vw - 32px);max-height:calc(100vh - 48px);background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:var(--r-l);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2); }
+.workbench .regenerate-slip.reading-paper,.workbench .history-slip.reading-paper,.workbench .run-card.reading-paper,.workbench .reading-failure-card.reading-paper{ background:var(--glass-strong); }
+/* 外观抽屉（另定宽 400，不超屏；限高计入 72px 顶偏移；玻璃面） */
+.biyu-theme-drawer{
+  top:72px;max-height:calc(100vh - 96px);
+  background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:var(--r-l);
+  box-shadow:var(--glass-shadow);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
+
 /* ---------- 红线：正文读稿区永远不透明纸底，不加玻璃 ----------
    .prose/#chapter-read/#official-chapter 的背景与透明度在此重申，
    任何后续玻璃规则都不得进入正文阅读区（DESIGN §0.8）。 */
