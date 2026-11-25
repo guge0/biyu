@@ -781,7 +781,7 @@
 
     // 预览候选名
     _namingApplyPreview.innerHTML =
-      '<div style="padding:10px 14px;background:rgba(0,0,0,0.04);border-radius:4px;font-size:15px;font-weight:600;color:var(--seal);">' +
+      '<div style="padding:10px 14px;background:var(--surface-subtle);border-radius:var(--r-m);font-size:15px;font-weight:500;color:var(--seal);">' +
       esc(name) + '</div>';
 
     // 加载书列表(若未缓存)

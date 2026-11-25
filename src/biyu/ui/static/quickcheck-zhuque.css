@@ -1,6 +1,6 @@
 /* S-6 · 朱雀体检与降分(快检台②卡 + 左栏分段视图)。样式照图纸 _s6_ref/prototype 的 zq- 段。 */
 
-.zq-verdict{font-family:var(--display-font);font-size:19px;font-weight:600;color:var(--ink);margin:2px 0}
+.zq-verdict{font-family:var(--display-font);font-size:19px;font-weight:500;color:var(--ink);margin:2px 0}
 .zq-mode{display:flex;flex-direction:column;gap:6px;margin:10px 0;font-size:13px}
 .zq-mode label{display:flex;align-items:flex-start;gap:8px;cursor:pointer}
 .zq-steps{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--ink-soft);display:flex;flex-direction:column;gap:8px}
@@ -18,7 +18,7 @@
 .zq-win[data-tone="ok"]{border-color:#BFD9D1}
 .zq-win[data-tone="amber"]{border-color:#E3CFA8}
 .zq-win-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;font-family:var(--sans);font-size:12px;color:var(--ink-soft)}
-.zq-chip{font-weight:600;padding:2px 10px;border-radius:999px}
+.zq-chip{font-weight:500;padding:2px 10px;border-radius:999px}
 .zq-chip[data-tone="red"]{background:var(--mark-bg);color:#7E3626}
 .zq-chip[data-tone="deep"]{background:#7E3626;color:#FAF8F3}
 .zq-chip[data-tone="ok"]{background:var(--ok-bg);color:var(--ok)}
@@ -27,7 +27,7 @@
 .zq-win p{margin:0 0 .2em}
 .zq-before{background:var(--surface-subtle);border:1px solid var(--rule-soft);border-radius:var(--r-sm);padding:8px 12px;margin:4px 0 8px;color:var(--ink-soft);font-size:15.5px}
 .zq-before-label,.zq-after-label{font-family:var(--sans);font-size:12px;margin-bottom:2px}
-.zq-after-label{color:var(--ok);font-weight:600}
+.zq-after-label{color:var(--ok);font-weight:500}
 .zq-fail{background:var(--amber-bg);color:#6B4410;border-radius:var(--r-sm);padding:8px 12px;font-family:var(--sans);font-size:13px;margin-top:6px}
 .zq-fail .zq-best{margin-top:6px;white-space:pre-wrap;font-family:var(--serif);font-size:15px;color:var(--ink-soft)}
 .zq-lock{color:var(--ink-mute)}
@@ -40,7 +40,18 @@
 a.b1,a.b2{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 
 /* S-8-2 降分进度逐窗层标签 / 结果标注 */
-.zq-layer-now{font-weight:600;color:var(--ink)}
-.zq-bt-badge{font-family:var(--sans);font-weight:700;font-size:12px;padding:2px 10px;border-radius:999px;background:#7E3626;color:#FAF8F3}
+.zq-layer-now{font-weight:500;color:var(--ink)}
+.zq-bt-badge{font-family:var(--sans);font-weight:500;font-size:12px;padding:2px 10px;border-radius:999px;background:#7E3626;color:#FAF8F3}
 .zq-polish-chip{font-family:var(--sans);font-size:11.5px;padding:1px 8px;border-radius:999px;border:1px solid var(--rule-strong);color:var(--ink-mute)}
 .zq-deai-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule-soft)}
+
+/* S-10 段3b 工单第2条：快检台是内测主菜——降分标记 7 套主题都要看得清。
+   亮色档沿用原值；暗色下 mark-bg/amber-bg 换深底，写死的深棕字（#7E3626/#6B4410）
+   在深底上对比度不足，换令牌派生的亮字；窗线亮色粉/青/杏同样换主题令牌半透明。 */
+html[data-theme="dark"] .zq-win[data-tone="red"]{border-color:color-mix(in srgb, var(--mark) 45%, transparent)}
+html[data-theme="dark"] .zq-win[data-tone="ok"]{border-color:color-mix(in srgb, var(--ok) 45%, transparent)}
+html[data-theme="dark"] .zq-win[data-tone="amber"]{border-color:color-mix(in srgb, var(--amber) 45%, transparent)}
+html[data-theme="dark"] .zq-chip[data-tone="red"]{color:color-mix(in srgb, var(--mark) 72%, white)}
+html[data-theme="dark"] .zq-chip[data-tone="amber"]{color:var(--amber)}
+html[data-theme="dark"] .zq-fail{color:var(--amber)}
+html[data-theme="dark"] .zq-risk-note{color:var(--amber)}

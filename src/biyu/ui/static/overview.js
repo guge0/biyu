@@ -342,7 +342,7 @@ function matrixCell(item, type) {
   const head = document.createElement('div');
   head.style.cssText = 'display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px';
   const no = document.createElement('span');
-  no.style.cssText = 'font-family:var(--display-font);font-size:14.5px;font-weight:600;color:var(--ink)';
+  no.style.cssText = 'font-family:var(--display-font);font-size:14.5px;font-weight:500;color:var(--ink)';
   no.textContent = `第 ${item.chapter} 章`;
   head.append(no);
   const chapterCosts = (currentMetrics && currentMetrics.chapter_costs) || {};

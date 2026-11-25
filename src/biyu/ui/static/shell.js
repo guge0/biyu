@@ -864,13 +864,13 @@
       .map((b) => '<option value="' + String(b.id).replace(/"/g, '&quot;') + '">' +
         (b.display_name || b.title || b.name) + '</option>')
       .join('');
-    return '<label style="display:block;font-size:12px;font-weight:600;color:var(--ink-mute);margin-bottom:4px">导入到哪本书</label>' +
+    return '<label style="display:block;font-size:12px;font-weight:500;color:var(--ink-mute);margin-bottom:4px">导入到哪本书</label>' +
       '<select id="biyu-import-book" class="biyu-contact-textarea" style="height:34px;margin-bottom:10px">' + options + '</select>';
   }
 
   function importIdentityBlock() {
     return '<div style="background:var(--surface-subtle);border:1px solid var(--rule);border-radius:8px;padding:10px 14px;margin-bottom:12px">' +
-      '<div style="font-size:12.5px;font-weight:600;margin-bottom:6px">这批稿件是什么身份？（必须选择）</div>' +
+      '<div style="font-size:12.5px;font-weight:500;margin-bottom:6px">这批稿件是什么身份？（必须选择）</div>' +
       '<label style="display:flex;gap:8px;align-items:center;font-size:13px;margin-bottom:4px">' +
       '<input type="radio" name="biyu-import-identity" value="candidate" checked><span><strong>作为候选稿</strong> —— 进入待定夺，可继续审读、批注和返修</span></label>' +
       '<label style="display:flex;gap:8px;align-items:center;font-size:13px">' +
@@ -886,7 +886,7 @@
     if (tab === 'legacy') {
       body.innerHTML =
         '<div style="background:var(--surface-subtle);border-radius:8px;padding:12px 14px;margin-bottom:12px">' +
-        '<p style="font-weight:600;margin:0 0 8px">自动识别旧版 biyu 数据根目录并一键迁移（纯文件复制，不调模型、不改源目录）</p>' +
+        '<p style="font-weight:500;margin:0 0 8px">自动识别旧版 biyu 数据根目录并一键迁移（纯文件复制，不调模型、不改源目录）</p>' +
         '<div class="row" style="gap:8px;margin-bottom:8px">' +
         '<input id="biyu-legacy-root" class="biyu-contact-textarea" style="flex:1" placeholder="旧版数据根目录，例如 E:\\biyu_v1_data\\books">' +
         '<button type="button" class="b2 bs" id="biyu-legacy-scan">重新识别</button></div>' +
@@ -900,7 +900,7 @@
     const targetSelect = await importTargetSelect();
     const isPaste = tab === 'paste';
     body.innerHTML = targetSelect +
-      '<label style="display:block;font-size:12px;font-weight:600;color:var(--ink-mute);margin-bottom:4px">从第几章开始</label>' +
+      '<label style="display:block;font-size:12px;font-weight:500;color:var(--ink-mute);margin-bottom:4px">从第几章开始</label>' +
       '<input id="biyu-import-chapter" type="number" min="1" value="1" class="biyu-contact-textarea" style="width:90px;height:34px;margin-bottom:12px">' +
       (isPaste
         ? '<textarea id="biyu-import-text" class="biyu-contact-textarea" rows="6" placeholder="粘贴单章；多章请用「第N章」作为明确分隔"></textarea>'
@@ -1003,7 +1003,7 @@
         document.getElementById('biyu-legacy-commit').disabled = true;
         return;
       }
-      result.innerHTML = '<div style="color:var(--ok);font-weight:600;margin-bottom:6px">✓ 已识别 ' + body.count + ' 本旧版作品：</div>' +
+      result.innerHTML = '<div style="color:var(--ok);font-weight:500;margin-bottom:6px">✓ 已识别 ' + body.count + ' 本旧版作品：</div>' +
         body.books.map((b) =>
           '<label style="display:flex;gap:8px;align-items:center;font-size:13px;padding:2px 0">' +
           '<input type="checkbox" class="biyu-legacy-pick" value="' + b.id + '" checked>' +
@@ -1094,7 +1094,7 @@
         '<h2 id="biyu-contact-title">' + shellIcon('chat') + ' 笔驭 (biyu) 作者交流群与问题反馈</h2>' +
         '<div class="card" style="background:var(--surface-subtle);margin-bottom:14px">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px">' +
-        '<div><div style="font-size:15px;font-weight:600">官方内测作者交流 QQ 群：<code style="color:var(--mark);font-size:15px">892467108</code></div>' +
+        '<div><div style="font-size:15px;font-weight:500">官方内测作者交流 QQ 群：<code style="color:var(--mark);font-size:15px">892467108</code></div>' +
         '<div style="font-size:12.5px;color:var(--ink-mute)">群里交流用法、反馈问题，开发者会在群里答疑；使用资料会陆续在群里分享</div></div>' +
         '<button type="button" class="b2 bs" id="biyu-contact-copy">复制群号</button></div>' +
         '<div style="font-size:12px;color:var(--ink-soft);border-top:1px solid var(--rule);padding-top:8px">' +

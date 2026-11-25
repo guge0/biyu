@@ -779,7 +779,7 @@
     scroll.innerHTML =
       '<span class="badge ' + (seal.achieved ? "need" : "") + '" style="margin-bottom:8px">' +
       (seal.achieved ? "里程碑已达成" : "尚未达成 · 继续耕读") + "</span>" +
-      '<h3 style="font-family:var(--display-font);font-size:23px;font-weight:600;color:#262018;margin:4px 0 6px">' + seal.title + "</h3>" +
+      '<h3 style="font-family:var(--display-font);font-size:23px;font-weight:500;color:var(--ink);margin:4px 0 6px">' + seal.title + "</h3>" +
       '<p style="font-size:13px;color:#5A5144;margin:0 0 12px">' + seal.detail + "</p>" +
       sealSvg(SEAL_CHARS[key]) +
       '<p style="font-family:var(--serif);font-size:14.5px;color:#2E2820;margin:8px auto 12px;max-width:28em;line-height:1.75">' + SEAL_QUOTES[key] + "</p>" +
