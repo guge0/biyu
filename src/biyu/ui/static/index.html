@@ -7,7 +7,7 @@
   <title>笔驭作者工作台 · 书架</title>
   <link rel="stylesheet" href="/styles.css?v=a1f1bf55">
   <link rel="stylesheet" href="/biyu-paper.css?v=ecdbc72d">
-  <link rel="stylesheet" href="/shell.css?v=f47278a2">
+  <link rel="stylesheet" href="/shell.css?v=f47278a2"><link rel="stylesheet" href="/glass.css?v=s3a1">
 </head>
 <body>
   <!-- 旧版顶部导航：S-1 起由 shell.js 接管渲染；此块保留导航契约锚点，运行时隐藏 -->
@@ -52,8 +52,8 @@
             <span id="welcome-text" style="margin-left:6px"></span>
           </div>
           <div class="row" style="gap:8px">
-            <button id="key-guide-button" class="b2 bs" type="button" style="border-color:var(--mark);color:var(--mark);font-weight:600">🔑 30 秒傻瓜式领 Key 锦囊</button>
-            <a id="welcome-quickcheck-link" class="b2 bs" href="/quickcheck.html" style="text-decoration:none">⚡ 免 Key 查 AI 味</a>
+            <button id="key-guide-button" class="b2 bs" type="button" style="border-color:var(--mark);color:var(--mark);font-weight:500"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-key"/></svg> 30 秒傻瓜式领 Key 锦囊</button>
+            <a id="welcome-quickcheck-link" class="b2 bs" href="/quickcheck.html" style="text-decoration:none"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-bolt"/></svg> 免 Key 查 AI 味</a>
             <button id="welcome-manual-button" class="b3 bs" type="button">手动建书</button>
           </div>
         </section>
@@ -62,12 +62,12 @@
         <section id="homestead-card" class="calendar-strip-card" hidden>
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px">
             <div class="row" style="gap:10px">
-              <span style="font-family:var(--display-font);font-size:17px;font-weight:600;color:var(--ink)">📜 书斋耕读历 · 作者主权与码字足迹</span>
+              <span style="font-family:var(--display-font);font-size:17px;font-weight:500;color:var(--ink)"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-summary"/></svg> 书斋耕读历 · 作者主权与码字足迹</span>
               <span class="badge ok" id="homestead-streak">连续耕读 0 天</span>
               <span class="badge need" id="homestead-intercepted">累计拦截 0 处 AI 翻译腔与套话</span>
             </div>
             <div class="row" style="gap:8px">
-              <button id="seal-open-button" class="b1 bs" type="button" style="background:var(--mark)">💮 朱批钤印 · 里程碑印章 (<span id="seal-count">0</span>枚)</button>
+              <button id="seal-open-button" class="b1 bs" type="button" style="background:var(--mark)"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-award"/></svg> 朱批钤印 · 里程碑印章 (<span id="seal-count">0</span>枚)</button>
               <button id="homestead-toggle" class="b3 bs" type="button" aria-expanded="true">收起日历 ▴</button>
             </div>
           </div>
@@ -83,7 +83,7 @@
         <div class="row" id="settings-entry" style="margin:0 0 14px">
           <button id="connection-settings-button" class="b2 bs" type="button" aria-label="Key 与模型设置">Key / 模型</button>
           <button id="backup-settings-button" class="b2 bs" type="button">备份</button>
-          <button id="import-works-button" class="b2 bs biyu-import-wizard-trigger" type="button" title="粘贴正文 / 本地 TXT 批量 / 旧版 biyu 数据根迁移">📥 导入作品</button>
+          <button id="import-works-button" class="b2 bs biyu-import-wizard-trigger" type="button" title="粘贴正文 / 本地 TXT 批量 / 旧版 biyu 数据根迁移"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-import"/></svg> 导入作品</button>
           <button id="manual-create-button" class="b2 bs" type="button" title="不开 AI，直接建立本地写作档案">手动建书</button>
           <button id="version-badge" class="env-badge env-test" type="button" title="当前运行版本" aria-expanded="false" aria-controls="version-details">
             <span class="env-dot"></span>
@@ -124,8 +124,8 @@
             <p class="ed">所有书籍设定、细纲契约与正文均保存在本机落盘目录（见上方路径），不绑云端、随时拷走。</p>
             <div class="row" style="justify-content:center;gap:12px;flex-wrap:wrap">
               <button type="button" class="b1" id="create-book-empty-button">+ 新建第一本书（AI 开书向导）</button>
-              <button type="button" class="b2" id="manual-create-empty-button">✎ 跳过 AI，手动建空白书</button>
-              <a class="b2 biyu-import-wizard-trigger" id="import-empty-link" href="#" style="text-decoration:none">📥 导入已有作品 / 旧版迁移</a>
+              <button type="button" class="b2" id="manual-create-empty-button"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-rename"/></svg> 跳过 AI，手动建空白书</button>
+              <a class="b2 biyu-import-wizard-trigger" id="import-empty-link" href="#" style="text-decoration:none"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-import"/></svg> 导入已有作品 / 旧版迁移</a>
             </div>
           </div>
 
@@ -231,7 +231,7 @@
   <!-- S-3 领 Key 锦囊（图纸 P0-2D：三渠道图文 + 粘贴保存走既有 setup） -->
   <div id="key-guide-overlay" class="modal-overlay" hidden>
     <section class="setup-card" role="dialog" aria-modal="true" aria-labelledby="key-guide-heading" style="max-width:620px">
-      <h2 id="key-guide-heading">🔑 怎么申请和填写 Key</h2>
+      <h2 id="key-guide-heading"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-key"/></svg> 怎么申请和填写 Key</h2>
       <p class="status-text" style="margin:0 0 12px">笔驭用你自己的 Key 直连模型服务商：书稿从你的电脑直接发往服务商，笔驭不经手、不赚差价。写作用 DeepSeek 或智谱任选其一；降 AI 率用智谱；体检用朱雀。</p>
       <div class="row" role="tablist" style="margin-bottom:14px">
         <button class="b2 bs key-guide-tab current" data-tab="deepseek" type="button">① DeepSeek（写作）</button>
@@ -261,8 +261,8 @@
       <div class="seal-scroll-box" id="seal-scroll"></div>
       <div class="modal-actions">
         <button id="seals-close" class="btn-secondary" type="button">收起印匣</button>
-        <button id="seal-copy" class="btn-secondary" type="button">📋 复制群晒单文案</button>
-        <button id="seal-save-poster" class="btn-primary" type="button">🖼 保存纪念日签海报</button>
+        <button id="seal-copy" class="btn-secondary" type="button"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-clipboard"/></svg> 复制群晒单文案</button>
+        <button id="seal-save-poster" class="btn-primary" type="button"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-image"/></svg> 保存纪念日签海报</button>
       </div>
     </section>
   </div>

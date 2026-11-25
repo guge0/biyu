@@ -50,7 +50,7 @@
       showError(exc.message || String(exc));
     } finally {
       $("qc-scan-btn").disabled = false;
-      $("qc-scan-btn").textContent = "⚡ 立即体检（本地 0 成本）";
+      $("qc-scan-btn").innerHTML = '<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-bolt"/></svg> 立即体检（本地 0 成本）';
     }
   }
 

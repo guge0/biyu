@@ -1,0 +1,99 @@
+/* ==========================================================================
+   笔驭 · S-10 段3a 方向 B 玻璃态公共层
+   视觉事实源：样张_TL/sample.css 的方向 B 部分（工单 S-10 段3a 指定）。
+   本文件在所有页面现有样式表之后引入（含 shell.css），同名规则以本层为准。
+   玻璃令牌 --glass-* 运行时由 shell.js applyThemeTokens 按主题写入行内样式
+   （THEME_PRESETS 内，令牌名只增不改；tests/test_v2_theme_tokens.py 同步钉值）；
+   这里的 :root 值只是 JS 未跑时的兜底。字重锁 400/500（08-04 手稿页定稿）。
+   正文读稿区永不玻璃（.prose/#chapter-read 等保持不透明纸底，见文末红线段）。
+   ========================================================================== */
+
+/* ---------- 结构令牌（DESIGN.md §2.2，与主题色正交） ---------- */
+:root{
+  --text-xs:12px; --text-sm:13px; --text-base:15px; --text-lg:17px; --text-xl:20px; --text-display:26px;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
+  --r-s:8px; --r-m:12px; --r-l:16px; --r-btn:999px;
+}
+
+/* ---------- 玻璃令牌（亮色 6 套白玻璃 / dark 暗玻璃；值与 THEME_PRESETS 一致） ---------- */
+:root{
+  --glass-bg:rgba(255, 255, 255, 0.55);      /* 卡片玻璃面 */
+  --glass-strong:rgba(255, 255, 255, 0.85);  /* 全局栏 / 弹窗 / 抽屉（保对比度） */
+  --glass-border:rgba(255, 255, 255, 0.70);
+  --glass-blur:18px;
+  --glass-shadow:0 8px 32px rgba(40, 36, 28, 0.10);
+}
+html[data-theme="dark"]{
+  --glass-bg:rgba(34, 31, 28, 0.55);
+  --glass-strong:rgba(30, 28, 26, 0.86);
+  --glass-border:rgba(255, 255, 255, 0.10);
+  --glass-shadow:0 8px 32px rgba(0, 0, 0, 0.35);
+}
+/* 不支持 backdrop-filter 的引擎：玻璃退成 0.96 不透明（样张同款退化） */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  :root{ --glass-bg:rgba(255, 255, 255, 0.96); --glass-strong:rgba(255, 255, 255, 0.96); }
+  html[data-theme="dark"]{ --glass-bg:rgba(34, 31, 28, 0.96); --glass-strong:rgba(30, 28, 26, 0.96); }
+}
+
+/* ---------- 页面背景：无壁纸时用柔彩雾面渐变，色相跟主题令牌走 ----------
+   壁纸（xuan/mist/bamboo/自定义上传）优先：shell.js 的 --bg-image 有图时压在渐变上层，
+   「遮罩/模糊」滑块照旧作用于壁纸层；无壁纸（data-bg="none"）时护眼蒙层让位给渐变。 */
+:root{
+  --glass-page-bg:
+    radial-gradient(900px 600px at 12% 8%, color-mix(in srgb, var(--mark) 16%, transparent), transparent 62%),
+    radial-gradient(800px 700px at 88% 18%, color-mix(in srgb, var(--numeral) 38%, transparent), transparent 62%),
+    radial-gradient(1000px 700px at 58% 102%, color-mix(in srgb, var(--ink-faint) 26%, transparent), transparent 64%),
+    var(--outer-bg);
+}
+html[data-theme="dark"]{
+  --glass-page-bg:
+    radial-gradient(900px 600px at 12% 8%, color-mix(in srgb, var(--mark) 13%, transparent), transparent 62%),
+    radial-gradient(800px 700px at 88% 18%, color-mix(in srgb, var(--numeral) 20%, transparent), transparent 62%),
+    radial-gradient(1000px 700px at 58% 102%, color-mix(in srgb, var(--ink-faint) 14%, transparent), transparent 64%),
+    var(--outer-bg);
+}
+.biyu-shell-bg-wallpaper{ background-image:var(--bg-image, none), var(--glass-page-bg); }
+html[data-bg="none"] .biyu-shell-bg-overlay{ opacity:0; }
+
+/* ---------- 按钮：主按钮实心胶囊 / 次按钮半透明描边胶囊 / 文字按钮无框 ---------- */
+.b1,.primary,button.primary,.btn-primary,.b2,.secondary,.btn-secondary,
+.b3,.tertiary,.b4,.destructive,.bs,.selection-primary{ border-radius:var(--r-btn); }
+.b2,.secondary,.btn-secondary,.b4,.destructive{ background:rgba(255, 255, 255, 0.45); }
+html[data-theme="dark"] .b2,html[data-theme="dark"] .secondary,
+html[data-theme="dark"] .btn-secondary,html[data-theme="dark"] .b4,
+html[data-theme="dark"] .destructive{ background:rgba(255, 255, 255, 0.05); }
+/* 选中态（biyu-paper 的 mark 描边勾号）压住半透明底 */
+.b2.current,.b2[aria-pressed="true"]{ background:var(--mark-bg); }
+
+/* ---------- 输入框 / 下拉：玻璃圆角（复选/单选不自绘胶囊，维持原样） ---------- */
+.field,input[type="text"],input[type="password"],input[type="number"],input[type="url"],
+textarea,select:not([multiple]){ border-radius:var(--r-m); }
+
+/* ---------- 卡片玻璃面（半透明 + 白描边 + 大投影；不加 backdrop-filter：
+   卡片底下是静态渐变，真模糊只有性能成本没有观感差；浮在内容上的
+   栏 / 弹窗 / 抽屉才用真模糊，见 3a-3/3a-5） ---------- */
+.card,.input-card,.book-card,.stat,.list,.stage-panel,.contract-tier-box,
+.contract-panel,.toolbar,.auditor-radar-card{
+  background:var(--glass-bg);
+  border-color:var(--glass-border);
+  box-shadow:var(--glass-shadow);
+}
+
+/* ---------- 字重锁 400/500：收敛历史 600/700（audit fw500 计数对应项） ---------- */
+h1,h2,h3,h4,.card-title,.page-title,.shelf-title,
+.b1,.primary,button.primary,.btn-primary,.selection-primary,
+.biyu-wordmark,.biyu-nav-btn.current,.biyu-sub-pill.current,.biyu-contact-pill,
+.biyu-drawer-title,.stat .v,.sample-preview-item span,.stage-button.current,
+.tier-step-badge{ font-weight:500; }
+
+/* 线条图标统一尺寸（.icon 基类在 styles.css，24px；按钮/栏内收成 15px） */
+.biyu-gicon{ width:15px; height:15px; flex:none; vertical-align:-2px; }
+
+/* ---------- 红线：正文读稿区永远不透明纸底，不加玻璃 ----------
+   .prose/#chapter-read/#official-chapter 的背景与透明度在此重申，
+   任何后续玻璃规则都不得进入正文阅读区（DESIGN §0.8）。 */
+.prose,#chapter-read,#official-chapter,.reading-prose>#chapter-read,.reading-prose>#official-chapter{
+  background:transparent; opacity:1; backdrop-filter:none; -webkit-backdrop-filter:none;
+}
+/* 编辑态文本域是"稿纸"，保持不透明表面（玻璃令牌不进正文编辑区） */
+#chapter-edit,.editing-pane{ background:var(--surface) !important; }

@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  const THEME_PRESETS = /*S1-THEME-BEGIN*/{"default": {"name": "温润手稿 · 云宣白卡 (默认)", "--paper": "#F3F1EA", "--surface": "#FFFFFF", "--surface-subtle": "#F9F8F3", "--ink": "#1F1C18", "--ink-solid": "#26221C", "--ink-soft": "#524C42", "--ink-mute": "#827B6E", "--ink-faint": "#ABA496", "--rule": "rgba(38, 33, 25, 0.08)", "--rule-strong": "#DED8CA", "--rule-soft": "#EFECE4", "--numeral": "#C4BDAE", "--mark": "#A64B38", "--mark-bg": "#F6E6E1", "--accent": "#26221C", "--accent-fg": "#FAF8F3", "--btn-border": "#D5CEBF", "--outer-bg": "#E5E1D6"}, "lingshu": {"name": "灵枢青瓷 · 松石绿 (对标竞品)", "--paper": "#F4F5F0", "--surface": "#FFFFFF", "--surface-subtle": "#F8FAF7", "--ink": "#1A2421", "--ink-solid": "#1D5B50", "--ink-soft": "#42544E", "--ink-mute": "#73857E", "--ink-faint": "#9EB0A9", "--rule": "rgba(29, 91, 80, 0.09)", "--rule-strong": "#D5DFDC", "--rule-soft": "#EBF0EE", "--numeral": "#B5C4BF", "--mark": "#1D5B50", "--mark-bg": "#E1F0EC", "--accent": "#1D5B50", "--accent-fg": "#FFFFFF", "--btn-border": "#C4D4CE", "--outer-bg": "#E2E7E4"}, "parchment": {"name": "古籍羊皮 · 暖杏护眼", "--paper": "#F3ECD8", "--surface": "#FCF8EE", "--surface-subtle": "#F7F1E1", "--ink": "#2B2318", "--ink-solid": "#30271B", "--ink-soft": "#5E513F", "--ink-mute": "#8A7D68", "--ink-faint": "#AFA28C", "--rule": "rgba(48, 39, 27, 0.09)", "--rule-strong": "#DDD3BC", "--rule-soft": "#EAE1CC", "--numeral": "#BFB399", "--mark": "#9E4735", "--mark-bg": "#F2DCD4", "--accent": "#382B1E", "--accent-fg": "#FCF8EE", "--btn-border": "#C8B99E", "--outer-bg": "#DFD5BE"}, "celadon": {"name": "宋刻竹青 · 润眼茶白", "--paper": "#EBF0EA", "--surface": "#F9FBF9", "--surface-subtle": "#F1F5F0", "--ink": "#1F2821", "--ink-solid": "#232D25", "--ink-soft": "#4A594D", "--ink-mute": "#758578", "--ink-faint": "#9BA99E", "--rule": "rgba(35, 45, 37, 0.09)", "--rule-strong": "#CFDAD1", "--rule-soft": "#E1EAE2", "--numeral": "#B0C0B3", "--mark": "#8E4A3B", "--mark-bg": "#EFE0DC", "--accent": "#2B4738", "--accent-fg": "#F9FBF9", "--btn-border": "#B8C7BB", "--outer-bg": "#D8E2D9"}, "stone": {"name": "澄心冷灰 · 碑拓质感", "--paper": "#EFECE6", "--surface": "#FAF9F6", "--surface-subtle": "#F4F2ED", "--ink": "#22201C", "--ink-solid": "#262420", "--ink-soft": "#54514B", "--ink-mute": "#827E76", "--ink-faint": "#A8A49C", "--rule": "rgba(38, 36, 32, 0.08)", "--rule-strong": "#D8D4CC", "--rule-soft": "#E6E2DA", "--numeral": "#BDB8AE", "--mark": "#964B3B", "--mark-bg": "#EFE0DC", "--accent": "#262420", "--accent-fg": "#FAF9F6", "--btn-border": "#C4BFB5", "--outer-bg": "#DAD6CE"}, "pure": {"name": "素练极简 · 现代纯白", "--paper": "#F6F7F9", "--surface": "#FFFFFF", "--surface-subtle": "#F9FAFB", "--ink": "#111827", "--ink-solid": "#1E293B", "--ink-soft": "#4B5563", "--ink-mute": "#6B7280", "--ink-faint": "#9CA3AF", "--rule": "rgba(17, 24, 39, 0.07)", "--rule-strong": "#E5E7EB", "--rule-soft": "#F3F4F6", "--numeral": "#CBD5E1", "--mark": "#B93829", "--mark-bg": "#FEE2E2", "--accent": "#18181B", "--accent-fg": "#FFFFFF", "--btn-border": "#D1D5DB", "--outer-bg": "#E5E7EB"}, "dark": {"name": "玄墨夜读 · 暗色纸感", "--paper": "#181614", "--surface": "#221F1C", "--surface-subtle": "#282420", "--ink": "#DDD5C7", "--ink-solid": "#E8E0D2", "--ink-soft": "#B0A797", "--ink-mute": "#857C6D", "--ink-faint": "#5E574B", "--rule": "rgba(255, 248, 235, 0.08)", "--rule-strong": "#36312A", "--rule-soft": "#2C2822", "--numeral": "#4A4339", "--mark": "#D47660", "--mark-bg": "#422822", "--accent": "#D47660", "--accent-fg": "#181614", "--btn-border": "#484138", "--outer-bg": "#0F0E0C"}}/*S1-THEME-END*/;
+  const THEME_PRESETS = /*S1-THEME-BEGIN*/{"default": {"name": "温润手稿 · 云宣白卡 (默认)", "--paper": "#F3F1EA", "--surface": "#FFFFFF", "--surface-subtle": "#F9F8F3", "--ink": "#1F1C18", "--ink-solid": "#26221C", "--ink-soft": "#524C42", "--ink-mute": "#827B6E", "--ink-faint": "#ABA496", "--rule": "rgba(38, 33, 25, 0.08)", "--rule-strong": "#DED8CA", "--rule-soft": "#EFECE4", "--numeral": "#C4BDAE", "--mark": "#A64B38", "--mark-bg": "#F6E6E1", "--accent": "#26221C", "--accent-fg": "#FAF8F3", "--btn-border": "#D5CEBF", "--outer-bg": "#E5E1D6", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "lingshu": {"name": "灵枢青瓷 · 松石绿 (对标竞品)", "--paper": "#F4F5F0", "--surface": "#FFFFFF", "--surface-subtle": "#F8FAF7", "--ink": "#1A2421", "--ink-solid": "#1D5B50", "--ink-soft": "#42544E", "--ink-mute": "#73857E", "--ink-faint": "#9EB0A9", "--rule": "rgba(29, 91, 80, 0.09)", "--rule-strong": "#D5DFDC", "--rule-soft": "#EBF0EE", "--numeral": "#B5C4BF", "--mark": "#1D5B50", "--mark-bg": "#E1F0EC", "--accent": "#1D5B50", "--accent-fg": "#FFFFFF", "--btn-border": "#C4D4CE", "--outer-bg": "#E2E7E4", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "parchment": {"name": "古籍羊皮 · 暖杏护眼", "--paper": "#F3ECD8", "--surface": "#FCF8EE", "--surface-subtle": "#F7F1E1", "--ink": "#2B2318", "--ink-solid": "#30271B", "--ink-soft": "#5E513F", "--ink-mute": "#8A7D68", "--ink-faint": "#AFA28C", "--rule": "rgba(48, 39, 27, 0.09)", "--rule-strong": "#DDD3BC", "--rule-soft": "#EAE1CC", "--numeral": "#BFB399", "--mark": "#9E4735", "--mark-bg": "#F2DCD4", "--accent": "#382B1E", "--accent-fg": "#FCF8EE", "--btn-border": "#C8B99E", "--outer-bg": "#DFD5BE", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "celadon": {"name": "宋刻竹青 · 润眼茶白", "--paper": "#EBF0EA", "--surface": "#F9FBF9", "--surface-subtle": "#F1F5F0", "--ink": "#1F2821", "--ink-solid": "#232D25", "--ink-soft": "#4A594D", "--ink-mute": "#758578", "--ink-faint": "#9BA99E", "--rule": "rgba(35, 45, 37, 0.09)", "--rule-strong": "#CFDAD1", "--rule-soft": "#E1EAE2", "--numeral": "#B0C0B3", "--mark": "#8E4A3B", "--mark-bg": "#EFE0DC", "--accent": "#2B4738", "--accent-fg": "#F9FBF9", "--btn-border": "#B8C7BB", "--outer-bg": "#D8E2D9", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "stone": {"name": "澄心冷灰 · 碑拓质感", "--paper": "#EFECE6", "--surface": "#FAF9F6", "--surface-subtle": "#F4F2ED", "--ink": "#22201C", "--ink-solid": "#262420", "--ink-soft": "#54514B", "--ink-mute": "#827E76", "--ink-faint": "#A8A49C", "--rule": "rgba(38, 36, 32, 0.08)", "--rule-strong": "#D8D4CC", "--rule-soft": "#E6E2DA", "--numeral": "#BDB8AE", "--mark": "#964B3B", "--mark-bg": "#EFE0DC", "--accent": "#262420", "--accent-fg": "#FAF9F6", "--btn-border": "#C4BFB5", "--outer-bg": "#DAD6CE", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "pure": {"name": "素练极简 · 现代纯白", "--paper": "#F6F7F9", "--surface": "#FFFFFF", "--surface-subtle": "#F9FAFB", "--ink": "#111827", "--ink-solid": "#1E293B", "--ink-soft": "#4B5563", "--ink-mute": "#6B7280", "--ink-faint": "#9CA3AF", "--rule": "rgba(17, 24, 39, 0.07)", "--rule-strong": "#E5E7EB", "--rule-soft": "#F3F4F6", "--numeral": "#CBD5E1", "--mark": "#B93829", "--mark-bg": "#FEE2E2", "--accent": "#18181B", "--accent-fg": "#FFFFFF", "--btn-border": "#D1D5DB", "--outer-bg": "#E5E7EB", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "dark": {"name": "玄墨夜读 · 暗色纸感", "--paper": "#181614", "--surface": "#221F1C", "--surface-subtle": "#282420", "--ink": "#DDD5C7", "--ink-solid": "#E8E0D2", "--ink-soft": "#B0A797", "--ink-mute": "#857C6D", "--ink-faint": "#5E574B", "--rule": "rgba(255, 248, 235, 0.08)", "--rule-strong": "#36312A", "--rule-soft": "#2C2822", "--numeral": "#4A4339", "--mark": "#D47660", "--mark-bg": "#422822", "--accent": "#D47660", "--accent-fg": "#181614", "--btn-border": "#484138", "--outer-bg": "#0F0E0C", "--glass-bg": "rgba(34, 31, 28, 0.55)", "--glass-strong": "rgba(30, 28, 26, 0.86)", "--glass-border": "rgba(255, 255, 255, 0.10)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(0, 0, 0, 0.35)"}}/*S1-THEME-END*/;
 
   const WALLPAPER_PRESETS = /*S1-WALLPAPER-BEGIN*/{"none": "none", "xuan": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Crect width='600' height='600' fill='%23EFECE2'/%3E%3Cg stroke='%23C9C0AC' stroke-width='0.8' opacity='0.45' fill='none'%3E%3Cpath d='M0 120 Q 150 90 300 130 T 600 110'/%3E%3Cpath d='M0 280 Q 180 310 350 260 T 600 290'/%3E%3Cpath d='M0 450 Q 120 420 280 460 T 600 440'/%3E%3C/g%3E%3Ccircle cx='480' cy='140' r='90' fill='%23DFD6C3' opacity='0.35'/%3E%3Ccircle cx='140' cy='460' r='130' fill='%23E3DAC8' opacity='0.4'/%3E%3C/svg%3E\")", "mist": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3ClinearGradient id='g1' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23DCE5E2'/%3E%3Cstop offset='100%25' stop-color='%23F2EFE6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='800' fill='url(%23g1)'/%3E%3Cpath d='M0 540 Q 240 420 520 500 T 1020 460 L 1200 510 L 1200 800 L 0 800 Z' fill='%23BACAC4' opacity='0.45'/%3E%3Cpath d='M0 620 Q 320 520 680 600 T 1200 560 L 1200 800 L 0 800 Z' fill='%239EB3AC' opacity='0.45'/%3E%3Cpath d='M0 700 Q 420 640 820 710 T 1200 680 L 1200 800 L 0 800 Z' fill='%23839B94' opacity='0.4'/%3E%3Ccircle cx='920' cy='210' r='54' fill='%23C87D6A' opacity='0.38'/%3E%3C/svg%3E\")", "bamboo": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700' viewBox='0 0 900 700'%3E%3Crect width='900' height='700' fill='%23EAEFE8'/%3E%3Cg stroke='%238BA190' stroke-linecap='round' opacity='0.35' fill='none'%3E%3Cline x1='760' y1='0' x2='730' y2='700' stroke-width='6'/%3E%3Cline x1='810' y1='80' x2='795' y2='700' stroke-width='4'/%3E%3Cpath d='M750 180 Q 680 150 640 190' stroke-width='3'/%3E%3Cpath d='M745 320 Q 670 300 610 340' stroke-width='3'/%3E%3Cpath d='M798 260 Q 850 230 885 265' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E\")"}/*S1-WALLPAPER-END*/;
 
@@ -58,6 +58,11 @@
     toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
   }
 
+  // S-10 3a-2：线条图标统一走 icons.js 的 sprite（每页都加载 icons.js，且先于本文件建好 sprite）
+  function shellIcon(name) {
+    return '<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-' + name + '"/></svg>';
+  }
+
   function schedulePersist() {
     cacheThemeTokens();
     if (saveTimer) clearTimeout(saveTimer);
@@ -84,12 +89,24 @@
   }
 
   /* ---------- 主题引擎 ---------- */
+  // S-10 3a-2：玻璃令牌随主题写入；引擎不支持 backdrop-filter 时玻璃退 0.96（CSS 侧 @supports 同步兜底）
+  function supportsBackdropFilter() {
+    try {
+      return CSS.supports('backdrop-filter', 'blur(1px)') || CSS.supports('-webkit-backdrop-filter', 'blur(1px)');
+    } catch (_) { return true; }
+  }
+
   function applyThemeTokens(key) {
     const preset = THEME_PRESETS[key] || THEME_PRESETS.default;
     const root = document.documentElement;
     Object.keys(preset).forEach((name) => {
       if (name.indexOf('--') === 0) root.style.setProperty(name, preset[name]);
     });
+    if (!supportsBackdropFilter()) {
+      const dark = key === 'dark';
+      root.style.setProperty('--glass-bg', dark ? 'rgba(34, 31, 28, 0.96)' : 'rgba(255, 255, 255, 0.96)');
+      root.style.setProperty('--glass-strong', dark ? 'rgba(30, 28, 26, 0.96)' : 'rgba(255, 255, 255, 0.96)');
+    }
   }
 
   function applyCustomColors() {
@@ -169,6 +186,8 @@
     } else if (state.background.type === 'custom' && state.background.file) {
       image = 'url("/api/ui/background-file/' + encodeURIComponent(state.background.file) + '")';
     }
+    // S-10 3a-2：背景类型进 data-bg 属性——glass.css 据此在无壁纸时隐藏纸感蒙层、露出柔彩渐变
+    root.dataset.bg = state.background.type;
     root.style.setProperty('--bg-image', image);
     root.style.setProperty('--bg-overlay-alpha', (state.background.overlay / 100).toFixed(2));
     root.style.setProperty('--bg-blur', state.background.blur + 'px');
@@ -655,7 +674,7 @@
     contactPill.className = 'biyu-contact-pill';
     contactPill.id = 'biyu-contact-pill';
     contactPill.title = '内测作者交流 Q 群与问题反馈';
-    contactPill.textContent = '💬 内测 Q 群：892467108 · 反馈';
+    contactPill.innerHTML = shellIcon('chat') + '<span>内测 Q 群：892467108 · 反馈</span>';
     contactPill.addEventListener('click', openContactFeedback);
     rightGroup.appendChild(contactPill);
     const versionText = document.createElement('span');
@@ -692,7 +711,7 @@
       overlay.id = 'biyu-import-overlay';
       overlay.innerHTML =
         '<div class="biyu-modal biyu-import-modal" role="dialog" aria-modal="true" aria-labelledby="biyu-import-title">' +
-        '<h2 id="biyu-import-title">📥 导入稿件与迁移向导</h2>' +
+        '<h2 id="biyu-import-title">' + shellIcon('import') + ' 导入稿件与迁移向导</h2>' +
         '<p style="font-size:13px;color:var(--ink-mute);margin:0 0 12px">导入本身不花钱，也不会改动现有世界观和角色卡。支持三来源统一入口：</p>' +
         '<div class="row biyu-import-tabs" role="tablist">' +
         '<button type="button" class="b2 bs current" data-tab="paste">① 粘贴正文</button>' +
@@ -952,7 +971,7 @@
       overlay.id = 'biyu-contact-overlay';
       overlay.innerHTML =
         '<div class="biyu-modal" role="dialog" aria-modal="true" aria-labelledby="biyu-contact-title">' +
-        '<h2 id="biyu-contact-title">💬 笔驭 (biyu) 作者交流群与问题反馈</h2>' +
+        '<h2 id="biyu-contact-title">' + shellIcon('chat') + ' 笔驭 (biyu) 作者交流群与问题反馈</h2>' +
         '<div class="card" style="background:var(--surface-subtle);margin-bottom:14px">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px">' +
         '<div><div style="font-size:15px;font-weight:600">官方内测作者交流 QQ 群：<code style="color:var(--mark);font-size:15px">892467108</code></div>' +
@@ -1057,6 +1076,8 @@
     overlay.setAttribute('aria-hidden', 'true');
     document.body.insertBefore(overlay, document.body.firstChild);
     document.body.insertBefore(wallpaper, overlay);
+    // S-10 3a-2：壳注入即声明当前背景类型（默认无壁纸→渐变）；偏好返回后 applyBackgroundTokens 修正
+    document.documentElement.dataset.bg = state.background.type;
 
     const titlebar = buildTitlebar();
     document.body.insertBefore(titlebar, wallpaper.nextSibling);

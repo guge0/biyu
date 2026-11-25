@@ -1485,7 +1485,7 @@ boot().catch(e=>showError(e.message));
       '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
       "<div><strong>" + esc(meta.label) + "</strong></div>" +
       '<div class="row" style="gap:6px">' +
-      '<button class="b2 bs" data-outline-draft="' + esc(cell.id) + '" type="button">✨ ' + esc(meta.draftLabel) + "</button>" +
+      '<button class="b2 bs" data-outline-draft="' + esc(cell.id) + '" type="button"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-spark"/></svg> ' + esc(meta.draftLabel) + "</button>" +
       '<button class="b2 bs" data-outline-draft="' + esc(cell.id) + '" data-instruction="续写下一卷，承接已有内容" type="button" id="draft-next-' + esc(cell.id) + '" hidden>+ 续写后卷</button>' +
       '<div class="segmented"><button type="button" class="current" data-outline-view="read-' + esc(cell.id) + '">阅读</button>' +
       '<button type="button" data-outline-view="edit-' + esc(cell.id) + '">编辑</button></div></div></div>' +

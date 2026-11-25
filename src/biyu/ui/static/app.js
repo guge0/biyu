@@ -611,7 +611,7 @@
     if (!ready) {
       badge.textContent = "✦ 免 Key 零门槛畅玩模式";
       badge.className = "badge ws-badge amber";
-      text.innerHTML = "还没申请 API Key？完全不影响！你现在可直接<strong>畅读并体检《死亡回溯》预载示例书</strong>、使用<strong>⚡独立快检台免费查 AI 味</strong>、手动建书或批量导入旧作。";
+      text.innerHTML = "还没申请 API Key？完全不影响！你现在可直接<strong>畅读并体检《死亡回溯》预载示例书</strong>、使用<strong><svg class=\"icon biyu-gicon\" aria-hidden=\"true\"><use href=\"#biyu-icon-bolt\"/></svg>独立快检台免费查 AI 味</strong>、手动建书或批量导入旧作。";
     } else {
       badge.textContent = "✓ 已配 Key 直连";
       badge.className = "badge ws-badge ok";
