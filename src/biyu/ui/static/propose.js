@@ -69,6 +69,9 @@
   }
 
   function renderEnv(env) {
+    // S-10 3a修正（走查 P0）：#env-badge/#env-label 已随旧导航退役（3a 摘除），
+    // 这里判空——元素不在时不该把整页初始化打进 ✗ 错误条
+    if (!envBadge || !envLabel) return;
     envBadge.classList.remove("env-test", "env-prod");
     envBadge.classList.add(env.level === "prod" ? "env-prod" : "env-test");
     envLabel.textContent = env.label + " · " + env.level;

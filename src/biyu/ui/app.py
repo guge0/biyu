@@ -474,12 +474,15 @@ def render_static_html(path: Path) -> str:
     # S-10 3a修正·工单第8条：用户主题随 HTML 内联——首帧就是用户的主题。
     # theme-boot.js 优先回放 localStorage 缓存（同会话内最新），没有缓存时（冷启动/
     # 全新浏览器档案）用这段服务端注入的令牌，不再先亮 300ms 再变色。
-    boot_css = _server_theme_boot_css()
+    # data-theme 属性也一并注入（暗色 CSS 规则 keyed 在 html[data-theme="dark"] 上）。
+    boot_css, theme_key = _server_theme_boot_css()
     if boot_css:
         inline = ('<script>window.__BIYU_THEME_BOOT__='
                   + json.dumps(boot_css).replace("<", "\\u003c").replace(">", "\\u003e")
                   + ';</script>')
         html = re.sub(r"(<head[^>]*>)", lambda m: m.group(1) + inline, html, count=1)
+        html = re.sub(r"(<html[^>]*?)(>)",
+                      lambda m: m.group(1) + f' data-theme="{theme_key}"' + m.group(2), html, count=1)
     return html
 
 
@@ -497,22 +500,24 @@ def _theme_boot_presets() -> dict:
     return _THEME_BOOT_CACHE
 
 
-def _server_theme_boot_css() -> str:
+def _server_theme_boot_css() -> tuple[str, str]:
     """把用户当前主题/取色覆盖/背景拼成与 shell.js cacheThemeTokens 同格式的 cssText。
 
     与 applyThemeTokens + applyCustomColors + applyBackgroundTokens 的默认分支一一对应；
-    读不了偏好（文件损坏等）就返回空串，页面退回 theme-boot 的 localStorage 路径。
+    返回 (cssText, theme_key)；读不了偏好（文件损坏等）就返回空串，页面退回
+    theme-boot 的 localStorage 路径。
     """
     from . import appearance
     try:
         prefs = appearance.load_ui_prefs()
     except Exception:
-        return ""
+        return "", ""
     try:
         boot = _theme_boot_presets()
     except Exception:
-        return ""
-    preset = boot["themes"].get(prefs.get("theme")) or boot["themes"]["default"]
+        return "", ""
+    theme_key = prefs.get("theme") if boot["themes"].get(prefs.get("theme")) else "default"
+    preset = boot["themes"].get(theme_key) or boot["themes"]["default"]
     parts = [f"{k}: {v};" for k, v in preset.items() if k.startswith("--")]
     custom = prefs.get("custom") or {}
     for token in ("--paper", "--surface", "--ink", "--mark", "--mark-bg"):
@@ -538,7 +543,7 @@ def _server_theme_boot_css() -> str:
     parts.append(f"--bg-image: {image};")
     parts.append(f"--bg-overlay-alpha: {overlay:.2f};")
     parts.append(f"--bg-blur: {int(blur)}px;")
-    return " ".join(parts)
+    return " ".join(parts), theme_key
 
 
 @app.get("/about.html", response_class=HTMLResponse)

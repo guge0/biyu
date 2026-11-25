@@ -152,6 +152,7 @@ button.b2.current::before,button.b2[aria-pressed="true"]::before{ font-weight:50
 .biyu-bookbar .biyu-chapnav .b3:hover{color:var(--ink);border-color:var(--ink-mute)}
 .biyu-bookbar .biyu-chapnav .b3:disabled{color:var(--ink-soft);background:transparent;border-color:var(--rule);cursor:not-allowed}
 html[data-theme="dark"] .biyu-bookbar .biyu-chapnav .b3{background:rgba(255,255,255,.05)}
+html[data-theme="dark"] .biyu-bookbar .biyu-chapnav .b3:disabled{color:var(--ink-soft);background:transparent}
 /* 书名即链接（#workbench-book-link 移到书名上）：衬线、随 bbar 尺寸、点书名回书页 */
 .workbench-book-title-link{display:inline-flex;align-items:baseline;min-width:0;font-family:var(--serif);font-size:var(--text-lg);color:var(--ink);text-decoration:none;border-bottom:none;white-space:nowrap}
 .workbench-book-title-link:hover{border-bottom:none;color:var(--mark)}

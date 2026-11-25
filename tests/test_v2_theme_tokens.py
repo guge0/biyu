@@ -212,7 +212,7 @@ EXPECTED_THEME_PRESETS: dict[str, dict[str, str]] = {
         "--rule-soft": "#2C2822",
         "--numeral": "#4A4339",
         "--mark": "#D47660",
-        "--mark-bg": "#422822",
+        "--mark-bg": "#38221C",
         "--accent": "#D47660",
         "--accent-fg": "#181614",
         "--btn-border": "#484138",

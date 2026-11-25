@@ -56,6 +56,15 @@
 /* 纯净现代黑体模式（标题改用黑体，供对比体验） */
 body.font-mode-sans{--display-font:var(--sans)}
 
+/* S-10 3a修正·工单第7条：ok / amber 是静态亮色值，暗色主题下芯片/提示条一直是亮底——
+   补暗色档（data-theme 属性由 shell.js/theme-boot/服务端注入写入）。 */
+html[data-theme="dark"]{
+  --ok:#8DB89A;
+  --ok-bg:#24302A;
+  --amber:#D9A05B;
+  --amber-bg:#33291C;
+}
+
 /* ---------- 基座 ---------- */
 *{box-sizing:border-box}
 [hidden]{display:none!important}

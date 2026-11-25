@@ -6,4 +6,6 @@
 try {
   var c = window.localStorage.getItem('biyu-theme-css') || window.__BIYU_THEME_BOOT__;
   if (c) document.documentElement.style.cssText = c;
+  var k = window.localStorage.getItem('biyu-theme-key');
+  if (k) document.documentElement.dataset.theme = (k === 'dark') ? 'dark' : 'light';
 } catch (e) { /* ignore */ }

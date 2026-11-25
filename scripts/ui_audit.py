@@ -279,6 +279,13 @@ def audit_page(ctx, url: str, label: str, theme_paper: str | None = None) -> dic
                     arg=theme_paper, timeout=6000)
             except Exception:
                 theme_late = True
+        if "workbench" in url:  # 3a修正：正文没到就截图会拍到 17px 纸面条——等候选稿渲染出来
+            try:
+                page.wait_for_function(
+                    "() => { const el = document.getElementById('chapter-read');"
+                    " return el && el.innerText.trim().length > 50; }", timeout=8000)
+            except Exception:
+                pass
         found = page.evaluate(DETECT_JS)
         shot = OUT / f"{label}.jpg"
         page.screenshot(path=str(shot), type="jpeg", quality=80)
@@ -379,7 +386,8 @@ def main() -> int:
                 prefs = {"theme": theme, "custom": None,
                          "background": {"type": "none", "preset": None, "file": None, "overlay": 90.0, "blur": 0}}
                 ctx.add_init_script(
-                    "try{localStorage.setItem('biyu-theme-css'," + json.dumps(theme_tokens_css(theme)) + ")}catch(e){}")
+                    "try{localStorage.setItem('biyu-theme-css'," + json.dumps(theme_tokens_css(theme))
+                    + ");localStorage.setItem('biyu-theme-key'," + json.dumps(theme) + ")}catch(e){}")
 
                 def route(rule):
                     req = rule.request

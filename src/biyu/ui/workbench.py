@@ -1531,7 +1531,11 @@ def _memory_snapshot(book_dir: Path) -> dict[str, Any]:
     } if chapters_dir.exists() else set()
     try:
         shards = read_shards(book_dir, chapters)
-    except (FileNotFoundError, ValueError) as exc:
+    except FileNotFoundError:
+        # S-10 3a修正（走查 P0）：书还没建过记忆（没有投影分片）是正常态——
+        # 返回空快照让页面走「暂无记忆条目」空态，不弹 ✗ 错误条
+        return {"entries": [], "conflicts": []}
+    except ValueError as exc:
         return {"entries": [], "conflicts": [], "error": str(exc)}
     pins = read_pins(book_dir)
     result = rebuild_memory(shards, chapters, pins)
