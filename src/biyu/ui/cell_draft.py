@@ -137,6 +137,18 @@ async def draft_cell(book: str, cell_id: str, request: DraftRequest) -> dict[str
         resp = await adapter.generate(messages, temperature=0.6, max_tokens=600)
     except Exception as exc:
         return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+    # S-7d 花费补账:起草是真实的模型调用,记进中央台账(书级合计吃得到)
+    draft_cost = float(getattr(resp, "cost", 0.0) or 0.0)
+    if draft_cost > 0:
+        try:
+            from .cost_log import write_cost_log
+
+            write_cost_log(
+                task="cell_draft", book=book, session=cell_id,
+                cost=draft_cost, model=str(_alias or ""),
+            )
+        except Exception:
+            pass  # 记账失败不挡起草
     text = re.sub(r"^```.*?\n|```$", "", (resp.text or "").strip(), flags=re.M).strip()
     if not text:
         return {"ok": False, "error": "模型没有返回草稿内容,请稍后重试"}

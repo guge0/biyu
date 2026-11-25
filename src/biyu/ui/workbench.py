@@ -21,6 +21,7 @@ from fastapi.responses import StreamingResponse
 
 from biyu.config import (
     BookConfig,
+    feature_enabled,
     find_book_dir,
     get_data_root,
     get_data_root_2,
@@ -413,8 +414,14 @@ async def generate_planning_with_architect(book: str, chapter: int, feedback: st
     outline_path = book_dir / "outlines" / f"ch{chapter}.md"
     outline_text = outline_path.read_text(encoding="utf-8") if outline_path.exists() else ""
 
+    judge_notes: list[str] = []
+
     async def _validate(text: str) -> tuple[bool, list[str], list[str]]:
-        """返回 (通过, 必检项缺失, 保真问题)。判定环节任何异常按 fail-open 放行。"""
+        """返回 (通过, 必检项缺失, 保真问题)。判定环节任何异常按 fail-open 放行。
+
+        S-7（2026-11-19 老板定）：语义判定的结果内测期只提醒、不打回——写进方案提示，由作者判断；
+        机械层（硬事实）与必检项缺失仍按原规则重试/拒收。
+        """
         missing_labels = _checklist_missing_labels(text)
         fidelity = _outline_hard_fact_issues(outline_text, text) if outline_text else []
         try:
@@ -424,7 +431,8 @@ async def generate_planning_with_architect(book: str, chapter: int, feedback: st
             )
         except Exception:
             judge_issues = []
-        return (not missing_labels and not fidelity and not judge_issues), missing_labels, fidelity + judge_issues
+        judge_notes[:] = list(judge_issues)
+        return (not missing_labels and not fidelity), missing_labels, fidelity
 
     if result.status != "ok" or not result.text.strip():
         rejected = {"state": "rejected", "missing_labels": [], "reason": "本次产出不完整，盘上方案未改变"}
@@ -462,6 +470,8 @@ async def generate_planning_with_architect(book: str, chapter: int, feedback: st
     source_label = "按作者意见修订" if feedback.strip() else "导演产出"
     temp.write_text(f"status: 待批\nsource: {source_label}\n{result.text}", encoding="utf-8")
     temp.replace(target)
+    if judge_notes:
+        notices = notices + ["可能漏掉或改动了细纲要点（仅供参考，请自己对照）：" + "；".join(judge_notes[:6])]
     _write_architect_state(
         book_dir, chapter,
         {"state": "draft", "missing_labels": [], "notices": notices},
@@ -1652,8 +1662,8 @@ def _outline_hard_fact_issues(outline: str, plan_text: str) -> list[str]:
 _FIDELITY_JUDGE_PROMPT = """你是细纲保真审查员。下面给出一章的细纲(作者原话)与导演据此写的方案。逐条核对细纲的每个剧情要点在方案中的处理,只能判三类:承载(原样保留)/改动(改变了事件、顺序、人物行为或结果)/丢失(方案没有对应内容;若方案在「删减判断」中明确声明并给了理由,算已声明,不算问题)。
 另查三件事:1) 方案的人物名必须与细纲一致,不得改名、不得造新名;2) 不得新增细纲没有的关键事件、道具或系统概念;3) 细纲的章末钩子必须被保留。
 只输出一个 JSON 对象,不要 Markdown 围栏:
-{"issues":[{"type":"改名|新增|丢失|改动","detail":"一句话说清改了什么","outline_evidence":"细纲原句片段","plan_evidence":"方案原句片段"}]}
-没有问题输出 {"issues":[]}
+{{"issues":[{{"type":"改名|新增|丢失|改动","detail":"一句话说清改了什么","outline_evidence":"细纲原句片段","plan_evidence":"方案原句片段"}}]}}
+没有问题输出 {{"issues":[]}}
 
 === 细纲(作者原话) ===
 {outline}
@@ -1679,6 +1689,15 @@ async def _judge_outline_coverage(
     prompt = _FIDELITY_JUDGE_PROMPT.format(outline=outline, plan=plan_text)
     started = time.time()
     last_error = ""
+    spent = 0.0  # S-7d:重试与解析失败的调用同样花了钱,一次不落全记上
+    logged = False
+
+    def _log_spent(status: str) -> None:
+        nonlocal logged
+        if not logged and spent > 0:
+            _log_cost(book, chapter, "fidelity_check", spent, time.time() - started, status=status)
+            logged = True
+
     for attempt in range(2):
         try:
             response = await adapter.generate(
@@ -1686,7 +1705,9 @@ async def _judge_outline_coverage(
                 temperature=0.1, max_tokens=2000,
             )
         except Exception:
-            return [], 0.0  # 判定调用失败不放拦主流程
+            _log_spent("error")  # 判定调用失败不放拦主流程,但已花的钱要记账
+            return [], 0.0
+        spent += float(getattr(response, "cost", 0.0) or 0.0)
         text = str(response.text).strip().strip("`")
         if text.startswith("json"):
             text = text[4:].strip()
@@ -1700,13 +1721,13 @@ async def _judge_outline_coverage(
                         f"[{item.get('type', '改动')}] {item['detail']}"
                         + (f"(细纲:{item['outline_evidence']})" if item.get("outline_evidence") else "")
                     )
-            cost = float(getattr(response, "cost", 0.0) or 0.0)
-            _log_cost(book, chapter, "fidelity_check", cost, time.time() - started)
-            return issues, cost
+            _log_spent("ok")
+            return issues, spent
         except (ValueError, KeyError, TypeError) as exc:
             last_error = str(exc)[:60]
             continue
-    return [], 0.0  # 两次解析失败,fail-open
+    _log_spent("empty")  # 两次解析失败,fail-open 放行
+    return [], 0.0
 
 
 @router.post("/books/{book}/chapters/{chapter}/feedback")
@@ -2177,6 +2198,8 @@ def _resolve_zebian_runtime(project_root: Path, launcher: Path) -> tuple[Path, P
 @router.get("/books/{book}/zebian/sessions")
 def list_zebian_sessions(book: str) -> dict[str, Any]:
     """List Claude Code editor sessions registered for one book."""
+    if not feature_enabled("zebian"):
+        raise HTTPException(status_code=404, detail="内测版暂未开放此功能。")
     return {"sessions": _load_zebian_sessions(_book_dir(book))}
 
 
@@ -2189,6 +2212,8 @@ def open_zebian(book: str, request: Request) -> dict[str, Any]:
     session, ``mode=new`` starts a new one, and ``session_id`` resumes a selected
     historical session.
     """
+    if not feature_enabled("zebian"):
+        raise HTTPException(status_code=404, detail="内测版暂未开放此功能。")
     book_dir = _book_dir(book)
     try:
         port = request.url.port

@@ -49,7 +49,8 @@ def test_shelf_modals_skeleton() -> None:
     """P0-2C/P0-2D:领 Key 锦囊三渠道 + 朱批钤印立轴弹窗。"""
     html = _src("index.html")
     assert 'id="key-guide-overlay"' in html
-    for tab_text in ("DeepSeek 官方（最稳首选）", "硅基流动（注册送免费额度）", "Kimi / Claude 兼容"):
+    # S-7b：内测版三张卡改为写作 / 降 AI 率 / 体检实际用到的三家。
+    for tab_text in ("DeepSeek（写作）", "智谱 GLM（降 AI 率 / 写作）", "朱雀（体检）"):
         assert tab_text in html
     assert 'id="key-guide-input"' in html and 'id="key-guide-save"' in html
     assert 'id="seals-overlay"' in html and 'id="seal-scroll"' in html
@@ -81,7 +82,7 @@ def test_app_js_experience_layer() -> None:
     # P0-2C 印章 SVG 与晒单/海报
     assert "cinnabar-seal-svg" in js and "复制群晒单文案" in js
     # P0-2D 三渠道步骤与保存走既有 setup
-    assert "platform.deepseek.com" in js and "cloud.siliconflow.cn" in js
+    assert "platform.deepseek.com" in js and "open.bigmodel.cn" in js and "/api/zhuque/key" in js
     assert "setup-overlay" in js
 
 

@@ -161,12 +161,18 @@
 
     async function init() {
       try {
-        const [booksResp] = await Promise.all([
+        const [booksResp, featuresResp] = await Promise.all([
           fetch("/api/books"),
+          // S-7a 拿功能开关藏责编入口;接口失败时按开启处理(旧后端兼容)
+          fetch("/api/features").catch(function () { return null; }),
         ]);
 
         // F3 (P8-M3R-fix):/api/books 返 dict schema {books, count}
         const books = (await booksResp.json()).books;
+        var features = {};
+        if (featuresResp && featuresResp.ok) {
+          features = await featuresResp.json().catch(function () { return {}; });
+        }
         // R1: 同时匹配 id 或 name(旧 URL ?name=X 仍可工作)
         const book = books.find(function (b) {
           return b.id === bookId || b.name === bookId;
@@ -175,13 +181,14 @@
           showError("书不存在: " + (bookId || "(空)"));
           return;
         }
-        renderBookDetail(book);
+        renderBookDetail(book, features);
       } catch (e) {
         showError("加载失败: " + e.message);
       }
     }
 
-    function renderBookDetail(book) {
+    function renderBookDetail(book, features) {
+      var zebianOn = !(features && features.features && features.features.zebian === false);
       var displayName = book.display_name || book.title || book.name;
       var genre = book.genre || "";
       // S-1 留白栏：章号中文数字 + meta
@@ -284,7 +291,7 @@
         '    <div class="entry-label">起名/改名</div>' +
         '    <div class="entry-desc">修改书名或起名候选</div>' +
         '  </button>' +
-        '  <a href="/summaries.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
+        '  <a id="summaries-entry" href="/summaries.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
         '    <div class="entry-icon">' + iconHtml("summary") + '</div>' +
         '    <div class="entry-label">纪要</div>' +
         '    <div class="entry-desc">跟责编聊出来的结论：否掉的方向、还没定的分歧、你的口味</div>' +
@@ -300,35 +307,46 @@
       detailEl.appendChild(entriesDiv);
       detailEl.hidden = false;
 
+      // S-7a 内测版藏责编:责编入口卡与责编纪要入口卡不渲染
+      if (!zebianOn) {
+        var zebianCard = document.getElementById("zebian-entry");
+        if (zebianCard) zebianCard.remove();
+        var summariesCard = document.getElementById("summaries-entry");
+        if (summariesCard) summariesCard.remove();
+      }
+
       // 改名弹窗绑定
       document.getElementById("rename-entry").addEventListener("click", function () {
         showRenameModal(book);
       });
-      document.getElementById("zebian-entry").addEventListener("click", function (event) {
-        if (event.target.id === "zebian-copy") return;
-        launchZebian(book, event.currentTarget);
-      });
-      document.getElementById("zebian-entry").addEventListener("keydown", function (event) {
-        if (event.target !== event.currentTarget) return;
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
+      var zebianEntry = document.getElementById("zebian-entry");
+      if (zebianEntry) {
+        zebianEntry.addEventListener("click", function (event) {
+          if (event.target.id === "zebian-copy") return;
           launchZebian(book, event.currentTarget);
-        }
-      });
-      document.getElementById("zebian-copy").addEventListener("click", function (event) {
-        event.stopPropagation();
-        copyZebianPrompt(book);
-      });
-      document.getElementById("zebian-session-select").addEventListener("change", function (event) {
-        event.stopPropagation();
-        var selected = event.currentTarget.value;
-        if (selected) launchZebian(book, document.getElementById("zebian-entry"), { session_id: selected });
-      });
-      document.getElementById("zebian-new-session").addEventListener("click", function (event) {
-        event.stopPropagation();
-        launchZebian(book, document.getElementById("zebian-entry"), { mode: "new" });
-      });
-      loadZebianSessions(book);
+        });
+        zebianEntry.addEventListener("keydown", function (event) {
+          if (event.target !== event.currentTarget) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            launchZebian(book, event.currentTarget);
+          }
+        });
+        document.getElementById("zebian-copy").addEventListener("click", function (event) {
+          event.stopPropagation();
+          copyZebianPrompt(book);
+        });
+        document.getElementById("zebian-session-select").addEventListener("change", function (event) {
+          event.stopPropagation();
+          var selected = event.currentTarget.value;
+          if (selected) launchZebian(book, document.getElementById("zebian-entry"), { session_id: selected });
+        });
+        document.getElementById("zebian-new-session").addEventListener("click", function (event) {
+          event.stopPropagation();
+          launchZebian(book, document.getElementById("zebian-entry"), { mode: "new" });
+        });
+        loadZebianSessions(book);
+      }
       fetch("/api/settings/status").then(function (response) { return response.json(); }).then(function (payload) {
         document.getElementById("settings-entry").hidden = !payload.enabled;
         if (!payload.enabled) return;

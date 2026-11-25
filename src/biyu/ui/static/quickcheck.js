@@ -21,6 +21,8 @@
     const banner = $("error-banner");
     banner.textContent = "✗ " + msg;
     banner.hidden = false;
+    // S-7d:体检/请求失败时给「导出诊断包」小链接(shell.js 公共函数)
+    if (window.BiyuShell?.mountDiagnosticsLink) window.BiyuShell.mountDiagnosticsLink(banner);
   }
 
   function updateCharCount() {
@@ -278,4 +280,30 @@
       document.title = document.title + " · 浏览器模式（便携）";
     }
   }).catch(() => {});
+
+  // S-7a 内测到期提示:剩 <=14 天或已到期时,快检台顶部显示一条可关闭的小提示
+  (function initBetaExpiryNotice() {
+    const strip = $("beta-expiry-strip");
+    if (!strip) return;
+    fetch("/api/license/status")
+      .then(r => (r.ok ? r.json() : null))
+      .then(payload => {
+        if (!payload) return;
+        let text = null;
+        if (payload.expired) text = "内测版已到期，降 AI 率需升级正式版";
+        else if (typeof payload.days_left === "number" && payload.days_left <= 14)
+          text = `内测版还剩 ${payload.days_left} 天（到 ${payload.expires}）`;
+        if (!text) return;
+        let seen = null;
+        try { seen = localStorage.getItem("biyu-beta-expiry-ack"); } catch (_e) { /* 隐私模式读不到就算了 */ }
+        if (seen === text) return;
+        $("beta-expiry-text").textContent = text;
+        strip.hidden = false;
+        $("beta-expiry-close").onclick = () => {
+          strip.hidden = true;
+          try { localStorage.setItem("biyu-beta-expiry-ack", text); } catch (_e) { /* 隐私模式存不进就算了 */ }
+        };
+      })
+      .catch(() => { /* 授权状态拿不到就不提示 */ });
+  })();
 })();

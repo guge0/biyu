@@ -248,7 +248,7 @@ def test_legacy_migrate_scan_commit(tmp_path, monkeypatch) -> None:
 def test_settings_contact_card() -> None:
     html = _src("settings.html")
     assert 'id="contact-card"' in html
-    assert "892467108" in html and "feedback@biyu.studio" in html
+    assert "892467108" in html and "feedback@biyu.studio" not in html  # S-7：邮箱未开通前不展示
     assert "复制 Q 群号" in html and "提交问题与建议" in html
     js = _src("settings.js")
     assert "contact-copy-group" in js

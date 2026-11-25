@@ -41,6 +41,12 @@ def tc(name: str, arguments: str, call_id: str = "call_1"):
     return {"id": call_id, "type": "function", "function": {"name": name, "arguments": arguments}}
 
 
+@pytest.fixture(autouse=True)
+def _zebian_enabled(monkeypatch: pytest.MonkeyPatch):
+    """S-7a 责编开关内测默认关;本文件测的全是开关打开时的引擎行为。"""
+    monkeypatch.setattr("biyu.ui.agent_routes.feature_enabled", lambda _name: True)
+
+
 @pytest.fixture
 def tmp_data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     make_book(tmp_path)

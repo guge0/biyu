@@ -20,11 +20,11 @@
       <div>
         <p class="eyebrow" style="color:var(--mark);margin-bottom:6px">0 · 官方作者内测交流群与问题反馈</p>
         <div style="font-size:16px;font-weight:600;color:var(--ink);margin-bottom:4px">💬 笔驭内测作者交流 QQ 群：<code style="color:var(--mark);font-size:16px">892467108</code></div>
-        <div style="font-size:13px;color:var(--ink-mute)">遇到生成卡点、想要新声纹包或提交 Bug，可一键复制群号加群。反馈邮箱：<code>feedback@biyu.studio</code></div>
+        <div style="font-size:13px;color:var(--ink-mute)">遇到生成卡点或想提 Bug，可一键复制群号加群；开发者会在群里答疑。反馈邮箱：<code>749814935@qq.com</code></div>
       </div>
       <div class="row" style="gap:8px">
         <button id="contact-copy-group" class="b2 bs" type="button">复制 Q 群号</button>
-        <a id="contact-feedback-link" class="b1 bs" href="mailto:feedback@biyu.studio?subject=%E7%AC%94%E9%A9%AD%E5%8F%8D%E9%A6%88" style="text-decoration:none">提交问题与建议</a>
+        <a id="contact-feedback-link" class="b1 bs" href="#" onclick="document.getElementById('biyu-contact-pill')?.click();return false;" style="text-decoration:none">提交问题与建议</a>
       </div>
     </section>
     <div class="settings-grid">
@@ -35,12 +35,12 @@
         <label class="search-label">搜索人物<input id="character-search" type="search" placeholder="输入姓名"></label>
         <button class="nav-item" id="roster-entry" type="button">人物卡总览</button><div id="character-links"></div>
         <div class="nav-group">其他</div><a class="nav-item" id="voiceprint-link">声纹 <span>→</span></a>
-        <div class="nav-group">责编</div>
+        <div class="nav-group" id="zebian-nav-group">责编</div>
         <!-- 旧版“每次都是新对话”已升级为可续接/可选历史/可新建。 -->
         <button class="nav-item" id="zebian-launch" type="button" aria-label="打开 Claude Code 并继续最近责编对话">继续最近责编对话</button>
         <select id="zebian-session-select" class="nav-item" aria-label="选择责编历史会话" hidden><option value="">选择历史对话…</option></select>
         <button class="nav-item" id="zebian-new-session" type="button">开始新责编对话</button>
-        <p class="tier-tip">可继续最近对话、选择历史会话或开始新对话；责编会读你已存进设定集的内容。</p>
+        <p class="tier-tip" id="zebian-nav-tip">可继续最近对话、选择历史会话或开始新对话；责编会读你已存进设定集的内容。</p>
         <button class="nav-item" id="zebian-copy" type="button" hidden>一键复制开场白</button>
         <p id="zebian-status" class="tier-tip" role="status"></p>
       </aside>

@@ -22,10 +22,12 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from biyu.config import get_config_path
 from biyu.llm import ModelRegistry
+from biyu.licensing import check_feature
 from biyu.quickcheck import MAX_SCAN_CHARS
 from biyu.secure_config import delete_provider_secret, load_provider_secret, store_provider_secret
 from biyu.ui.cost_log import write_cost_log
@@ -89,6 +91,9 @@ def _rewriter_info() -> dict[str, Any]:
         adapter, alias = resolve_ui_adapter(registry)
     except (FileNotFoundError, KeyError, ValueError):
         return unavailable
+    if not getattr(adapter, "api_key", ""):
+        # S-7b：没配任何 Key 时不要报「可用」，否则降分跑到一半才报 401
+        return unavailable
     cfg = models.get(alias) if isinstance(models.get(alias), dict) else {}
     provider = str(cfg.get("provider") or alias)
     model_id = cfg.get("model_id") or getattr(adapter, "model_name", alias)
@@ -99,7 +104,7 @@ def _rewriter_info() -> dict[str, Any]:
 def _client_or_error() -> ZhuqueClient:
     key = load_provider_secret(_PROVIDER)
     if not key:
-        raise HTTPException(status_code=400, detail="还没填朱雀 Key：先在上面填一下，再开始体检。")
+        raise HTTPException(status_code=400, detail="还没填朱雀 Key：先在上面填一下再体检；不会申请可点「怎么申请？」，或改用「我去朱雀网页测」模式。")
     try:
         return ZhuqueClient(key)
     except ZhuqueError as exc:
@@ -109,6 +114,17 @@ def _client_or_error() -> ZhuqueClient:
 def _guard_length(text: str) -> None:
     if len(text) > MAX_SCAN_CHARS:
         raise HTTPException(status_code=413, detail=f"文本超过 {MAX_SCAN_CHARS} 字上限，请分段粘贴")
+
+
+def _license_block(feature: str) -> JSONResponse | None:
+    """S-7a 授权闸:付费功能未授权时回 402(detail=人话 message + code)。允许时返回 None。"""
+    decision = check_feature(feature)
+    if decision.allowed:
+        return None
+    return JSONResponse(
+        status_code=402,
+        content={"detail": decision.message, "code": "license_required"},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -300,15 +316,19 @@ def _estimate_fix(text: str) -> dict[str, Any]:
     }
 
 
-@router.post("/fix")
-def zhuque_fix(req: FixRequest) -> dict[str, Any]:
+@router.post("/fix", response_model=None)
+def zhuque_fix(req: FixRequest) -> dict[str, Any] | JSONResponse:
     _guard_length(req.text)
     if req.estimate_only:
+        # S-7c：看预估金额不收费，到期后也能看；只拦真正的改写。
         return {"estimate": _estimate_fix(req.text)}
+    blocked = _license_block("zhuque_fix")
+    if blocked is not None:
+        return blocked
     client = _client_or_error()
     info = _rewriter_info()
     if not info["available"]:
-        raise HTTPException(status_code=400, detail="改写模型不可用：请先在书架页右上「换 Key / 换模型」里保存 Key。")
+        raise HTTPException(status_code=400, detail="还没配降 AI 率用的模型 Key（推荐智谱 glm-5.2）：到书架页「Key / 模型」保存；不会申请可点快检台里的「怎么申请？」。")
     text, terms = req.text, [t.strip() for t in req.terms if t.strip()]
     adapter, model = info["adapter"], str(info["model"])
 
@@ -319,12 +339,15 @@ def zhuque_fix(req: FixRequest) -> dict[str, Any]:
     return {"job_id": job_id}
 
 
-@router.post("/fix-blind")
-def zhuque_fix_blind(req: FixBlindRequest) -> dict[str, Any]:
+@router.post("/fix-blind", response_model=None)
+def zhuque_fix_blind(req: FixBlindRequest) -> dict[str, Any] | JSONResponse:
+    blocked = _license_block("zhuque_fix")
+    if blocked is not None:
+        return blocked
     _guard_length(req.text)
     info = _rewriter_info()
     if not info["available"]:
-        raise HTTPException(status_code=400, detail="改写模型不可用：请先在书架页右上「换 Key / 换模型」里保存 Key。")
+        raise HTTPException(status_code=400, detail="还没配降 AI 率用的模型 Key（推荐智谱 glm-5.2）：到书架页「Key / 模型」保存；不会申请可点快检台里的「怎么申请？」。")
     text = req.text
     terms = [t.strip() for t in req.terms if t.strip()]
     targets = req.targets

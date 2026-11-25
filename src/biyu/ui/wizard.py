@@ -98,6 +98,12 @@ async def _generate_premise(idea: str, genre: str) -> dict[str, Any]:
             temperature=0.7,
             max_tokens=4000,
         )
+        try:  # S-7c：开书向导花费进中央账（每次尝试都记，记账失败不影响主流程）
+            from .cost_log import write_cost_log
+
+            write_cost_log(task="wizard_premise", book="", session="", cost=float(getattr(resp, "cost", 0.0) or 0.0), model=str(_alias or ""))
+        except Exception:
+            pass
         try:
             data = _extract_json(resp.text or "")
         except ValueError as exc:

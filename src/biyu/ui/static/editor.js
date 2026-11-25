@@ -45,8 +45,26 @@
   const sendBtn = $("send-btn");
 
   // ---------- 初始化 ----------
+  // S-7a 内测版藏责编:开关关闭时整页让位给一句提示,不加载会话、不报错
+  function showBetaDisabled() {
+    if (chatPlaceholder) chatPlaceholder.innerHTML = "<p>内测版暂未开放此功能</p>";
+    const config = $("session-config");
+    if (config) config.hidden = true;
+    if (sessionList) sessionList.replaceChildren();
+  }
+
   async function init() {
     try {
+      let featuresOff = false;
+      try {
+        const featuresResp = await fetch("/api/features");
+        if (featuresResp.ok) {
+          const payload = await featuresResp.json();
+          featuresOff = !!(payload && payload.features && payload.features.zebian === false);
+        }
+      } catch (_e) { /* 接口失败按开启处理(旧后端兼容) */ }
+      if (featuresOff) { showBetaDisabled(); return; }
+
       const [envResp, peakResp, booksResp, modeResp] = await Promise.all([
         fetch("/api/env"),
         fetch("/api/peak-hours"),

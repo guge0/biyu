@@ -137,4 +137,5 @@ async def run_agent_turn(
             break
         yield {"type": "done", "cost": round(cost, 6), "steps": steps}
     except Exception as exc:  # noqa: BLE001 — 模型层异常收成 error 事件,由 API 层翻人话
-        yield {"type": "error", "message": str(exc)}
+        # S-7d:中途失败也要把已花费用带出去,记账方不丢部分成本
+        yield {"type": "error", "message": str(exc), "cost": round(cost, 6)}

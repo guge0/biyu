@@ -906,6 +906,43 @@
   }
 
   /* ---------- S-3 决策6A:联系与反馈弹窗(图纸 openContactFeedbackModal 搬运) ---------- */
+
+  // S-7d:诊断包导出的公共逻辑——页脚弹窗、工作台失败卡、快检台失败条共用这一份,不复制粘贴
+  async function exportDiagnostics(btn, statusEl) {
+    const label = btn.textContent;
+    const say = (msg) => { if (statusEl) statusEl.textContent = msg; };
+    btn.disabled = true;
+    if (statusEl) say('正在生成…'); else btn.textContent = '正在生成…';
+    try {
+      const resp = await fetch('/api/diagnostics/export', { method: 'POST' });
+      const body = await resp.json().catch(() => ({}));
+      if (!resp.ok || !body.ok) throw new Error(body.detail || '生成失败');
+      if (statusEl) {
+        say('已生成：' + body.path + '。请把这个文件发到 Q 群 892467108。');
+      } else {
+        btn.textContent = '已生成 ✓ 发 Q 群 892467108';
+        setTimeout(() => { btn.textContent = label; }, 2600);
+      }
+      const a = document.createElement('a'); a.href = body.download; a.download = body.name; document.body.appendChild(a); a.click(); a.remove();
+    } catch (error) {
+      if (statusEl) say('诊断包生成失败：' + error.message);
+      else { btn.textContent = '生成失败，点此重试'; setTimeout(() => { btn.textContent = label; }, 2600); }
+    } finally { btn.disabled = false; }
+  }
+
+  function mountDiagnosticsLink(container) {
+    if (!container || container.querySelector('.diag-export-link')) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'diag-export-link';
+    btn.textContent = '导出诊断包';
+    const status = document.createElement('span');
+    status.className = 'diag-export-status';
+    container.appendChild(btn);
+    container.appendChild(status);
+    btn.addEventListener('click', () => { exportDiagnostics(btn, status); });
+  }
+
   function openContactFeedback() {
     let overlay = document.getElementById('biyu-contact-overlay');
     if (!overlay) {
@@ -918,12 +955,16 @@
         '<div class="card" style="background:var(--surface-subtle);margin-bottom:14px">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px">' +
         '<div><div style="font-size:15px;font-weight:600">官方内测作者交流 QQ 群：<code style="color:var(--mark);font-size:15px">892467108</code></div>' +
-        '<div style="font-size:12.5px;color:var(--ink-mute)">群内提供声纹卡分享、拆书模板、保真闸调优技巧与开发组直接答疑</div></div>' +
+        '<div style="font-size:12.5px;color:var(--ink-mute)">群里交流用法、反馈问题，开发者会在群里答疑；使用资料会陆续在群里分享</div></div>' +
         '<button type="button" class="b2 bs" id="biyu-contact-copy">复制群号</button></div>' +
         '<div style="font-size:12px;color:var(--ink-soft);border-top:1px solid var(--rule);padding-top:8px">' +
-        '· 反馈邮箱：<code>feedback@biyu.studio</code></div></div>' +
+        '· 反馈邮箱：<code>749814935@qq.com</code>；遇到报错可以先「导出诊断包」，连同问题描述一起发到群里或邮箱</div></div>' +
         '<p class="eyebrow" style="margin-bottom:6px">快速提交问题或建议</p>' +
         '<textarea class="biyu-contact-textarea" id="biyu-contact-text" rows="3" placeholder="写下你遇到的问题或功能建议…"></textarea>' +
+        '<p class="eyebrow" style="margin:12px 0 6px">遇到报错？</p>' +
+        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+        '<button type="button" class="b2 bs" id="biyu-diag-export">导出诊断包</button>' +
+        '<span id="biyu-diag-status" style="font-size:12px;color:var(--ink-soft)">只含版本、花费和运行日志，不含 Key 和书稿正文</span></div>' +
         '<div class="biyu-modal-actions">' +
         '<button type="button" class="b3" id="biyu-contact-close">关闭</button>' +
         '<button type="button" class="b1" id="biyu-contact-send">提交反馈</button></div>' +
@@ -933,6 +974,9 @@
         if (event.target === overlay) overlay.hidden = true;
       });
       document.getElementById('biyu-contact-close').addEventListener('click', () => { overlay.hidden = true; });
+      document.getElementById('biyu-diag-export').addEventListener('click', (event) => {
+        exportDiagnostics(event.target, document.getElementById('biyu-diag-status'));
+      });
       document.getElementById('biyu-contact-copy').addEventListener('click', (event) => {
         if (navigator.clipboard) navigator.clipboard.writeText('892467108');
         event.target.textContent = '已复制 ✓';
@@ -940,9 +984,11 @@
       });
       document.getElementById('biyu-contact-send').addEventListener('click', () => {
         const text = document.getElementById('biyu-contact-text').value.trim();
-        const subject = encodeURIComponent('笔驭反馈');
-        const body = encodeURIComponent(text || '（请在邮件正文中描述你遇到的问题）');
-        window.location.href = 'mailto:feedback@biyu.studio?subject=' + subject + '&body=' + body;
+        // S-7：反馈邮箱还没开通，先复制文字，请作者发到 Q 群
+        const btn = document.getElementById('biyu-contact-send');
+        if (navigator.clipboard && text) navigator.clipboard.writeText(text);
+        btn.textContent = text ? '已复制，请发到 Q 群 892467108' : '先写几句再提交';
+        setTimeout(() => { btn.textContent = '提交反馈'; }, 2500);
       });
     }
     overlay.hidden = false;
@@ -1070,6 +1116,8 @@
     setWallpaperPreset: setWallpaperPreset,
     toggleDrawer: toggleDrawer,
     THEME_PRESETS: THEME_PRESETS,
-    WALLPAPER_PRESETS: WALLPAPER_PRESETS
+    WALLPAPER_PRESETS: WALLPAPER_PRESETS,
+    exportDiagnostics: exportDiagnostics,
+    mountDiagnosticsLink: mountDiagnosticsLink
   };
 })();

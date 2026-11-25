@@ -8,6 +8,12 @@ import pytest
 from fastapi import Request
 
 
+@pytest.fixture(autouse=True)
+def _zebian_enabled(monkeypatch: pytest.MonkeyPatch):
+    """S-7a 责编开关内测默认关;本文件测的是开关打开时的启动行为。"""
+    monkeypatch.setattr("biyu.ui.workbench.feature_enabled", lambda _name: True)
+
+
 def _request(port: int = 8090) -> Request:
     return Request({
         "type": "http", "http_version": "1.1", "method": "POST", "scheme": "http",

@@ -63,6 +63,8 @@
     banner.textContent = "✗ " + msg;
     banner.style.color = "";
     banner.hidden = false;
+    // S-7d:朱雀体检失败时给「导出诊断包」小链接(shell.js 公共函数)
+    if (window.BiyuShell?.mountDiagnosticsLink) window.BiyuShell.mountDiagnosticsLink(banner);
   }
 
   function updateCharCountLocal() {
@@ -490,7 +492,7 @@
   async function blindFix() {
     const text = currentText().trim();
     if (!text) { showErrorZq("先在左边粘贴章节文本。"); return; }
-    if (!S.rewriter || !S.rewriter.available) { showErrorZq("改写模型不可用：先去书架页右上「换 Key / 换模型」保存 Key。"); return; }
+    if (!S.rewriter || !S.rewriter.available) { showErrorZq("还没配降 AI 率用的模型 Key（推荐智谱 glm-5.2）：到书架页「Key / 模型」保存，或点「怎么申请？」看步骤。"); return; }
     try {
       const r = await postJson("/api/zhuque/fix-blind", {
         text, terms: S.terms, targets: S.webTargets,

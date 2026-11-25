@@ -2250,6 +2250,7 @@ async def generate_chapter(
                         tool_observer=editor_observer,
                     )
                     extra_cost = editor_result_obj.cost
+                    print(f"  [Editor] 审读完成 - ¥{extra_cost:.4f}, {len(editor_result_obj.issues)} 条问题", flush=True)
                     rows = [
                         f"规划履约:{'偏离 ' + str(sum(i.type == '规划履约' for i in editor_result_obj.issues)) if use_existing_planning else '无合同,跳过'}",
                         "", "### 候选稿审读", "", "| # | 类型 | 严重度 | 行号 | 问题描述 | 建议 |",
@@ -2286,7 +2287,10 @@ async def generate_chapter(
                         editor_result_obj = editor_results[-1]
                 stage_latencies["editor"] = time.time() - t0_ed
                 total_cost += extra_cost
-                _log_cost(book, chapter_num, "editor_total", extra_cost, stage_latencies["editor"])
+                # S-7d:工作台候选审读只有这一行、没有 per-round 行,行名必须是可聚合的
+                # editor——read_chapter_costs 跳过 editor_total 聚合行,此前整笔审读费
+                # 从书内账消失(S-7 实跑一章差 ¥0.7 的主因)。
+                _log_cost(book, chapter_num, "editor", extra_cost, stage_latencies["editor"])
 
                 # 修订后的文本替换原文
                 if not force_pending and revised_text != text_after_guard:
@@ -2554,6 +2558,8 @@ async def generate_chapter(
         ):
             _cl_adapter = _degraded_fallback_adapter(registry)
             if _cl_adapter is not None:
+                print("  [F-4] 必检项核对中（通常要几分钟）...", flush=True)
+                _cl_started = time.monotonic()
                 _checklist_result, _cl_warnings = await _run_checklist_with_cost_log(
                     book=book,
                     book_dir=book_dir,
@@ -2562,6 +2568,7 @@ async def generate_chapter(
                     chapter_text=final_text,
                     adapter=_cl_adapter,
                 )
+                print(f"  [F-4] 必检项核对结束 - {time.monotonic() - _cl_started:.1f}s", flush=True)
                 warnings.extend(_cl_warnings)
     except Exception as e:
         print(f"  [F-4] 必检项核对异常(warning): {e}")

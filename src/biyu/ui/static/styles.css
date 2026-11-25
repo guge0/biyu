@@ -1850,6 +1850,12 @@ label{min-height:0}
 .error-banner .error-banner-close{position:absolute;top:10px;right:10px;background:none;border:none;font-size:16px;color:var(--ink-faint);cursor:pointer;padding:2px 6px}
 .notice-banner{border-left:2px solid var(--btn-border);background:var(--surface);padding:12px 16px;font-size:14px;color:var(--ink-soft);border-radius:0;margin:12px 0;line-height:1.7}
 
+/* ---------- S-7d 失败面上的「导出诊断包」小链接 ---------- */
+.diag-export-link{background:none;border:none;padding:0;margin-left:10px;font-size:13px;color:var(--mark);cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-family:inherit}
+.diag-export-link:hover{opacity:0.75}
+.diag-export-link[disabled]{opacity:0.5;cursor:default;text-decoration:none}
+.diag-export-status{font-size:12px;color:var(--ink-mute);margin-left:8px;word-break:break-all}
+
 /* ---------- U-1.6 加载/骨架/请求中 ---------- */
 .skeleton{background:linear-gradient(90deg,var(--rule-soft),var(--rule),var(--rule-soft));background-size:200% 100%;animation:u1-shimmer 1.4s ease-in-out infinite;border-radius:4px}
 @keyframes u1-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}

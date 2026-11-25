@@ -17,7 +17,10 @@ class CreatedBook:
 
 
 def _slug(title: str) -> str:
-    return re.sub(r"[^a-z0-9-]+", "-", title.lower()).strip("-") or "new-book"
+    # S-7c：保留中文等文字（旧版只留 a-z0-9，「无Key测试」会变成 key、纯中文变成 new-book）。
+    # \w 不含 Windows 非法字符 <>:"/\|?*；限长避免路径过长。
+    slug = re.sub(r"[^\w-]+", "-", title.lower()).strip("-_")[:40].strip("-_")
+    return slug or "new-book"
 
 
 def create_book(title: str, genre: str, *, data_root: Path | None = None) -> CreatedBook:

@@ -19,14 +19,14 @@ import logging
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from biyu.agent.confirmations import PendingActionError, PendingActionStore
 from biyu.agent.loop import run_agent_turn
 from biyu.agent.tools import ToolInputError, safe_book_dir
-from biyu.config import get_data_root
+from biyu.config import feature_enabled, get_data_root
 from biyu.ui.chat import ChatManager
 from biyu.ui.cli_executor import execute
 from biyu.ui.cost_log import write_cost_log
@@ -36,7 +36,15 @@ from biyu.web.sse import sse_generator
 
 logger = logging.getLogger("biyu.ui.agent_routes")
 
-router = APIRouter(prefix="/api/agent", tags=["agent"])
+def _require_zebian_enabled() -> None:
+    """S-7a 内测版藏责编:features.zebian 关闭时整组 /api/agent/* 一刀切拒绝。"""
+    if not feature_enabled("zebian"):
+        raise HTTPException(status_code=404, detail="内测版暂未开放此功能。")
+
+
+router = APIRouter(
+    prefix="/api/agent", tags=["agent"], dependencies=[Depends(_require_zebian_enabled)]
+)
 
 
 class CreateAgentSessionRequest(BaseModel):
@@ -215,6 +223,8 @@ async def post_agent_message(session_id: str, req: ChatSendRequest) -> Streaming
                     total_cost = float(event.get("cost") or 0.0)
                 if etype == "error":
                     _flush_step()
+                    # S-7d:单轮中途失败时,error 事件带着已花的部分费用,照记台账
+                    total_cost = float(event.get("cost") or 0.0) or total_cost
                     message = humanize_llm_error(
                         None, raw=str(event.get("message", "")),
                         default=str(event.get("message", "")),

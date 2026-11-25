@@ -489,3 +489,29 @@ def test_nested_worldbook_reaches_whitelist_and_setting_lookup(tmp_path) -> None
     assert "桑渡口白役" in wl  # 嵌套条目里的专名进入白名单
     result = look_up_setting("盐丁 Seventy", book)
     assert "盐丁 Seventy" in result  # 嵌套条目可查
+
+
+def test_semantic_judge_only_reminds_in_beta(
+    fidelity_book: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """S-7（老板 11-19 定）：语义判定只提醒、不打回——方案照样落盘，问题进 notices。"""
+    from biyu.ui import workbench
+
+    good = VALID_PLAN + "\n姜聆当众复述登记簿结论。"
+    calls: list[str] = []
+
+    async def fake_call(book_dir, chapter, feedback=""):
+        calls.append(feedback)
+        return _FakeResult(good)
+
+    async def fake_judge(outline, plan, registry, book, chapter):
+        return (["要点2「登记簿」可能被改动"], 0.0)
+
+    monkeypatch.setattr(workbench, "_call_web_architect", fake_call)
+    monkeypatch.setattr(workbench, "_judge_outline_coverage", fake_judge)
+    monkeypatch.setattr(workbench, "get_registry", lambda: _Registry())
+
+    result = asyncio.run(workbench.generate_planning_with_architect("Book", 9))
+    assert result["state"] == "draft"
+    assert len(calls) == 1  # 不因语义判定重试
+    assert any("登记簿" in n and "仅供参考" in n for n in result["notices"])

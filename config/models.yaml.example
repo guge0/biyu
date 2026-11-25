@@ -88,4 +88,7 @@ features:
   settings_page: true
   web_architect: true
   planner_guard: true
-  checklist: true
+  # 必检项机器核对：每章约 ¥0.30、10 分钟左右，内测版默认关（2026-11-19 老板定），需要时改 true。
+  checklist: false
+  # S-7a 内测版藏责编：内测用户电脑没有 Claude Code，责编入口默认关（缺省同样按 false）。
+  zebian: false

@@ -47,6 +47,9 @@ def humanize_llm_error(
     if status is not None and status in _STATUS_COPY:
         return f"{_STATUS_COPY[status]}（原始信息：{_trim(text)}）"
     lowered = text.lower()
+    # S-7b：没配 Key 时 httpx 报「Illegal header value b'Bearer '」一类英文，翻成可行动的人话
+    if ("illegal header value" in lowered and "bearer" in lowered) or "api key is missing" in lowered or "no api key" in lowered:
+        return "还没配模型 Key：到书架页「Key / 模型」保存 DeepSeek 或智谱的 Key；不会申请可点「怎么申请？」看步骤。"
     if any(key in lowered for key in _TIMEOUT_KEYS):
         return f"请求超时：服务商在限定时间内没有响应。请检查网络（含代理/VPN）后重试；持续出现可稍后再试（原始信息：{_trim(text)}）"
     if any(key in lowered for key in _CONNECT_KEYS):

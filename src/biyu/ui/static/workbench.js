@@ -516,6 +516,11 @@ function renderFailureState() {
   const reason = current.failure_card?.reason || '操作没有完成，请重试';
   $('failure-reason').textContent = reason;
   $('reading-failure-reason').textContent = `${reason}。正文和当前步骤都没有改变，可以直接重试。`;
+  // S-7d:失败卡上给「导出诊断包」小链接(shell.js 公共函数;defer 加载,首帧可能还没就绪)
+  if (failed && window.BiyuShell?.mountDiagnosticsLink) {
+    window.BiyuShell.mountDiagnosticsLink($('failure-card'));
+    window.BiyuShell.mountDiagnosticsLink($('reading-failure-card'));
+  }
 }
 function renderLayerStatus() {
   const step = String(current.axes?.step || '');
@@ -606,7 +611,10 @@ function renderArchitectState(){
     pane.innerHTML='<p class="planning-rejected-note">跳过导演模式已开启：本页没有方案，你的细纲就是写手的契约。关闭开关可回到导演模式。</p>';
     return;
   }
-  $('planning-source').textContent='方案来源：导演正在写';
+  $('planning-source').textContent=hasPlan?'方案来源：导演产出':'';
+  // S-7：导演方案的提醒（如保真闸语义判定「可能漏掉的要点」），只提醒不拦截
+  {let box=$('planning-notices');if(!box){box=document.createElement('p');box.id='planning-notices';box.className='planning-rejected-note';$('planning-source').insertAdjacentElement('afterend',box);}
+   const items=(current.web_architect?.notices||[]).filter(Boolean);box.textContent=items.join('\n');box.style.whiteSpace='pre-line';box.hidden=!(hasPlan&&items.length)||state==='running';}
   $('planning-empty').hidden=hasPlan||state==='running'||state==='rejected';
   $('planning-run').hidden=state!=='running';
   $('planning-reject').hidden=state!=='rejected';
@@ -1100,7 +1108,7 @@ function resolveDirty() {
 async function navigateChapter(chapter) {
   if(busy)return; const old=Number(current.chapter||$('chapter').value||1); if(chapter!==old&&!await resolveDirty()){$('chapter').value=old;return;}
   const status=$('entry-status');status.hidden=false;status.textContent='正在读取本章…';$('chapter').disabled=true;$('chapter').value=Math.max(1,chapter);
-  try{dirty.clear();syncDirtyUi();generationVoiceprintWorkspace=null;generationVoiceprintBook='';generationVoiceprintDirty=false;generationVoiceprintError=false;clearTransientStatus();await fetchSnapshot();syncWorkbenchLocation();await refreshActiveVoiceprint();if(current.axes.step==='outline'){const r=await api(`/books/${encodeURIComponent($('book').value)}/chapters/${current.chapter}/outline-template`);$('outline').value=(await r.json()).content;markDirty('outline');toggleView('outline-edit');render({preserveDirty:true});}}
+  try{dirty.clear();syncDirtyUi();generationVoiceprintWorkspace=null;generationVoiceprintBook='';generationVoiceprintDirty=false;generationVoiceprintError=false;clearTransientStatus();await fetchSnapshot();syncWorkbenchLocation();await refreshActiveVoiceprint();if(current.axes.step==='outline'){const r=await api(`/books/${encodeURIComponent($('book').value)}/chapters/${current.chapter}/outline-template`);$('outline').value=(await r.json()).content;toggleView('outline-edit');render({preserveDirty:true});}}
   catch(error){$('chapter').value=old;showError(error.message);}finally{$('chapter').disabled=false;status.hidden=true;}
 }
 function appendLog(text) { if (!text) return; $('log').textContent += text + '\n'; $('log').scrollTop = $('log').scrollHeight; }
@@ -1126,7 +1134,7 @@ async function stream(action, extra={}, confirmed=false, options={}) {
       if(repeat) break;
     }
     if(repeat){ busy=false; return stream(action,extra,true,options); }
-    if(asked&&!repeat){if(!inline){$('log-drawer').open=false;$('log-drawer').hidden=true;$('run-result').textContent='已取消，本次没有执行';$('run-result').hidden=false;}return false;}
+    if(asked&&!repeat){if(runTimer){clearInterval(runTimer);runTimer=0;}runStartedAt=0;if(!inline){$('log-drawer').open=false;$('log-drawer').hidden=true;$('run-result').hidden=true;$('run-surface').hidden=true;}showNotice('已取消，本次没有执行');return false;}
     if(failed){if(runTimer){clearInterval(runTimer);runTimer=0;}await fetchSnapshot();if(!inline)$('run-surface').hidden=true;return false;}
     await fetchSnapshot();
     if(!inline){$('log-drawer').open = false;$('log-drawer').hidden=true;finishRunProgress(action);$('run-result').textContent=`已完成：${RUN_LABELS[action]||'操作成功'}`;$('run-result').hidden=false;$('run-surface-close').textContent='返回读稿';}

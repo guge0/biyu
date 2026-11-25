@@ -6,7 +6,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-SERVICE = "biyu"
+# 默认钥匙串服务名是 biyu。BIYU_KEYRING_SERVICE 只给隔离测试用（同一 Windows 用户下模拟干净机），普通用户不会设。
+SERVICE = os.environ.get("BIYU_KEYRING_SERVICE", "").strip() or "biyu"
 
 
 def user_config_dir() -> Path:

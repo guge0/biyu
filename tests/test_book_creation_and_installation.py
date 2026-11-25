@@ -37,7 +37,7 @@ def test_create_book_builds_complete_local_repository(tmp_path: Path) -> None:
     created = create_book("我的新书", "xuanhuan", data_root=tmp_path / "BiyuData")
     book = created.book_dir
 
-    assert created.book_id == "new-book"
+    assert created.book_id == "我的新书"  # S-7c：目录名保留中文
     assert json.loads((book / "book.json").read_text(encoding="utf-8"))["genre"] == "xuanhuan"
     for relative in (
         "outlines", "chapters", "chapters/_pending", "logs", "truth_files",
@@ -56,8 +56,10 @@ def test_create_book_rejects_blank_fields_and_deduplicates_slug(tmp_path: Path) 
         create_book("  ", "xuanhuan", data_root=tmp_path)
     with pytest.raises(ValueError, match="题材"):
         create_book("Book", "  ", data_root=tmp_path)
-    assert create_book("中文", "dushi", data_root=tmp_path).book_id == "new-book"
-    assert create_book("中文", "dushi", data_root=tmp_path).book_id == "new-book-2"
+    assert create_book("中文", "dushi", data_root=tmp_path).book_id == "中文"
+    assert create_book("中文", "dushi", data_root=tmp_path).book_id == "中文-2"
+    assert create_book("无Key测试", "dushi", data_root=tmp_path).book_id == "无key测试"
+    assert create_book("？？？", "dushi", data_root=tmp_path).book_id == "new-book"
 
 
 def test_external_data_repo_adoption_and_history(tmp_path: Path) -> None:

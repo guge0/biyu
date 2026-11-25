@@ -70,6 +70,19 @@
     }
 
     async function init() {
+      // S-7a 内测版藏责编:开关关闭时整页让位给一句提示,不加载、不报错
+      try {
+        var featuresResp = await fetch("/api/features");
+        if (featuresResp.ok) {
+          var fp = await featuresResp.json();
+          if (fp && fp.features && fp.features.zebian === false) {
+            listBodyEl.innerHTML = "";
+            displayEl.innerHTML =
+              '<div class="empty-state"><p class="es-title">内测版暂未开放此功能</p></div>';
+            return;
+          }
+        }
+      } catch (_e) { /* 接口失败按开启处理(旧后端兼容) */ }
       try {
         var resp = await fetch("/api/books");
         if (!resp.ok) throw new Error("HTTP " + resp.status);

@@ -352,6 +352,9 @@ app.include_router(_cell_draft_router)
 app.include_router(_quickcheck_router)
 app.include_router(_agent_router)
 app.include_router(_zhuque_router)
+from biyu.ui.diagnostics import router as _diagnostics_router  # S-7b:一键导出诊断包(不含 Key 与书稿)
+
+app.include_router(_diagnostics_router)
 # M2 章节工作台 + 审读路由(books/chapters/characters/truth_files/cost/SSE/reviews)
 app.include_router(_web_router)
 
@@ -373,6 +376,22 @@ def runtime_version() -> dict[str, object]:
         "behind_commits": _behind_count_cached(),
         **identity,
     }
+
+
+@app.get("/api/features")
+def runtime_features() -> dict[str, object]:
+    """S-7a 功能开关一次性下发;页面据此藏入口,不要各自硬编码。"""
+    from biyu.config import feature_enabled
+
+    return {"features": {"zebian": feature_enabled("zebian")}}
+
+
+@app.get("/api/license/status")
+def license_status() -> dict[str, object]:
+    """S-7a 内测授权状态:版本/到期日/剩余天数/各功能是否可用。"""
+    from biyu import licensing
+
+    return licensing.status()
 
 
 @app.post("/api/update/pull")

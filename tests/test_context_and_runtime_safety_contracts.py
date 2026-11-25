@@ -18,6 +18,12 @@ from biyu.prompts.director_prompt import build_planning_prompt
 from biyu.prompts.writer_v3_legacy import build_writer_user_prompt
 
 
+@pytest.fixture(autouse=True)
+def _zebian_enabled(monkeypatch: pytest.MonkeyPatch):
+    """S-7a 责编开关内测默认关;本文件测的是开关打开时的启动契约。"""
+    monkeypatch.setattr("biyu.ui.workbench.feature_enabled", lambda _name: True)
+
+
 def _request(port: int | None) -> Request:
     server = ("127.0.0.1", port) if port is not None else ("127.0.0.1", None)
     return Request({

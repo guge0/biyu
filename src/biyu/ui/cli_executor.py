@@ -107,6 +107,17 @@ def _append_run_log(path: Path, text: str) -> None:
         handle.write(text.rstrip("\r\n") + "\n")
 
 
+# S-3C 异常矩阵的线索特征:状态码 / LLMError / 超时 / 断连;
+# S-7d 加入缺 Key 特征(httpx 的 Illegal header value / api key),
+# 否则无 Key 时子进程尾行是中文 RuntimeError,英文病根行挑不中,页面出不了人话。
+_CLUE_RE = re.compile(r"\[\d{3}\]|LLMError|timed out|连接失败|illegal header value|api key", re.IGNORECASE)
+
+
+def _clue_line(tail_lines: list[str], last_output: str) -> str:
+    """从子进程末几行里挑最能说明失败原因的一行(倒序第一个命中)。"""
+    return next((line for line in reversed(tail_lines) if _CLUE_RE.search(line)), last_output)
+
+
 async def execute(action_id: str, *, book: str, chapter: int, confirmed: bool, extra: dict[str, str]) -> AsyncGenerator[dict, None]:
     key = (book, chapter)
     if key in _RUNNING:
@@ -114,7 +125,13 @@ async def execute(action_id: str, *, book: str, chapter: int, confirmed: bool, e
         return
     action = action_for(action_id, book=book, chapter=chapter)
     if action.confirm and not confirmed:
-        yield {"type": "confirmation_required", "estimate": action.estimate}
+        from .action_estimate import estimate_text
+
+        try:
+            estimate_book_dir = resolve_book_dir(book)
+        except Exception:
+            estimate_book_dir = None
+        yield {"type": "confirmation_required", "estimate": estimate_text(action_id, estimate_book_dir, action.estimate)}
         return
     book_dir = resolve_book_dir(book)
     previous_step = read_workbench_step(book_dir, chapter)
@@ -205,14 +222,7 @@ async def execute(action_id: str, *, book: str, chapter: int, confirmed: bool, e
             write_workbench_step(book_dir, chapter, previous_step)
             message = f"操作没有完成（退出码 {code}）"
             # S-3C 异常矩阵:坏 Key/余额不足/断网的原始异常行翻成人话再带给作者
-            clue = next(
-                (
-                    line for line in reversed(tail_lines)
-                    if re.search(r"\[\d{3}\]", line) or "LLMError" in line
-                    or "timed out" in line.lower() or "连接失败" in line
-                ),
-                last_output,
-            )
+            clue = _clue_line(tail_lines, last_output)
             if clue:
                 message += f"：{humanize_llm_error(raw=clue, default=clue)}"
             _append_run_log(run_log, f"---\nstatus=failed\nreturncode={code}\nerror={message}")

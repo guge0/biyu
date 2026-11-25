@@ -14,6 +14,12 @@ from biyu.pipeline import _build_context_block
 from biyu.prompts.chapter_writer import build_layer2_context
 
 
+@pytest.fixture(autouse=True)
+def _zebian_enabled(monkeypatch: pytest.MonkeyPatch):
+    """S-7a 责编开关内测默认关;本文件测的是开关打开时的启动环境投影。"""
+    monkeypatch.setattr("biyu.ui.workbench.feature_enabled", lambda _name: True)
+
+
 def _request(host: str = "localhost", port: int = 8090) -> Request:
     return Request({
         "type": "http",

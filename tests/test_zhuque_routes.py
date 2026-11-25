@@ -271,7 +271,7 @@ def test_fix_without_rewriter_plain_error(client, monkeypatch) -> None:
     monkeypatch.setattr(zhuque_routes, "_rewriter_info", lambda: unavailable)
     resp = client.post("/api/zhuque/fix", json={"text": "一段。"})
     assert resp.status_code == 400
-    assert "改写模型不可用" in resp.json()["detail"]
+    assert "还没配降 AI 率用的模型 Key" in resp.json()["detail"]  # S-7b 文案
 
 
 def test_second_job_while_running_gets_409(client, monkeypatch) -> None:
@@ -321,7 +321,7 @@ def test_fix_blind_without_rewriter_plain_error(client, monkeypatch) -> None:
     monkeypatch.setattr(zhuque_routes, "_rewriter_info", lambda: unavailable)
     resp = client.post("/api/zhuque/fix-blind", json={"text": "一段。"})
     assert resp.status_code == 400
-    assert "改写模型不可用" in resp.json()["detail"]
+    assert "还没配降 AI 率用的模型 Key" in resp.json()["detail"]  # S-7b 文案
 
 
 # ---------- report ----------

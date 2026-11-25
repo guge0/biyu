@@ -29,7 +29,34 @@
   document.addEventListener("click", () => closeBookMoreMenus());
 
   // ---------- 初始化 ----------
+  // S-7a 内测到期提示:剩 <=14 天或已到期时,书架页顶部显示一条可关闭的小提示
+  function initBetaExpiryNotice() {
+    const strip = $("beta-expiry-strip");
+    if (!strip) return;
+    fetch("/api/license/status")
+      .then(response => (response.ok ? response.json() : null))
+      .then(payload => {
+        if (!payload) return;
+        let text = null;
+        if (payload.expired) text = "内测版已到期，降 AI 率需升级正式版";
+        else if (typeof payload.days_left === "number" && payload.days_left <= 14)
+          text = `内测版还剩 ${payload.days_left} 天（到 ${payload.expires}）`;
+        if (!text) return;
+        let seen = null;
+        try { seen = localStorage.getItem("biyu-beta-expiry-ack"); } catch (_e) { /* 隐私模式读不到就算了 */ }
+        if (seen === text) return;
+        $("beta-expiry-text").textContent = text;
+        strip.hidden = false;
+        $("beta-expiry-close").onclick = () => {
+          strip.hidden = true;
+          try { localStorage.setItem("biyu-beta-expiry-ack", text); } catch (_e) { /* 隐私模式存不进就算了 */ }
+        };
+      })
+      .catch(() => { /* 授权状态拿不到就不提示 */ });
+  }
+
   async function init() {
+    initBetaExpiryNotice();
     fetch("/api/version")
       .then(response => {
         if (!response.ok) throw new Error("版本接口不可用");
@@ -553,21 +580,28 @@
 
   const $ = (id) => document.getElementById(id);
 
+  // S-7b：内测版 Key 引导。文案只改这里一处；第四项是配图路径（放到 static/img/keyguide/ 后填如 "img/keyguide/deepseek-1.png"），留空不显示。
   const KEY_GUIDE_STEPS = {
     deepseek: [
-      ["第 1 步", "浏览器打开 platform.deepseek.com，手机号验证码 5 秒登录", "https://platform.deepseek.com"],
-      ["第 2 步", "点左侧「充值」充 ¥10（约可写 80 章 / 25 万字网文，几乎用不完）", ""],
-      ["第 3 步", "点左侧「API Keys → 创建 API Key」，复制以 sk- 开头的密钥粘贴到下方即可！", ""],
+      ["用途", "写作模型：开书向导、导演方案、写章、编辑审读。和智谱二选一即可；不配的话只能手动建书、用快检台本地扫描。", "", ""],
+      ["第 1 步", "浏览器打开 DeepSeek 开放平台，用手机号登录。", "https://platform.deepseek.com", ""],
+      ["第 2 步", "先充一点余额（内测实测一章约 ¥0.3–1，充 ¥10 够试十几章）。", "", ""],
+      ["第 3 步", "左侧「API Keys」→ 创建，复制 sk- 开头的密钥，粘贴到下方，服务商选 DeepSeek。", "", ""],
     ],
-    silicon: [
-      ["第 1 步", "打开硅基流动 cloud.siliconflow.cn 注册账号（新用户直接送 14 元免费 Token 额度）", "https://cloud.siliconflow.cn"],
-      ["第 2 步", "在左侧「API 密钥」新建一条 sk- 密钥，在笔驭服务商选「硅基流动 DeepSeek-V3」即可白嫖开写！", ""],
+    glm: [
+      ["用途", "一键降 AI 率 / 去 AI 味的改写模型（glm-5.2）；也可以当写作模型用。不配的话快检台只能体检、不能改。", "", ""],
+      ["第 1 步", "打开智谱开放平台注册登录。", "https://open.bigmodel.cn", ""],
+      ["第 2 步", "进入「API 密钥」页面，添加新的 API Key 并复制。按量计费，记得保证账户有余额。", "", ""],
+      ["第 3 步", "粘贴到下方，服务商选「智谱」。", "", ""],
     ],
-    kimi: [
-      ["Kimi", "前往 platform.moonshot.cn 创建 API Key，适合长上下文设定集读取", "https://platform.moonshot.cn"],
-      ["Claude", "也可在服务商选「Claude」，填 Anthropic 官方 Key（claude-3-7-sonnet）", ""],
+    zhuque: [
+      ["用途", "快检台「朱雀体检」和降分后的自动复测。不配也能用「我去朱雀网页测」模式。", "", ""],
+      ["第 1 步", "打开腾讯云 EdgeOne Makers 控制台并登录，按提示开通 Makers。", "https://console.cloud.tencent.com/edgeone", ""],
+      ["第 2 步", "在 Makers → Models → API Key 页面创建 API Key 并复制。每月有免费额度，用完会提示「额度用完」。", "", ""],
+      ["第 3 步", "粘贴到下方，点「保存」。", "", ""],
     ],
   };
+  let keyGuideTab = "deepseek";
 
   function renderWelcome(ready) {
     const strip = $("welcome-strip");
@@ -601,6 +635,14 @@
       body.style.flex = "1";
       body.textContent = step[1];
       item.append(num, body);
+      if (step[3]) {
+        const img = document.createElement("img");
+        img.src = step[3];
+        img.alt = "";
+        img.style.cssText = "display:block;max-width:100%;margin-top:6px;border-radius:6px";
+        img.onerror = () => img.remove();
+        body.appendChild(img);
+      }
       if (step[2]) {
         const copy = document.createElement("button");
         copy.type = "button";
@@ -617,15 +659,44 @@
     });
   }
 
-  function openKeyGuide() {
+  function selectKeyGuideTab(tab) {
+    keyGuideTab = KEY_GUIDE_STEPS[tab] ? tab : "deepseek";
+    renderKeyGuideSteps(keyGuideTab);
+    document.querySelectorAll(".key-guide-tab").forEach((btn) => {
+      btn.classList.toggle("current", btn.dataset.tab === keyGuideTab);
+    });
+    const input = $("key-guide-input");
+    if (input) input.placeholder = keyGuideTab === "zhuque" ? "粘贴朱雀（EdgeOne Makers）API Key…" : "粘贴 API Key…";
+    const save = $("key-guide-save");
+    if (save) save.textContent = keyGuideTab === "zhuque" ? "保存朱雀 Key" : "一键测试并保存";
+    refreshKeyGuideConfigured();
+  }
+
+  async function refreshKeyGuideConfigured() {
+    const status = $("key-guide-configured");
+    if (!status) return;
+    try {
+      if (keyGuideTab === "zhuque") {
+        const res = await fetch("/api/zhuque/status");
+        const body = res.ok ? await res.json() : {};
+        status.textContent = body.has_key ? "朱雀 Key：已配置 ✓" : "朱雀 Key：未配置";
+      } else {
+        const res = await fetch("/api/setup/status");
+        const body = res.ok ? await res.json() : {};
+        status.textContent = body.ready ? "写作模型 Key：已配置 ✓" : "写作模型 Key：未配置";
+      }
+    } catch (_) {
+      status.textContent = "";
+    }
+  }
+
+  function openKeyGuide(tab) {
     const overlay = $("key-guide-overlay");
     if (!overlay) return;
     overlay.hidden = false;
-    renderKeyGuideSteps("deepseek");
-    document.querySelectorAll(".key-guide-tab").forEach((btn) => {
-      btn.classList.toggle("current", btn.dataset.tab === "deepseek");
-    });
+    selectKeyGuideTab(typeof tab === "string" ? tab : "deepseek");
   }
+  window.biyuOpenKeyGuide = openKeyGuide;
 
   function wireKeyGuide() {
     const overlay = $("key-guide-overlay");
@@ -635,14 +706,30 @@
     });
     $("key-guide-close").addEventListener("click", () => { overlay.hidden = true; });
     document.querySelectorAll(".key-guide-tab").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".key-guide-tab").forEach((b) => b.classList.toggle("current", b === btn));
-        renderKeyGuideSteps(btn.dataset.tab);
-      });
+      btn.addEventListener("click", () => selectKeyGuideTab(btn.dataset.tab));
     });
-    $("key-guide-save").addEventListener("click", () => {
+    $("key-guide-save").addEventListener("click", async () => {
       const key = $("key-guide-input").value.trim();
+      if (keyGuideTab === "zhuque") {
+        const status = $("key-guide-configured");
+        if (!key) { if (status) status.textContent = "请先粘贴朱雀 Key"; return; }
+        try {
+          const res = await fetch("/api/zhuque/key", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key }) });
+          const body = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(body.detail || "保存失败");
+          $("key-guide-input").value = "";
+          if (status) status.textContent = "朱雀 Key：已保存 ✓";
+        } catch (error) {
+          if (status) status.textContent = "朱雀 Key 保存失败：" + error.message;
+        }
+        return;
+      }
       overlay.hidden = true;
+      const provider = document.getElementById("setup-provider");
+      if (provider && [...provider.options].some((o) => o.value === keyGuideTab)) {
+        provider.value = keyGuideTab;
+        provider.dispatchEvent(new Event("change"));
+      }
       const setupKey = document.getElementById("setup-key");
       if (key && setupKey) setupKey.value = key;
       const setupOverlay = document.getElementById("setup-overlay");
@@ -818,8 +905,11 @@
       });
     });
     const keyGuideBtn = $("key-guide-button");
-    if (keyGuideBtn) keyGuideBtn.addEventListener("click", openKeyGuide);
+    if (keyGuideBtn) keyGuideBtn.addEventListener("click", () => openKeyGuide("deepseek"));
     wireKeyGuide();
+    // S-7b：其它页面「怎么申请？」链接跳到 /?keyguide=<tab>，在这里打开同一个引导
+    const wantedGuide = new URLSearchParams(location.search).get("keyguide");
+    if (wantedGuide) openKeyGuide(wantedGuide);
 
     const sealBtn = $("seal-open-button");
     if (sealBtn) sealBtn.addEventListener("click", openSeals);
