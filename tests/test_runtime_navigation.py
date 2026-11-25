@@ -32,7 +32,16 @@ def _top_nav_links(page: str) -> list[tuple[str, str]]:
 
 
 def test_production_top_navigation_keeps_shelf_and_workbench_contract() -> None:
+    """S-10 3a-3:导航收敛为 shell.js 全局栏（书架→/），运行时渲染统一由壳负责；
+    页内静态 top-nav 锚点除 workbench.html（死代码已按工单删除）外保留。"""
+    shell = (STATIC / "shell.js").read_text(encoding="utf-8")
+    assert "shelfBtn.href = '/'" in shell
+    assert "shelfBtn.textContent = '书架'" in shell
     for page in PRODUCTION_PAGES:
+        html = (STATIC / page).read_text(encoding="utf-8")
+        if page == "workbench.html":
+            assert '<nav class="top-nav">' not in html
+            continue
         links = _top_nav_links(page)
         labels = [text for text, _ in links]
         expected = ["书架", "工作台"]
@@ -46,18 +55,16 @@ def test_production_top_navigation_keeps_shelf_and_workbench_contract() -> None:
 
 
 def test_workbench_keeps_contextual_memory_and_voiceprint_paths() -> None:
+    """S-10 3a-3:工作台旧 nav 已删；本书记忆/声纹入口统一收进书内栏「本书 ▾」（shell.js）。"""
     html = (STATIC / "workbench.html").read_text(encoding="utf-8")
-    book = (STATIC / "book.html").read_text(encoding="utf-8")
-    nav = re.search(r'<nav class="top-nav">.*?</nav>', html, re.DOTALL)
-    assert nav is not None
-    assert "/memory.html" not in nav.group(0)
-    assert "/voiceprint.html" not in nav.group(0)
+    shell = (STATIC / "shell.js").read_text(encoding="utf-8")
+    assert '<nav class="top-nav">' not in html
     assert 'id="memory-link"' not in html
     assert 'id="voiceprint-link"' not in html
-    assert 'href="/memory.html?book=' in book
-    assert 'href="/voiceprint.html?book=' in book
-    assert "本书记忆" in book
-    assert "本书声纹" in book
+    assert "/memory.html?book=" in shell
+    assert "/voiceprint.html?book=" in shell
+    assert "本书记忆" in shell
+    assert "声纹" in shell
 
 
 def test_workbench_command_row_only_wraps_below_desktop_width() -> None:

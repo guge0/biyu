@@ -89,6 +89,86 @@ h1,h2,h3,h4,.card-title,.page-title,.shelf-title,
 /* 线条图标统一尺寸（.icon 基类在 styles.css，24px；按钮/栏内收成 15px） */
 .biyu-gicon{ width:15px; height:15px; flex:none; vertical-align:-2px; }
 
+/* ---------- 3a-3 全局栏（第一层，浮条玻璃，sticky；样张 .gbar） ---------- */
+.biyu-titlebar{
+  position:sticky; top:10px; z-index:120; display:flex; align-items:center; gap:var(--sp-2);
+  height:52px; margin:10px 16px 0; padding:0 var(--sp-4); flex-wrap:nowrap; box-sizing:border-box;
+  background:var(--glass-strong); border:1px solid var(--glass-border); border-radius:var(--r-l);
+  box-shadow:var(--glass-shadow); user-select:none;
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
+.biyu-brand{display:inline-flex;align-items:center;gap:8px;font-family:var(--serif);font-size:var(--text-lg);margin-right:var(--sp-3);white-space:nowrap;border-bottom:none;color:var(--ink);flex:none}
+.biyu-seal{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:7px;background:var(--accent);color:var(--accent-fg);font-style:normal;font-size:15px;font-weight:500;flex:none}
+.biyu-wordmark{font-family:var(--display-font);font-size:18px;font-weight:500;letter-spacing:.03em;color:var(--ink)}
+.biyu-nav-links{display:flex;align-items:center;gap:2px;min-width:0}
+.biyu-nav-btn{padding:6px 12px;border-radius:var(--r-btn);font-size:var(--text-sm);color:var(--ink-soft);white-space:nowrap;border-bottom:none;display:inline-flex;align-items:center;gap:6px;background:transparent;box-shadow:none}
+.biyu-nav-btn:hover{background:var(--rule-soft);color:var(--ink);border-bottom:none}
+.biyu-nav-btn.current{color:var(--ink);font-weight:500;background:var(--accent);border-bottom:none}
+.biyu-quickcheck-pill{color:var(--mark);background:var(--mark-bg)}
+.biyu-quickcheck-pill:hover,.biyu-quickcheck-pill.current{background:var(--mark);color:var(--accent-fg)}
+.biyu-quickcheck-pill .biyu-gicon{width:14px;height:14px}
+.biyu-gspacer{flex:1;min-width:8px}
+.biyu-gtools{display:flex;align-items:center;gap:4px;flex:none}
+.biyu-ibtn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border:1px solid transparent;background:transparent;border-radius:var(--r-btn);font-size:var(--text-sm);font-weight:400;color:var(--ink-soft);cursor:pointer;white-space:nowrap;border-bottom:none;text-decoration:none;box-shadow:none}
+.biyu-ibtn:hover{background:var(--rule-soft);color:var(--ink);border-color:var(--rule-strong);border-bottom:1px solid var(--rule-strong)}
+.biyu-ibtn.current{color:var(--ink);background:var(--rule-soft)}
+
+/* ---------- 3a-3 书内栏（第二层，进文档流不 fixed；样张 .bbar） ---------- */
+.biyu-bookbar{
+  display:flex; align-items:center; gap:var(--sp-3); flex-wrap:wrap; min-height:48px; box-sizing:border-box;
+  margin:8px 16px 0; padding:6px var(--sp-4);
+  background:var(--glass-strong); border:1px solid var(--glass-border); border-radius:var(--r-l);
+  box-shadow:var(--glass-shadow);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
+.biyu-crumb{display:flex;align-items:center;gap:10px;white-space:nowrap;min-width:0}
+.biyu-crumb-back{font-size:var(--text-sm);color:var(--ink-soft);border-bottom:none}
+.biyu-crumb-back:hover{color:var(--ink);border-bottom:none}
+.biyu-crumb-title{font-family:var(--serif);font-size:var(--text-lg);color:var(--ink)}
+.biyu-crumb .wb-title{display:flex;align-items:baseline;gap:8px;min-width:0;max-width:34em}
+.biyu-crumb .wb-title strong{overflow:hidden;text-overflow:ellipsis}
+.biyu-chapnav{display:flex;align-items:center;gap:4px;flex:none}
+.biyu-chapnav .chapter-num{width:54px;height:30px;text-align:center;padding:2px 6px}
+.biyu-bookmenu{position:relative;flex:none}
+.biyu-caret{color:var(--ink-faint);font-size:11px}
+.biyu-bookmenu-list{
+  position:absolute;right:0;top:calc(100% + 6px);z-index:150;min-width:136px;padding:6px 0;
+  border:1px solid var(--glass-border);border-radius:var(--r-m);background:var(--glass-strong);
+  box-shadow:var(--glass-shadow);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
+.biyu-bookmenu-list[hidden]{display:none}
+.biyu-bookmenu-list a{display:block;padding:8px 14px;font-size:var(--text-sm);color:var(--ink-soft);border-bottom:none}
+.biyu-bookmenu-list a:hover{background:var(--rule-soft);color:var(--ink);border-bottom:none}
+.biyu-bookmenu-list a.current{color:var(--mark);font-weight:500}
+
+/* ①–⑤ 阶段条：胶囊分段（样张 .stages）；宽度不够整条换行，不挤压不叠 */
+.biyu-bookbar .stage-bar{
+  display:flex; gap:2px; padding:3px; flex:none; max-width:100%; overflow-x:auto;
+  background:rgba(127,120,108,.12); border:0; border-radius:999px; height:auto; min-height:0;
+}
+.biyu-bookbar .stage-button{
+  position:relative; padding:5px 10px; font-size:var(--text-sm); color:var(--ink-mute);
+  background:transparent; border:0; border-radius:var(--r-btn); white-space:nowrap; border-bottom:0;
+  box-shadow:none;
+}
+.biyu-bookbar .stage-button.done{color:var(--ink-soft)}
+.biyu-bookbar .stage-button.done::after{content:" ✓";color:var(--ok)}
+.biyu-bookbar .stage-button.current{background:var(--surface);color:var(--ink);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.12);border-radius:var(--r-btn);border-bottom:0}
+.biyu-bookbar .stage-button.current::after{content:none}
+.biyu-bookbar .stage-button.locked{opacity:.55}
+.biyu-bookbar .workbench-more{position:relative;flex:none;margin-left:0}
+.biyu-bookbar .workbench-more-menu{border-radius:var(--r-m)}
+
+/* 窄屏：2560 屏 200% 缩放 / 1920 屏 150% 缩放时浏览器里只有约 1280 宽 */
+@media (max-width:1366px){
+  .biyu-titlebar,.biyu-bookbar{margin-left:12px;margin-right:12px;padding-left:var(--sp-3);padding-right:var(--sp-3)}
+  .biyu-lbl-long{display:none}
+}
+@media (max-width:1100px){
+  .biyu-lbl{display:none}
+}
+
 /* ---------- 红线：正文读稿区永远不透明纸底，不加玻璃 ----------
    .prose/#chapter-read/#official-chapter 的背景与透明度在此重申，
    任何后续玻璃规则都不得进入正文阅读区（DESIGN §0.8）。 */

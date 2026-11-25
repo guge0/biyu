@@ -28,12 +28,12 @@ let readingChromeTimer=0;
 let readingChromeLastTop=0;
 let bookRoots=new Map();
 let generationVoiceprintWorkspace = null, generationVoiceprintBook = '', generationVoiceprintDirty = false, generationVoiceprintLoading = false, generationVoiceprintError = false;
-const workbenchSelfLink = $('workbench-self-link');
+const workbenchSelfLink = $('workbench-self-link'); // S-10 3a-3 起旧 nav.top-nav 已删，本元素不存在；保留判空兼容
 const memoryLink = $('memory-link');
 const voiceprintLink = $('voiceprint-link');
 const selectedBook = new URLSearchParams(location.search).get('book');
 if (selectedBook) {
-  workbenchSelfLink.href = `/workbench.html?book=${encodeURIComponent(selectedBook)}`;
+  if (workbenchSelfLink) workbenchSelfLink.href = `/workbench.html?book=${encodeURIComponent(selectedBook)}`;
   if (memoryLink) memoryLink.href = `/memory.html?book=${encodeURIComponent(selectedBook)}`;
   if (voiceprintLink) voiceprintLink.href = `/voiceprint.html?book=${encodeURIComponent(selectedBook)}`;
 }

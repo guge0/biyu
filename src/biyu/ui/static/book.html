@@ -267,41 +267,24 @@
         '    </span>' +
         '  </div>' +
         '</div>' +
-        '<div class="entry-grid entry-grid-sub">' +
-        '  <a href="/memory.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
-        '    <div class="entry-label">本书记忆</div>' +
-        '    <div class="entry-desc">跨章事实、承诺和人物状态</div>' +
-        '  </a>' +
-        '  <a href="/voiceprint.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
-        '    <div class="entry-label">本书声纹</div>' +
-        '    <div class="entry-desc">全书通用的叙述与角色声音</div>' +
-        '  </a>' +
-        '  <a href="/overview.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
-        '    <div class="entry-icon">▤</div>' +
-        '    <div class="entry-label">整书概览</div>' +
-        '    <div class="entry-desc">全书进度，哪些等你处理</div>' +
-        '  </a>' +
-        '  <a href="/good-sentences.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
-        '    <div class="entry-icon">❝</div>' +
-        '    <div class="entry-label">好句</div>' +
-        '    <div class="entry-desc">标过的句子</div>' +
-        '  </a>' +
-        // D-148：总导演入口退回环5；后端、CLI 与书级会话注册表保留休眠。
-        '  <button class="entry-card" id="rename-entry" style="cursor:pointer;text-align:left;font-family:inherit;font-size:inherit;">' +
-        '    <div class="entry-icon">' + iconHtml("rename") + '</div>' +
-        '    <div class="entry-label">起名/改名</div>' +
-        '    <div class="entry-desc">修改书名或起名候选</div>' +
-        '  </button>' +
         '  <a id="summaries-entry" href="/summaries.html?book=' + encodeURIComponent(bookIdOrName) + '" class="entry-card">' +
         '    <div class="entry-icon">' + iconHtml("summary") + '</div>' +
         '    <div class="entry-label">纪要</div>' +
         '    <div class="entry-desc">跟责编聊出来的结论：否掉的方向、还没定的分歧、你的口味</div>' +
         '  </a>' +
+        '</div>' +
+        // S-10 3a-3：四张次级入口卡（概览/记忆/声纹/好句）与书内栏「本书 ▾」菜单重复，删除；
+        // 起名/改名是本页独有动作，保留。D-148：总导演入口退回环5，后端与会话注册表保留休眠。
+        '<div class="entry-grid entry-grid-sub">' +
+        '  <button class="entry-card" id="rename-entry" style="cursor:pointer;text-align:left;font-family:inherit;font-size:inherit;">' +
+        '    <div class="entry-icon">' + iconHtml("rename") + '</div>' +
+        '    <div class="entry-label">起名/改名</div>' +
+        '    <div class="entry-desc">修改书名或起名候选</div>' +
+        '  </button>' +
         '</div>';
 
-      // 组装
+      // 组装（S-10 3a-3：页内「← 书架」返回链接与书内栏重复，已删）
       detailEl.innerHTML = "";
-      detailEl.appendChild(backLink());
       detailEl.appendChild(titleEl);
       detailEl.appendChild(metaDiv);
       if (genre) detailEl.appendChild(genreP);
@@ -359,14 +342,6 @@
           document.getElementById("settings-entry-state").textContent = filled ? "9 格 · 已填 " + filled : "9 格 · 一格没填";
         });
       }).catch(function () { document.getElementById("settings-entry").hidden = true; });
-    }
-
-    function backLink() {
-      var a = document.createElement("a");
-      a.className = "back-link";
-      a.href = "/";
-      a.innerHTML = "← 书架";
-      return a;
     }
 
     function showPersistentError(msg) {

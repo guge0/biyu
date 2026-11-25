@@ -54,7 +54,9 @@ def test_all_four_navigation_surfaces_hide_pruned_targets() -> None:
         "six_page_top": "\n".join(_top_nav(_text(page)) for page in SIX_PAGE_NAV),
         "book_internal_four": "\n".join(
             _top_nav(_text(page))
-            for page in ("overview.html", "workbench.html", "memory.html", "voiceprint.html")
+            # S-10 3a-3:workbench.html 的 nav.top-nav 死代码已删（书内导航由 shell.js 统一渲染，
+            # 不含被摘除页面的链接），此处不再要求工作台保留旧导航锚点。
+            for page in ("overview.html", "memory.html", "voiceprint.html")
         ),
     }
     for label, html in surfaces.items():
@@ -85,13 +87,13 @@ def test_every_retained_destination_has_a_shelf_path() -> None:
     app_js = _text("app.js")
     book_html = _text("book.html")
     workbench_html = _text("workbench.html")
+    shell_js = _text("shell.js")
     assert "/book.html?book=" in app_js
     assert 'href="/workbench.html?book=' in book_html
     assert 'href="/summaries.html?book=' in book_html
-    assert 'href="/overview.html?book=' in book_html
-    assert 'href="/good-sentences.html?book=' in book_html
-    for target in ("/memory.html", "/voiceprint.html"):
-        assert f'href="{target}?book=' in book_html
+    # S-10 3a-3:整书概览/好句/记忆/声纹的入口卡已收进书内栏「本书 ▾」菜单（shell.js 统一渲染）
+    for target in ("/overview.html?book=", "/good-sentences.html?book=", "/memory.html?book=", "/voiceprint.html?book="):
+        assert target in shell_js
     assert 'id="memory-link"' not in workbench_html
     assert 'id="voiceprint-link"' not in workbench_html
     assert 'href="/overview.html' not in workbench_html

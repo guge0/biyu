@@ -79,6 +79,8 @@ DETECT_JS = r"""
     if (!vis(el)) continue;
     const dx = el.scrollWidth - el.clientWidth, dy = el.scrollHeight - el.clientHeight;
     const s = getComputedStyle(el);
+    // 行内元素 clientWidth 恒为 0，量不出溢出；line-clamp 截断在 Firefox 的 scrollHeight 是全文高
+    if (s.display === 'inline' || parseInt(s.webkitLineClamp) > 0) continue;
     const scrollable = axis => ['auto', 'scroll', 'overlay'].includes(axis);
     if ((dx > 0 && scrollable(s.overflowX)) || (dy > 0 && scrollable(s.overflowY))) continue;
     const d = Math.max(dx, dy);

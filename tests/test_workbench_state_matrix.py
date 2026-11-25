@@ -215,12 +215,16 @@ def test_git_history_commit_path_and_blob_refer_to_the_same_changed_file(tmp_pat
 
 
 def test_workbench_self_link_keeps_the_selected_book() -> None:
+    """S-10 3a-3:旧 nav.top-nav 自链（workbench-self-link）已删，书内导航由 shell.js
+    统一渲染并带书参数；workbench.js 对旧元素保留判空兼容。"""
     html = Path("src/biyu/ui/static/workbench.html").read_text(encoding="utf-8")
     js = Path("src/biyu/ui/static/workbench.js").read_text(encoding="utf-8")
+    shell = Path("src/biyu/ui/static/shell.js").read_text(encoding="utf-8")
 
-    assert 'id="workbench-self-link"' in html
-    assert "workbenchSelfLink.href" in js
-    assert "encodeURIComponent(selectedBook)" in js
+    assert 'id="workbench-self-link"' not in html
+    assert "if (workbenchSelfLink)" in js
+    assert "encodeURIComponent(book.id)" in shell
+    assert "encodeURIComponent(bookId)" in shell
 
 
 def test_force_pending_seam_keeps_default_and_workbench_paths_separate(tmp_path: Path) -> None:

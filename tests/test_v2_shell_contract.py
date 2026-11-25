@@ -73,8 +73,8 @@ def test_shell_engine_guards_match_spec():
     assert "恢复默认" in shell
     # REQ-3 降级：custom 背景缺文件回落 none
     assert "state.background.type = 'none'" in shell
-    # REQ-4 反向：无书时书名与二级胶囊不渲染
-    assert "if (book)" in shell
+    # REQ-4 反向：无书时书名不渲染（S-10 3a-3 起书名链接挂在书内页判定之后）
+    assert "if (book && IN_BOOK_PAGES" in shell
 
 
 def test_no_cdn_font_references_anywhere():

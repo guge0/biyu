@@ -20,64 +20,8 @@
   transition:background-color .25s ease,opacity .2s ease;
 }
 
-/* ---------- 顶栏 ---------- */
-.biyu-titlebar{
-  display:flex;align-items:center;justify-content:space-between;gap:16px;
-  padding:10px 24px;background:var(--surface);
-  border-bottom:1px solid var(--rule);
-  user-select:none;min-height:56px;flex-wrap:wrap;
-  position:sticky;top:0;z-index:100;
-}
-.biyu-win-left{display:flex;align-items:center;gap:14px;min-width:0;flex-wrap:wrap}
-.biyu-brand{display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:none;background:none;padding:0;color:var(--ink)}
-.biyu-seal{
-  width:28px;height:28px;border-radius:7px;background:var(--accent);color:var(--accent-fg);
-  font-family:var(--serif);font-size:14px;font-weight:600;
-  display:inline-flex;align-items:center;justify-content:center;
-  box-shadow:0 2px 5px rgba(0,0,0,.12);
-}
-.biyu-wordmark{font-family:var(--display-font);font-size:18px;font-weight:600;letter-spacing:.03em;color:var(--ink)}
-.biyu-brand-divider{width:1px;height:18px;background:var(--rule-strong)}
-.biyu-nav-links{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.biyu-nav-btn{
-  background:transparent;border:none;padding:6px 12px;border-radius:var(--r-md);
-  font-size:14px;font-weight:500;color:var(--ink-soft);cursor:pointer;
-  font-family:var(--sans);transition:all .15s ease;display:inline-flex;align-items:center;gap:6px;
-}
-.biyu-nav-btn:hover{background:var(--rule-soft);color:var(--ink)}
-.biyu-nav-btn.current{background:var(--rule-soft);color:var(--ink);font-weight:600}
-
-/* 书内二级工具胶囊组 */
-.biyu-secondary-pills{
-  display:inline-flex;align-items:center;gap:2px;background:var(--surface-subtle);
-  border:1px solid var(--rule);border-radius:var(--r-md);padding:3px;margin-left:6px;
-}
-.biyu-sub-pill{
-  background:transparent;border:none;padding:4px 10px;border-radius:6px;
-  font-size:12px;font-weight:500;color:var(--ink-mute);cursor:pointer;transition:all .15s ease;
-}
-.biyu-sub-pill:hover{color:var(--ink)}
-.biyu-sub-pill.current{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-
-/* 顶栏右侧 */
-.biyu-win-right{display:flex;align-items:center;gap:10px}
-.biyu-gacha-switch{
-  display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;
-  border:1px solid var(--btn-border);border-radius:var(--r-md);background:var(--surface-subtle);
-  cursor:pointer;font-size:13px;font-weight:500;color:var(--ink-soft);transition:all .15s ease;
-}
-.biyu-gacha-switch:hover{border-color:var(--ink-soft);color:var(--ink)}
-.biyu-gacha-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-faint)}
-.biyu-theme-trigger{
-  display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;
-  border:1px solid var(--btn-border);border-radius:var(--r-md);background:var(--surface-subtle);
-  color:var(--ink-soft);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s ease;
-}
-.biyu-theme-trigger:hover{border-color:var(--ink-soft);color:var(--ink)}
-.biyu-swatch-dot{
-  width:12px;height:12px;border-radius:50%;background:var(--paper);
-  border:2px solid var(--mark);display:inline-block;
-}
+/* ---------- 窗口控制钮（S-5 Electron，S-10 3a-3 起挂在全局栏工具区） ----------
+   顶栏本体样式已迁 glass.css（S-10 3a-3 两层导航：全局玻璃栏 + 书内栏）。 */
 .biyu-win-controls{
   display:inline-flex;align-items:center;gap:4px;padding-left:8px;
   border-left:1px solid var(--rule);visibility:hidden;
@@ -173,7 +117,6 @@ body.biyu-shell-active{padding-bottom:40px}
 .biyu-toast.show{display:block}
 
 @media(max-width:760px){
-  .biyu-titlebar{padding:8px 12px}
   .biyu-theme-drawer{right:8px;left:8px;width:auto;top:76px}
   .biyu-statusbar{padding:6px 12px}
 }
@@ -243,28 +186,7 @@ body.biyu-shell-active{padding-bottom:40px}
   resize: vertical;
 }
 
-/* S-3 决策6B:顶栏导入向导按钮 */
-.biyu-import-wizard-btn {
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--btn-border);
-  border-radius: var(--r-md);
-  background: var(--surface-subtle);
-  color: var(--ink-soft);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.biyu-import-wizard-btn:hover { border-color: var(--ink-soft); color: var(--ink); }
+/* S-3 决策6B:顶栏导入向导按钮——本体样式已迁 glass.css（3a-3 两层导航） */
 .biyu-import-modal { max-width: 640px; }
 
-/* S-3 T7:顶栏快检朱砂胶囊(P0-1A) */
-.biyu-quickcheck-pill {
-  background: var(--mark-bg) !important;
-  color: var(--mark) !important;
-  border: 1px solid rgba(166, 75, 56, 0.32) !important;
-  font-weight: 600 !important;
-  border-radius: var(--r-md);
-  padding: 6px 12px;
-}
-.biyu-quickcheck-pill:hover, .biyu-quickcheck-pill.current { background: var(--mark) !important; color: #FAF8F3 !important; border-color: var(--mark) !important; }
+/* S-3 T7:顶栏快检朱砂胶囊(P0-1A)——本体样式已迁 glass.css（3a-3 两层导航） */

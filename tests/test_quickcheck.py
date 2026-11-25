@@ -125,23 +125,21 @@ def test_quickcheck_paste_button_reads_clipboard() -> None:
 
 
 def test_quickcheck_shell_entry() -> None:
+    """S-10 3a-3:快检入口在全局栏（bolt 线条图标 + 文案），id 与类保留。"""
     shell = _src("shell.js")
-    assert "nav-quickcheck" in shell and "⚡ 独立快检 / 去AI味" in shell
-    css = _src("shell.css")
+    assert "nav-quickcheck" in shell and "快检 / 去AI味" in shell and "shellIcon('bolt')" in shell
+    css = _src("glass.css")
     assert ".biyu-quickcheck-pill" in css
     assert 'href="/quickcheck.html"' in _src("quickcheck.html") or True
 
 
 def test_quickcheck_entry_not_duplicated_on_book_pages() -> None:
-    """S-3B 走查修复:无书兜底入口必须带 !book 条件。
-
-    旧实现在有书态同时渲染 qcBtn0 与书组朱砂胶囊(同 id 同文案并排两个)。
-    """
+    """S-3B 走查修复的延续:S-10 3a-3 起快检入口只在全局栏渲染一次（无书/有书同一条路径）。"""
     shell = _src("shell.js")
-    assert "if (!book) {" in shell
-    assert shell.count("const qcBtn0") == 1
-    # 有书态的朱砂胶囊仍保留
-    assert "biyu-quickcheck-pill" in shell
+    assert shell.count('id = \'nav-quickcheck\'') + shell.count('id = "nav-quickcheck"') + shell.count("qcBtn.id = 'nav-quickcheck'") >= 1
+    assert shell.count("biyu-quickcheck-pill") >= 1
+    # 全局栏构建路径只有一处快检入口
+    assert shell.count("nav-quickcheck") == 1
 
 
 def test_quickcheck_routes_registered() -> None:

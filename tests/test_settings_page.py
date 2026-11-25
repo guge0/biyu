@@ -282,11 +282,12 @@ def test_settings_static_page_has_required_floor_and_tier_copy() -> None:
     js = Path("src/biyu/ui/static/settings.js").read_text(encoding="utf-8")
     book = Path("src/biyu/ui/static/book.html").read_text(encoding="utf-8")
     main_start = book.index('class="entry-grid entry-grid-main"')
-    sub_start = book.index('class="entry-grid entry-grid-sub"')
-    main = book[main_start:sub_start]
-    sub = book[sub_start:book.index("      // 组装", sub_start)]
+    main = book[main_start:book.index("      // 组装", main_start)]
     assert "设定集" in main and "/settings.html?book=" in main
-    assert "整书概览" not in main and "整书概览" in sub
+    # S-10 3a-3:本书记忆/声纹/整书概览/好句四张次级入口卡已收进 shell.js 的「本书 ▾」菜单，
+    # book.html 不再重复渲染；起名/改名是本页独有动作，保留。
+    assert "整书概览" not in book and "本书记忆" not in book and "本书声纹" not in book
+    assert 'id="rename-entry"' in book
     assert "立项资产历史" not in book
     assert 'id="setup-assets-panel"' not in book
     assert "9 格 · 一格没填" in book and "9 格 · 已填 " in book

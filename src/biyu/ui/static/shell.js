@@ -474,12 +474,15 @@
     if (drawer) drawer.classList.toggle('open');
   }
 
-  /* ---------- 顶栏与状态栏 ---------- */
+  /* ---------- 顶栏与状态栏（S-10 3a-3：全局玻璃栏 + 书内栏，样张 sample.js 结构） ---------- */
   function currentPage() {
     const path = location.pathname.replace(/\\/g, '/');
     const file = path.split('/').pop() || 'index.html';
     return file.replace(/\.html$/, '').replace(/^$/, 'index');
   }
+
+  // 带 ?book= 的书内页（书内栏出现范围；trash 无书参数不算）
+  const IN_BOOK_PAGES = ['book', 'workbench', 'overview', 'voiceprint', 'good-sentences', 'memory', 'summaries', 'editor', 'propose', 'settings'];
 
   function buildTitlebarNavLinks() {
     const nav = document.createElement('nav');
@@ -493,81 +496,46 @@
     if (currentPage() === 'index') shelfBtn.classList.add('current');
     nav.appendChild(shelfBtn);
 
-    // S-3 T7:快检一级入口在无书态同样可达
-    // S-3B 走查修复:有书态下方已有朱砂胶囊(qcBtn),这里不再重复渲染,
-    // 否则书页顶栏出现两个同文案同链接的「独立快检」入口(且 id 重复)。
+    // 《当前书名》：书内页才有，点了回书籍页（样张同款）
     const book = state.book;
-    if (!book) {
-      const qcBtn0 = document.createElement('a');
-      qcBtn0.className = 'biyu-nav-btn biyu-quickcheck-pill';
-      qcBtn0.id = 'nav-quickcheck';
-      qcBtn0.href = '/quickcheck.html';
-      qcBtn0.textContent = '⚡ 独立快检 / 去AI味';
-      if (currentPage() === 'quickcheck') qcBtn0.classList.add('current');
-      nav.appendChild(qcBtn0);
-    }
-
-    if (book) {
+    if (book && IN_BOOK_PAGES.indexOf(currentPage()) !== -1) {
       const bookBtn = document.createElement('a');
-      bookBtn.className = 'biyu-nav-btn';
-      const inBook = ['book', 'workbench', 'overview', 'voiceprint', 'good-sentences', 'memory'].indexOf(currentPage()) !== -1;
-      if (inBook) bookBtn.classList.add('current');
-      bookBtn.href = '/workbench.html?book=' + encodeURIComponent(book.id);
+      bookBtn.className = 'biyu-nav-btn biyu-book-title-link';
+      bookBtn.href = '/book.html?book=' + encodeURIComponent(book.id);
+      bookBtn.title = '回到这本书';
       bookBtn.textContent = '《' + (book.display_name || book.title || book.name) + '》';
-
-      const pills = document.createElement('span');
-      pills.className = 'biyu-secondary-pills';
-      const pillDefs = [
-        ['全书概览', '/overview.html?book=' + encodeURIComponent(book.id), 'overview'],
-        ['声纹', '/voiceprint.html?book=' + encodeURIComponent(book.id), 'voiceprint'],
-        ['好句', '/good-sentences.html?book=' + encodeURIComponent(book.id), 'good-sentences'],
-        ['回收站', '/trash.html', 'trash']
-      ];
-      pillDefs.forEach((def) => {
-        const pill = document.createElement('a');
-        pill.className = 'biyu-sub-pill';
-        pill.href = def[1];
-        pill.textContent = def[0];
-        if (currentPage() === def[2]) pill.classList.add('current');
-        pills.appendChild(pill);
-      });
       nav.appendChild(bookBtn);
-      // S-3 T7(P0-1A):顶栏一级快检入口(朱砂胶囊)
-      const qcBtn = document.createElement('a');
-      qcBtn.className = 'biyu-nav-btn biyu-quickcheck-pill';
-      qcBtn.id = 'nav-quickcheck';
-      qcBtn.href = '/quickcheck.html';
-      qcBtn.title = '免建书免填设定，随手粘贴小说即刻查 AI 味词族密度';
-      qcBtn.textContent = '⚡ 独立快检 / 去AI味';
-      if (currentPage() === 'quickcheck') qcBtn.classList.add('current');
-      nav.appendChild(qcBtn);
-      nav.appendChild(pills);
     }
+
+    // 快检 / 去AI味：全局一级入口（付费主菜，朱砂色；S-3 T7 的 id 与类保留）
+    const qcBtn = document.createElement('a');
+    qcBtn.className = 'biyu-nav-btn biyu-quickcheck-pill';
+    qcBtn.id = 'nav-quickcheck';
+    qcBtn.href = '/quickcheck.html';
+    qcBtn.title = '独立快检 / 去AI味：免建书免填设定，随手粘贴小说即刻查 AI 味词族密度';
+    qcBtn.setAttribute('aria-label', '独立快检 / 去AI味');
+    qcBtn.innerHTML = shellIcon('bolt') + '<span>快检 / 去AI味</span>';
+    if (currentPage() === 'quickcheck') qcBtn.classList.add('current');
+    nav.appendChild(qcBtn);
     return nav;
   }
 
   function refreshTitlebarNav() {
     const header = document.querySelector('.biyu-titlebar');
     if (!header) return;
-    const left = header.querySelector('.biyu-win-left');
     const oldNav = header.querySelector('.biyu-nav-links');
-    if (left && oldNav) {
-      const divider = left.querySelector('.biyu-brand-divider');
-      if (divider) divider.insertAdjacentElement('afterend', buildTitlebarNavLinks());
-      oldNav.remove();
-    }
+    if (oldNav) oldNav.replaceWith(buildTitlebarNavLinks());
     if (state.book) {
-      const settingsBtn = header.querySelector('.biyu-win-right a.biyu-nav-btn[href$="#settings-entry"]');
+      const settingsBtn = header.querySelector('.biyu-settings-link');
       if (settingsBtn) settingsBtn.href = '/settings.html?book=' + encodeURIComponent(state.book.id);
+      const bookLink = header.querySelector('.biyu-book-title-link');
+      if (bookLink) bookLink.href = '/book.html?book=' + encodeURIComponent(state.book.id);
     }
   }
 
-  function buildTitlebar(books) {
+  function buildTitlebar() {
     const header = document.createElement('header');
     header.className = 'biyu-titlebar';
-
-    const left = document.createElement('div');
-    left.className = 'biyu-win-left';
 
     const brand = document.createElement('a');
     brand.className = 'biyu-brand';
@@ -581,61 +549,65 @@
     wordmark.textContent = '笔驭';
     brand.appendChild(seal);
     brand.appendChild(wordmark);
-    left.appendChild(brand);
+    header.appendChild(brand);
 
-    const divider = document.createElement('span');
-    divider.className = 'biyu-brand-divider';
-    left.appendChild(divider);
+    header.appendChild(buildTitlebarNavLinks());
 
-    left.appendChild(buildTitlebarNavLinks());
-    header.appendChild(left);
+    const spacer = document.createElement('span');
+    spacer.className = 'biyu-gspacer';
+    header.appendChild(spacer);
 
-    const right = document.createElement('div');
-    right.className = 'biyu-win-right';
+    const tools = document.createElement('div');
+    tools.className = 'biyu-gtools';
 
-    // S-3 决策6B:全局顶栏「📥 导入向导」入口(三合一弹窗)
+    // 导入向导（三合一弹窗，原入口保留）
     const importWizard = document.createElement('button');
     importWizard.type = 'button';
-    importWizard.className = 'biyu-import-wizard-btn';
-    importWizard.title = '粘贴正文 / 本地 TXT 批量 / 旧版 biyu 数据根自动识别迁移';
-    importWizard.textContent = '📥 导入向导';
+    importWizard.className = 'biyu-ibtn';
+    importWizard.title = '导入向导：粘贴正文 / 本地 TXT 批量 / 旧版 biyu 数据根自动识别迁移';
+    importWizard.setAttribute('aria-label', '导入向导');
+    importWizard.innerHTML = shellIcon('import') + '<span class="biyu-lbl">导入<span class="biyu-lbl-long">向导</span></span>';
     importWizard.addEventListener('click', openImportWizard);
-    right.appendChild(importWizard);
+    tools.appendChild(importWizard);
 
+    // 抽卡模式（后续版本上线，保持占位）
     const gacha = document.createElement('button');
     gacha.type = 'button';
-    gacha.className = 'biyu-gacha-switch';
+    gacha.className = 'biyu-ibtn';
     gacha.title = '抽卡模式：细纲抽一版自动批准（后续版本上线）';
-    const dot = document.createElement('span');
-    dot.className = 'biyu-gacha-dot';
+    gacha.setAttribute('aria-label', '抽卡模式');
     const gachaLabel = document.createElement('span');
-    gachaLabel.textContent = '抽卡模式';
-    gacha.appendChild(dot);
+    gachaLabel.innerHTML = '<span class="biyu-lbl">抽卡<span class="biyu-lbl-long">模式</span></span>';
+    gacha.appendChild(shellIconWrap('gacha'));
     gacha.appendChild(gachaLabel);
     gacha.addEventListener('click', () => showToast('抽卡模式将于后续版本开放'));
-    right.appendChild(gacha);
+    tools.appendChild(gacha);
 
+    // 外观与背景（原 biyu-theme-trigger id 保留）
     const themeTrigger = document.createElement('button');
     themeTrigger.type = 'button';
-    themeTrigger.className = 'biyu-theme-trigger';
+    themeTrigger.className = 'biyu-ibtn';
     themeTrigger.id = 'biyu-theme-trigger';
-    const swatch = document.createElement('span');
-    swatch.className = 'biyu-swatch-dot';
+    themeTrigger.title = '外观与背景：七套主题色板、壁纸与蒙层';
+    themeTrigger.setAttribute('aria-label', '外观与背景');
     const themeText = document.createElement('span');
-    themeText.textContent = '外观与背景';
-    themeTrigger.appendChild(swatch);
+    themeText.innerHTML = '<span class="biyu-lbl">外观<span class="biyu-lbl-long">与背景</span></span>';
+    themeTrigger.appendChild(shellIconWrap('look'));
     themeTrigger.appendChild(themeText);
     themeTrigger.addEventListener('click', toggleDrawer);
-    right.appendChild(themeTrigger);
+    tools.appendChild(themeTrigger);
 
+    // 设置
     const settingsBtn = document.createElement('a');
-    settingsBtn.className = 'biyu-nav-btn';
-    settingsBtn.textContent = '设置';
+    settingsBtn.className = 'biyu-ibtn biyu-settings-link';
+    settingsBtn.title = '设置';
+    settingsBtn.setAttribute('aria-label', '设置');
+    settingsBtn.innerHTML = shellIcon('gear') + '<span class="biyu-lbl">设置</span>';
     const page = currentPage();
     const bookParam = state.book ? '?book=' + encodeURIComponent(state.book.id) : '';
     if (page === 'settings') settingsBtn.classList.add('current');
     settingsBtn.href = state.book ? '/settings.html' + bookParam : '/index.html#settings-entry';
-    right.appendChild(settingsBtn);
+    tools.appendChild(settingsBtn);
 
     const controls = document.createElement('span');
     controls.className = 'biyu-win-controls';
@@ -646,11 +618,140 @@
       btn.textContent = glyph;
       controls.appendChild(btn);
     });
-    right.appendChild(controls);
+    tools.appendChild(controls);
 
-    header.appendChild(right);
+    header.appendChild(tools);
     return header;
   }
+
+  // shellIcon 的 DOM 版（insertAdjacentHTML 不便时用）
+  function shellIconWrap(name) {
+    const wrap = document.createElement('span');
+    wrap.innerHTML = shellIcon(name);
+    return wrap.firstChild;
+  }
+
+  /* ---------- 书内栏（S-10 3a-3：所有 ?book= 页面统一生成；进文档流不 fixed） ---------- */
+  function buildBookBar() {
+    const bookId = new URLSearchParams(location.search).get('book');
+    if (!bookId) return null;
+    const isWb = currentPage() === 'workbench';
+
+    const bar = document.createElement('div');
+    bar.className = 'biyu-bookbar';
+
+    // 面包屑：← 书架 · 书名 ·（工作台：第 N 章）
+    const crumb = document.createElement('div');
+    crumb.className = 'biyu-crumb';
+    const back = document.createElement('a');
+    back.className = 'biyu-crumb-back';
+    back.href = '/';
+    back.textContent = '← 书架';
+    crumb.appendChild(back);
+
+    if (isWb) {
+      // 原 .workbench-header 的元素整体迁入书内栏（节点搬移保留全部 id 与事件绑定）
+      const wbTitle = document.querySelector('.workbench-header .wb-title');
+      if (wbTitle) crumb.appendChild(wbTitle);
+      const wbLink = document.getElementById('workbench-book-link');
+      if (wbLink) crumb.appendChild(wbLink);
+    } else {
+      const title = document.createElement('span');
+      title.className = 'biyu-crumb-title';
+      title.textContent = bookId;
+      crumb.appendChild(title);
+    }
+    bar.appendChild(crumb);
+
+    if (isWb) {
+      // 上一章 / 章号 / 下一章（原 .toolbar.workbench-chapter-nav 整体迁入）
+      const chapnav = document.querySelector('.workbench-header .toolbar.workbench-chapter-nav');
+      if (chapnav) { chapnav.classList.add('biyu-chapnav'); bar.appendChild(chapnav); }
+      // ①–⑤ 阶段条（原 #stage-bar 迁入；胶囊分段样式见 glass.css）
+      const stageBar = document.getElementById('stage-bar');
+      if (stageBar) bar.appendChild(stageBar);
+    }
+
+    const spacer = document.createElement('span');
+    spacer.className = 'biyu-gspacer';
+    bar.appendChild(spacer);
+
+    if (isWb) {
+      const more = document.querySelector('.workbench-header .workbench-more');
+      if (more) bar.appendChild(more);
+    }
+
+    // 本书 ▾ 菜单：原来散在各处的书内链接收拢，一个不少
+    const menu = document.createElement('div');
+    menu.className = 'biyu-bookmenu';
+    const q = encodeURIComponent(bookId);
+    const menuDefs = [
+      ['全书概览', '/overview.html?book=' + q, 'overview'],
+      ['设定集', '/settings.html?book=' + q, 'settings'],
+      ['本书记忆', '/memory.html?book=' + q, 'memory'],
+      ['声纹', '/voiceprint.html?book=' + q, 'voiceprint'],
+      ['好句', '/good-sentences.html?book=' + q, 'good-sentences'],
+      ['纪要', '/summaries.html?book=' + q, 'summaries'],
+      ['回收站', '/trash.html', 'trash'],
+    ];
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'biyu-ibtn';
+    toggle.id = 'biyu-book-menu-toggle';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', 'biyu-book-menu-list');
+    toggle.innerHTML = '<span>本书</span><span class="biyu-caret" aria-hidden="true">▾</span>';
+    const list = document.createElement('div');
+    list.className = 'biyu-bookmenu-list';
+    list.id = 'biyu-book-menu-list';
+    list.hidden = true;
+    menuDefs.forEach(([label, href, pageKey]) => {
+      const a = document.createElement('a');
+      a.href = href;
+      a.textContent = label;
+      if (currentPage() === pageKey) a.classList.add('current');
+      list.appendChild(a);
+    });
+    toggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const open = list.hidden;
+      list.hidden = !open;
+      toggle.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', (event) => {
+      if (!menu.contains(event.target)) { list.hidden = true; toggle.setAttribute('aria-expanded', 'false'); }
+    });
+    menu.appendChild(toggle);
+    menu.appendChild(list);
+    bar.appendChild(menu);
+
+    if (isWb) {
+      // 原头部容器已搬空 → 摘除；万一还有没搬走的元素（不应发生），先藏避免叠
+      const header = document.querySelector('.workbench-header');
+      if (header) {
+        if (!header.querySelector('button, a, select, input, section, strong, span[id]')) header.remove();
+        else header.hidden = true;
+      }
+    }
+    return bar;
+  }
+
+  // 偏好加载后把书名补进书内栏面包屑（挂载时只有 book id 参数可用）
+  function refreshBookBar() {
+    const bar = document.querySelector('.biyu-bookbar');
+    if (!bar || !state.book) return;
+    const title = bar.querySelector('.biyu-crumb-title');
+    if (title) title.textContent = state.book.display_name || state.book.title || state.book.name || title.textContent;
+  }
+
+  // 两层栏实高 → --chrome-h（3a-4 起工作台等页面用它替代硬编码 52/72px）
+  function measureChrome() {
+    const g = document.querySelector('.biyu-titlebar');
+    const b = document.querySelector('.biyu-bookbar');
+    const h = (g ? g.offsetHeight : 0) + (b ? b.offsetHeight : 0);
+    if (h > 0) document.documentElement.style.setProperty('--chrome-h', Math.round(h) + 'px');
+  }
+  window.addEventListener('resize', measureChrome);
 
   function buildStatusBar() {
     const bar = document.createElement('footer');
@@ -1082,6 +1183,10 @@
     const titlebar = buildTitlebar();
     document.body.insertBefore(titlebar, wallpaper.nextSibling);
 
+    const bookBar = buildBookBar();
+    if (bookBar) document.body.insertBefore(bookBar, titlebar.nextSibling);
+    measureChrome();
+
     const drawer = buildDrawer();
     document.body.appendChild(drawer);
 
@@ -1119,12 +1224,14 @@
       .then(loadPrefs)
       .then(() => {
         refreshTitlebarNav();
+        refreshBookBar();
         applyThemeTokens(state.themeKey);
         applyCustomColors();
         applyBackgroundTokens();
         syncThemeInputs();
         syncBackgroundInputs();
         cacheThemeTokens();
+        measureChrome();
         const statusBarPath = document.getElementById('biyu-sb-data-root');
         if (statusBarPath) {
           statusBarPath.textContent = state.dataRoot
@@ -1143,6 +1250,10 @@
     document.addEventListener('DOMContentLoaded', boot);
   } else {
     boot();
+  }
+  // 字体就绪后栏高可能变化（衬线标题换行等），补一次测量
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => measureChrome()).catch(() => { });
   }
 
   window.BiyuShell = {
