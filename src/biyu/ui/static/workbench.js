@@ -534,9 +534,15 @@ function renderLayerStatus() {
 function renderWorkbenchIdentity() {
   const name = $('workbench-book-name');
   const number = $('workbench-chapter-number');
+  const total = $('workbench-chapter-total');
   const selected = $('book')?.selectedOptions?.[0]?.textContent || $('book')?.value || '未选择书籍';
-  if (name) name.textContent = `《${selected.replace(/^《|》$/g, '')}》`;
+  // S-10 3a修正：书名链接即面包屑书名（衬线、不带书名号，样张同款）；第 N / M 章的 M 来自书籍列表
+  if (name) name.textContent = selected.replace(/^《|》$/g, '');
   if (number) number.textContent = String(current.chapter || $('chapter')?.value || '—');
+  if (total && !total.dataset.filled && window.BiyuShell?.state?.book?.last_chapter) {
+    total.textContent = String(window.BiyuShell.state.book.last_chapter);
+    total.dataset.filled = '1';
+  }
   const bookLink=$('workbench-book-link');
   if(bookLink)bookLink.href=`/book.html?book=${encodeURIComponent($('book')?.value||'')}`;
 }

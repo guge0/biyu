@@ -470,7 +470,75 @@ def render_static_html(path: Path) -> str:
         digest = hashlib.sha256(asset.read_bytes()).hexdigest()[:8]
         return f'{match.group("prefix")}?v={digest}{match.group("suffix")}'
 
-    return _ASSET_REF.sub(replace, html)
+    html = _ASSET_REF.sub(replace, html)
+    # S-10 3a修正·工单第8条：用户主题随 HTML 内联——首帧就是用户的主题。
+    # theme-boot.js 优先回放 localStorage 缓存（同会话内最新），没有缓存时（冷启动/
+    # 全新浏览器档案）用这段服务端注入的令牌，不再先亮 300ms 再变色。
+    boot_css = _server_theme_boot_css()
+    if boot_css:
+        inline = ('<script>window.__BIYU_THEME_BOOT__='
+                  + json.dumps(boot_css).replace("<", "\\u003c").replace(">", "\\u003e")
+                  + ';</script>')
+        html = re.sub(r"(<head[^>]*>)", lambda m: m.group(1) + inline, html, count=1)
+    return html
+
+
+_THEME_BOOT_CACHE: dict | None = None
+
+
+def _theme_boot_presets() -> dict:
+    """THEME_PRESETS / WALLPAPER_PRESETS 从 shell.js 的标记段解析——值只存一份（shell.js 是事实源）。"""
+    global _THEME_BOOT_CACHE
+    if _THEME_BOOT_CACHE is None:
+        shell = (_static_dir / "shell.js").read_text(encoding="utf-8")
+        themes = json.loads(re.search(r"/\*S1-THEME-BEGIN\*/(.*?)/\*S1-THEME-END\*/", shell, re.S).group(1))
+        papers = json.loads(re.search(r"/\*S1-WALLPAPER-BEGIN\*/(.*?)/\*S1-WALLPAPER-END\*/", shell, re.S).group(1))
+        _THEME_BOOT_CACHE = {"themes": themes, "papers": papers}
+    return _THEME_BOOT_CACHE
+
+
+def _server_theme_boot_css() -> str:
+    """把用户当前主题/取色覆盖/背景拼成与 shell.js cacheThemeTokens 同格式的 cssText。
+
+    与 applyThemeTokens + applyCustomColors + applyBackgroundTokens 的默认分支一一对应；
+    读不了偏好（文件损坏等）就返回空串，页面退回 theme-boot 的 localStorage 路径。
+    """
+    from . import appearance
+    try:
+        prefs = appearance.load_ui_prefs()
+    except Exception:
+        return ""
+    try:
+        boot = _theme_boot_presets()
+    except Exception:
+        return ""
+    preset = boot["themes"].get(prefs.get("theme")) or boot["themes"]["default"]
+    parts = [f"{k}: {v};" for k, v in preset.items() if k.startswith("--")]
+    custom = prefs.get("custom") or {}
+    for token in ("--paper", "--surface", "--ink", "--mark", "--mark-bg"):
+        if custom.get(token):
+            parts.append(f"{token}: {custom[token]};")
+            if token == "--ink":
+                parts.append(f"--ink-solid: {custom[token]};")
+    bg = prefs.get("background") or {}
+    image = "none"
+    if bg.get("type") == "preset":
+        image = boot["papers"].get(bg.get("preset")) or "none"
+    elif bg.get("type") == "custom" and bg.get("file"):
+        from urllib.parse import quote
+        image = 'url("/api/ui/background-file/%s")' % quote(str(bg["file"]))
+    try:
+        overlay = min(98.0, max(65.0, float(bg.get("overlay", 90)))) / 100
+    except (TypeError, ValueError):
+        overlay = 0.90
+    try:
+        blur = max(0.0, float(bg.get("blur", 0)))
+    except (TypeError, ValueError):
+        blur = 0.0
+    parts.append(f"--bg-image: {image};")
+    parts.append(f"--bg-overlay-alpha: {overlay:.2f};")
+    parts.append(f"--bg-blur: {int(blur)}px;")
+    return " ".join(parts)
 
 
 @app.get("/about.html", response_class=HTMLResponse)

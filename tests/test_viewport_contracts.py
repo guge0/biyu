@@ -26,7 +26,11 @@ def test_workbench_and_settings_boundary_contracts_are_encoded() -> None:
     settings = (static / "settings.js").read_text(encoding="utf-8")
 
     assert 'id="workbench-book-link"' in workbench
-    assert "← 回到这本书" in workbench
+    # S-10 3a修正·工单第1条：书名即链接（id=workbench-book-link 包住 workbench-book-name），「← 回到这本书」退役
+    assert 'id="workbench-book-name"' in workbench
+    assert 'id="workbench-chapter-total"' in workbench
+    assert "← 回到这本书" not in workbench
+    assert 'id="runtime-identity"' not in workbench  # 运行时身份标在 shell.js 页脚，不在书内栏
     assert "bookLink.href=`/book.html?book=" in workbench_js
     command_rule = re.search(r"\.workbench-command-row\{(?P<body>[^}]*)\}", styles).group("body")
     assert "display:flex" in command_rule

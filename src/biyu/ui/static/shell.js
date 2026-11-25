@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  const THEME_PRESETS = /*S1-THEME-BEGIN*/{"default": {"name": "温润手稿 · 云宣白卡 (默认)", "--paper": "#F3F1EA", "--surface": "#FFFFFF", "--surface-subtle": "#F9F8F3", "--ink": "#1F1C18", "--ink-solid": "#26221C", "--ink-soft": "#524C42", "--ink-mute": "#827B6E", "--ink-faint": "#ABA496", "--rule": "rgba(38, 33, 25, 0.08)", "--rule-strong": "#DED8CA", "--rule-soft": "#EFECE4", "--numeral": "#C4BDAE", "--mark": "#A64B38", "--mark-bg": "#F6E6E1", "--accent": "#26221C", "--accent-fg": "#FAF8F3", "--btn-border": "#D5CEBF", "--outer-bg": "#E5E1D6", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "lingshu": {"name": "灵枢青瓷 · 松石绿 (对标竞品)", "--paper": "#F4F5F0", "--surface": "#FFFFFF", "--surface-subtle": "#F8FAF7", "--ink": "#1A2421", "--ink-solid": "#1D5B50", "--ink-soft": "#42544E", "--ink-mute": "#73857E", "--ink-faint": "#9EB0A9", "--rule": "rgba(29, 91, 80, 0.09)", "--rule-strong": "#D5DFDC", "--rule-soft": "#EBF0EE", "--numeral": "#B5C4BF", "--mark": "#1D5B50", "--mark-bg": "#E1F0EC", "--accent": "#1D5B50", "--accent-fg": "#FFFFFF", "--btn-border": "#C4D4CE", "--outer-bg": "#E2E7E4", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "parchment": {"name": "古籍羊皮 · 暖杏护眼", "--paper": "#F3ECD8", "--surface": "#FCF8EE", "--surface-subtle": "#F7F1E1", "--ink": "#2B2318", "--ink-solid": "#30271B", "--ink-soft": "#5E513F", "--ink-mute": "#8A7D68", "--ink-faint": "#AFA28C", "--rule": "rgba(48, 39, 27, 0.09)", "--rule-strong": "#DDD3BC", "--rule-soft": "#EAE1CC", "--numeral": "#BFB399", "--mark": "#9E4735", "--mark-bg": "#F2DCD4", "--accent": "#382B1E", "--accent-fg": "#FCF8EE", "--btn-border": "#C8B99E", "--outer-bg": "#DFD5BE", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "celadon": {"name": "宋刻竹青 · 润眼茶白", "--paper": "#EBF0EA", "--surface": "#F9FBF9", "--surface-subtle": "#F1F5F0", "--ink": "#1F2821", "--ink-solid": "#232D25", "--ink-soft": "#4A594D", "--ink-mute": "#758578", "--ink-faint": "#9BA99E", "--rule": "rgba(35, 45, 37, 0.09)", "--rule-strong": "#CFDAD1", "--rule-soft": "#E1EAE2", "--numeral": "#B0C0B3", "--mark": "#8E4A3B", "--mark-bg": "#EFE0DC", "--accent": "#2B4738", "--accent-fg": "#F9FBF9", "--btn-border": "#B8C7BB", "--outer-bg": "#D8E2D9", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "stone": {"name": "澄心冷灰 · 碑拓质感", "--paper": "#EFECE6", "--surface": "#FAF9F6", "--surface-subtle": "#F4F2ED", "--ink": "#22201C", "--ink-solid": "#262420", "--ink-soft": "#54514B", "--ink-mute": "#827E76", "--ink-faint": "#A8A49C", "--rule": "rgba(38, 36, 32, 0.08)", "--rule-strong": "#D8D4CC", "--rule-soft": "#E6E2DA", "--numeral": "#BDB8AE", "--mark": "#964B3B", "--mark-bg": "#EFE0DC", "--accent": "#262420", "--accent-fg": "#FAF9F6", "--btn-border": "#C4BFB5", "--outer-bg": "#DAD6CE", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "pure": {"name": "素练极简 · 现代纯白", "--paper": "#F6F7F9", "--surface": "#FFFFFF", "--surface-subtle": "#F9FAFB", "--ink": "#111827", "--ink-solid": "#1E293B", "--ink-soft": "#4B5563", "--ink-mute": "#6B7280", "--ink-faint": "#9CA3AF", "--rule": "rgba(17, 24, 39, 0.07)", "--rule-strong": "#E5E7EB", "--rule-soft": "#F3F4F6", "--numeral": "#CBD5E1", "--mark": "#B93829", "--mark-bg": "#FEE2E2", "--accent": "#18181B", "--accent-fg": "#FFFFFF", "--btn-border": "#D1D5DB", "--outer-bg": "#E5E7EB", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.85)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)"}, "dark": {"name": "玄墨夜读 · 暗色纸感", "--paper": "#181614", "--surface": "#221F1C", "--surface-subtle": "#282420", "--ink": "#DDD5C7", "--ink-solid": "#E8E0D2", "--ink-soft": "#B0A797", "--ink-mute": "#857C6D", "--ink-faint": "#5E574B", "--rule": "rgba(255, 248, 235, 0.08)", "--rule-strong": "#36312A", "--rule-soft": "#2C2822", "--numeral": "#4A4339", "--mark": "#D47660", "--mark-bg": "#422822", "--accent": "#D47660", "--accent-fg": "#181614", "--btn-border": "#484138", "--outer-bg": "#0F0E0C", "--glass-bg": "rgba(34, 31, 28, 0.55)", "--glass-strong": "rgba(30, 28, 26, 0.86)", "--glass-border": "rgba(255, 255, 255, 0.10)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(0, 0, 0, 0.35)"}}/*S1-THEME-END*/;
+  const THEME_PRESETS = /*S1-THEME-BEGIN*/{"default": {"name": "温润手稿 · 云宣白卡 (默认)", "--paper": "#F3F1EA", "--surface": "#FFFFFF", "--surface-subtle": "#F9F8F3", "--ink": "#1F1C18", "--ink-solid": "#26221C", "--ink-soft": "#524C42", "--ink-mute": "#6E685C", "--ink-faint": "#7A7366", "--rule": "rgba(38, 33, 25, 0.08)", "--rule-strong": "#DED8CA", "--rule-soft": "#EFECE4", "--numeral": "#C4BDAE", "--mark": "#A64B38", "--mark-bg": "#F6E6E1", "--accent": "#26221C", "--accent-fg": "#FAF8F3", "--btn-border": "#D5CEBF", "--outer-bg": "#E5E1D6", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#D6AA8C", "--glass-blob-b": "#96B4AA", "--glass-blob-c": "#C8BED7"}, "lingshu": {"name": "灵枢青瓷 · 松石绿 (对标竞品)", "--paper": "#F4F5F0", "--surface": "#FFFFFF", "--surface-subtle": "#F8FAF7", "--ink": "#1A2421", "--ink-solid": "#1D5B50", "--ink-soft": "#42544E", "--ink-mute": "#5A6B65", "--ink-faint": "#66786F", "--rule": "rgba(29, 91, 80, 0.09)", "--rule-strong": "#D5DFDC", "--rule-soft": "#EBF0EE", "--numeral": "#B5C4BF", "--mark": "#1D5B50", "--mark-bg": "#E1F0EC", "--accent": "#1D5B50", "--accent-fg": "#FFFFFF", "--btn-border": "#C4D4CE", "--outer-bg": "#E2E7E4", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#BFD3BC", "--glass-blob-b": "#9CC6B4", "--glass-blob-c": "#C6CBB8"}, "parchment": {"name": "古籍羊皮 · 暖杏护眼", "--paper": "#F3ECD8", "--surface": "#FCF8EE", "--surface-subtle": "#F7F1E1", "--ink": "#2B2318", "--ink-solid": "#30271B", "--ink-soft": "#5E513F", "--ink-mute": "#6F6350", "--ink-faint": "#7E7159", "--rule": "rgba(48, 39, 27, 0.09)", "--rule-strong": "#DDD3BC", "--rule-soft": "#EAE1CC", "--numeral": "#BFB399", "--mark": "#9E4735", "--mark-bg": "#F2DCD4", "--accent": "#382B1E", "--accent-fg": "#FCF8EE", "--btn-border": "#C8B99E", "--outer-bg": "#DFD5BE", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#DEC08E", "--glass-blob-b": "#C6B48E", "--glass-blob-c": "#D1BFA6"}, "celadon": {"name": "宋刻竹青 · 润眼茶白", "--paper": "#EBF0EA", "--surface": "#F9FBF9", "--surface-subtle": "#F1F5F0", "--ink": "#1F2821", "--ink-solid": "#232D25", "--ink-soft": "#4A594D", "--ink-mute": "#5C6B60", "--ink-faint": "#687769", "--rule": "rgba(35, 45, 37, 0.09)", "--rule-strong": "#CFDAD1", "--rule-soft": "#E1EAE2", "--numeral": "#B0C0B3", "--mark": "#8E4A3B", "--mark-bg": "#EFE0DC", "--accent": "#2B4738", "--accent-fg": "#F9FBF9", "--btn-border": "#B8C7BB", "--outer-bg": "#D8E2D9", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#BCCFAE", "--glass-blob-b": "#A6C8B4", "--glass-blob-c": "#C9D0B6"}, "stone": {"name": "澄心冷灰 · 碑拓质感", "--paper": "#EFECE6", "--surface": "#FAF9F6", "--surface-subtle": "#F4F2ED", "--ink": "#22201C", "--ink-solid": "#262420", "--ink-soft": "#54514B", "--ink-mute": "#6A665E", "--ink-faint": "#75716A", "--rule": "rgba(38, 36, 32, 0.08)", "--rule-strong": "#D8D4CC", "--rule-soft": "#E6E2DA", "--numeral": "#BDB8AE", "--mark": "#964B3B", "--mark-bg": "#EFE0DC", "--accent": "#262420", "--accent-fg": "#FAF9F6", "--btn-border": "#C4BFB5", "--outer-bg": "#DAD6CE", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#C9C0B4", "--glass-blob-b": "#B7BFC4", "--glass-blob-c": "#CBBFC8"}, "pure": {"name": "素练极简 · 现代纯白", "--paper": "#F6F7F9", "--surface": "#FFFFFF", "--surface-subtle": "#F9FAFB", "--ink": "#111827", "--ink-solid": "#1E293B", "--ink-soft": "#4B5563", "--ink-mute": "#545B68", "--ink-faint": "#6E7684", "--rule": "rgba(17, 24, 39, 0.07)", "--rule-strong": "#E5E7EB", "--rule-soft": "#F3F4F6", "--numeral": "#CBD5E1", "--mark": "#B93829", "--mark-bg": "#FEE2E2", "--accent": "#18181B", "--accent-fg": "#FFFFFF", "--btn-border": "#D1D5DB", "--outer-bg": "#E5E7EB", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#CFD9E4", "--glass-blob-b": "#CAD4CC", "--glass-blob-c": "#DCD8E4"}, "dark": {"name": "玄墨夜读 · 暗色纸感", "--paper": "#181614", "--surface": "#221F1C", "--surface-subtle": "#282420", "--ink": "#DDD5C7", "--ink-solid": "#E8E0D2", "--ink-soft": "#B0A797", "--ink-mute": "#948B7C", "--ink-faint": "#8A8172", "--rule": "rgba(255, 248, 235, 0.08)", "--rule-strong": "#36312A", "--rule-soft": "#2C2822", "--numeral": "#4A4339", "--mark": "#D47660", "--mark-bg": "#422822", "--accent": "#D47660", "--accent-fg": "#181614", "--btn-border": "#484138", "--outer-bg": "#0F0E0C", "--glass-bg": "rgba(34, 31, 28, 0.55)", "--glass-strong": "rgba(30, 28, 26, 0.58)", "--glass-border": "rgba(255, 255, 255, 0.10)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(0, 0, 0, 0.35)", "--glass-blob-a": "#A05A3C", "--glass-blob-b": "#325A50", "--glass-blob-c": "#463C64"}}/*S1-THEME-END*/;
 
   const WALLPAPER_PRESETS = /*S1-WALLPAPER-BEGIN*/{"none": "none", "xuan": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Crect width='600' height='600' fill='%23EFECE2'/%3E%3Cg stroke='%23C9C0AC' stroke-width='0.8' opacity='0.45' fill='none'%3E%3Cpath d='M0 120 Q 150 90 300 130 T 600 110'/%3E%3Cpath d='M0 280 Q 180 310 350 260 T 600 290'/%3E%3Cpath d='M0 450 Q 120 420 280 460 T 600 440'/%3E%3C/g%3E%3Ccircle cx='480' cy='140' r='90' fill='%23DFD6C3' opacity='0.35'/%3E%3Ccircle cx='140' cy='460' r='130' fill='%23E3DAC8' opacity='0.4'/%3E%3C/svg%3E\")", "mist": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3ClinearGradient id='g1' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23DCE5E2'/%3E%3Cstop offset='100%25' stop-color='%23F2EFE6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='800' fill='url(%23g1)'/%3E%3Cpath d='M0 540 Q 240 420 520 500 T 1020 460 L 1200 510 L 1200 800 L 0 800 Z' fill='%23BACAC4' opacity='0.45'/%3E%3Cpath d='M0 620 Q 320 520 680 600 T 1200 560 L 1200 800 L 0 800 Z' fill='%239EB3AC' opacity='0.45'/%3E%3Cpath d='M0 700 Q 420 640 820 710 T 1200 680 L 1200 800 L 0 800 Z' fill='%23839B94' opacity='0.4'/%3E%3Ccircle cx='920' cy='210' r='54' fill='%23C87D6A' opacity='0.38'/%3E%3C/svg%3E\")", "bamboo": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700' viewBox='0 0 900 700'%3E%3Crect width='900' height='700' fill='%23EAEFE8'/%3E%3Cg stroke='%238BA190' stroke-linecap='round' opacity='0.35' fill='none'%3E%3Cline x1='760' y1='0' x2='730' y2='700' stroke-width='6'/%3E%3Cline x1='810' y1='80' x2='795' y2='700' stroke-width='4'/%3E%3Cpath d='M750 180 Q 680 150 640 190' stroke-width='3'/%3E%3Cpath d='M745 320 Q 670 300 610 340' stroke-width='3'/%3E%3Cpath d='M798 260 Q 850 230 885 265' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E\")"}/*S1-WALLPAPER-END*/;
 
@@ -631,7 +631,11 @@
     return wrap.firstChild;
   }
 
-  /* ---------- 书内栏（S-10 3a-3：所有 ?book= 页面统一生成；进文档流不 fixed） ---------- */
+  /* ---------- 书内栏（S-10 3a-3：所有 ?book= 页面统一生成；进文档流不 fixed） ----------
+     3a修正·工单第1条照样张精简：← 书架 ｜ 书名(衬线,点了回书页) ｜ 第 N / M 章(仅工作台)
+     ｜ 上一章 [N] 下一章(直接放栏里,无外层卡片) ｜ 右侧阶段条 ｜ 更多▾ ｜ 本书▾。
+     「← 回到这本书」退役（id=workbench-book-link 挪到书名上，见 workbench.html wb-title）；
+     运行时身份标 #runtime-identity 移到页脚右侧（见 buildStatusBar）。 */
   function buildBookBar() {
     const bookId = new URLSearchParams(location.search).get('book');
     if (!bookId) return null;
@@ -640,7 +644,7 @@
     const bar = document.createElement('div');
     bar.className = 'biyu-bookbar';
 
-    // 面包屑：← 书架 · 书名 ·（工作台：第 N 章）
+    // 面包屑：← 书架 · 书名 ·（工作台：第 N / M 章）
     const crumb = document.createElement('div');
     crumb.className = 'biyu-crumb';
     const back = document.createElement('a');
@@ -650,11 +654,10 @@
     crumb.appendChild(back);
 
     if (isWb) {
-      // 原 .workbench-header 的元素整体迁入书内栏（节点搬移保留全部 id 与事件绑定）
+      // 原 .workbench-header 的元素整体迁入书内栏（节点搬移保留全部 id 与事件绑定）；
+      // wb-title 内已含 #workbench-book-link（书名链接）与 第 N / M 章
       const wbTitle = document.querySelector('.workbench-header .wb-title');
       if (wbTitle) crumb.appendChild(wbTitle);
-      const wbLink = document.getElementById('workbench-book-link');
-      if (wbLink) crumb.appendChild(wbLink);
     } else {
       const title = document.createElement('span');
       title.className = 'biyu-crumb-title';
@@ -664,12 +667,9 @@
     bar.appendChild(crumb);
 
     if (isWb) {
-      // 上一章 / 章号 / 下一章（原 .toolbar.workbench-chapter-nav 整体迁入）
+      // 上一章 / 章号 / 下一章（原 .toolbar.workbench-chapter-nav 整体迁入；去卡片底，见 glass.css）
       const chapnav = document.querySelector('.workbench-header .toolbar.workbench-chapter-nav');
       if (chapnav) { chapnav.classList.add('biyu-chapnav'); bar.appendChild(chapnav); }
-      // ①–⑤ 阶段条（原 #stage-bar 迁入；胶囊分段样式见 glass.css）
-      const stageBar = document.getElementById('stage-bar');
-      if (stageBar) bar.appendChild(stageBar);
     }
 
     const spacer = document.createElement('span');
@@ -677,6 +677,9 @@
     bar.appendChild(spacer);
 
     if (isWb) {
+      // ①–⑤ 阶段条（原 #stage-bar 迁入；胶囊分段样式见 glass.css；样张 .stages 靠右）
+      const stageBar = document.getElementById('stage-bar');
+      if (stageBar) bar.appendChild(stageBar);
       const more = document.querySelector('.workbench-header .workbench-more');
       if (more) bar.appendChild(more);
     }
@@ -742,9 +745,14 @@
     if (!bar || !state.book) return;
     const title = bar.querySelector('.biyu-crumb-title');
     if (title) title.textContent = state.book.display_name || state.book.title || state.book.name || title.textContent;
+    // 3a修正·工单第1条：第 N / M 章的 M（书籍总章数，书籍列表的 last_chapter）
+    const total = document.getElementById('workbench-chapter-total');
+    if (total && state.book.last_chapter) total.textContent = String(state.book.last_chapter);
   }
 
   // 两层栏实高 → --chrome-h（3a-4 起工作台等页面用它替代硬编码 52/72px）
+  // 3a修正：换行/字体导致的栏高变化用 ResizeObserver 跟踪——一次性测量会留下过期值
+  // （1280 下书内栏先两行后一行，--chrome-h 卡在 172px，纸面被压矮、下方留白）
   function measureChrome() {
     const g = document.querySelector('.biyu-titlebar');
     const b = document.querySelector('.biyu-bookbar');
@@ -752,6 +760,12 @@
     if (h > 0) document.documentElement.style.setProperty('--chrome-h', Math.round(h) + 'px');
   }
   window.addEventListener('resize', measureChrome);
+  let chromeObserver = null;
+  function watchChrome() {
+    if (chromeObserver || typeof ResizeObserver === 'undefined') return;
+    chromeObserver = new ResizeObserver(() => measureChrome());
+    document.querySelectorAll('.biyu-titlebar, .biyu-bookbar').forEach((el) => chromeObserver.observe(el));
+  }
 
   function buildStatusBar() {
     const bar = document.createElement('footer');
@@ -769,7 +783,7 @@
     leftGroup.appendChild(pathText);
     const rightGroup = document.createElement('span');
     rightGroup.className = 'biyu-sb-group';
-    // S-3 决策6A:状态栏常驻内测 Q 群胶囊 + 联系反馈弹窗
+    // S-3 决策6A:状态栏常驻内测 Q 群胶囊 + 联系反馈弹窗（3a修正·工单第4条：全站一致，版本号在药丸外面）
     const contactPill = document.createElement('button');
     contactPill.type = 'button';
     contactPill.className = 'biyu-contact-pill';
@@ -778,16 +792,17 @@
     contactPill.innerHTML = shellIcon('chat') + '<span>内测 Q 群：892467108 · 反馈</span>';
     contactPill.addEventListener('click', openContactFeedback);
     rightGroup.appendChild(contactPill);
-    const versionText = document.createElement('span');
-    versionText.textContent = state.version ? '笔驭 v' + state.version : '';
-    // S-3 T9 更新降级(工单 E 节):安装版不做壳内自动更新;点击版本区=下载指引。
-    // checkout 形态的 git 落后红点机制保留在书架页版本徽章(app.js),此处不重复。
-    versionText.style.cursor = 'pointer';
-    versionText.title = '点击查看新版获取方式';
-    versionText.addEventListener('click', () => {
+    // S-10 3a修正·工单第1条：运行时身份标从书内栏移到页脚右侧（原来只在 workbench/settings 有挂点）。
+    // shell 先用 /api/version 填基础文案；加载了 runtime-identity.js 的页面会再增强（构建/便携/更新红点）。
+    const runtime = document.createElement('span');
+    runtime.id = 'runtime-identity';
+    runtime.className = 'biyu-runtime-identity';
+    runtime.textContent = state.version ? '笔驭 v' + state.version : '';
+    runtime.title = '点击查看新版获取方式';
+    runtime.addEventListener('click', () => {
       showToast('获取新版：请到内测 Q 群（892467108）或官网下载页获取最新安装包；本机数据不受影响。');
     });
-    rightGroup.appendChild(versionText);
+    rightGroup.appendChild(runtime);
     bar.appendChild(leftGroup);
     bar.appendChild(rightGroup);
     return bar;
@@ -1216,12 +1231,22 @@
 
   function boot() {
     mountShell();
+    watchChrome();
     if (!hasCachedTheme()) {
       applyThemeTokens(state.themeKey);
       applyBackgroundTokens();
     }
-    loadContext()
-      .then(loadPrefs)
+    // S-10 3a修正·工单第8条：偏好（主题/背景）先行——/api/books 在大库上首拉 2s+，
+    // 主题跟它绑在同一链上会让首帧亮 300ms+ 才变暗；主题令牌要尽早落缓存（theme-boot 首帧回放用）。
+    const themeReady = loadPrefs().then(() => {
+      applyThemeTokens(state.themeKey);
+      applyCustomColors();
+      applyBackgroundTokens();
+      syncThemeInputs();
+      syncBackgroundInputs();
+      cacheThemeTokens();
+    });
+    Promise.all([themeReady, loadContext()])
       .then(() => {
         refreshTitlebarNav();
         refreshBookBar();
@@ -1238,8 +1263,10 @@
             ? '本地自动落盘：' + state.dataRoot + (state.dataRootTemporary ? '（临时数据根）' : '')
             : '';
         }
-        const versionSpan = document.querySelector('.biyu-statusbar .biyu-sb-group:last-child span');
-        if (versionSpan && state.version) versionSpan.textContent = '笔驭 v' + state.version;
+        // 3a修正·工单第4条：页脚右侧身份标按 id 定位——旧选择器
+        // '.biyu-sb-group:last-child span' 会命中 Q 群药丸里的文字 span，把药丸文案覆盖成版本号
+        const runtimeBadge = document.getElementById('runtime-identity');
+        if (runtimeBadge && state.version) runtimeBadge.textContent = '笔驭 v' + state.version;
       })
       .catch(() => {
         console.warn('[biyu-shell] 壳数据初始化失败，保持默认主题。');
@@ -1263,6 +1290,8 @@
     THEME_PRESETS: THEME_PRESETS,
     WALLPAPER_PRESETS: WALLPAPER_PRESETS,
     exportDiagnostics: exportDiagnostics,
-    mountDiagnosticsLink: mountDiagnosticsLink
+    mountDiagnosticsLink: mountDiagnosticsLink,
+    // 3a修正：工作台「第 N / M 章」的 M 从这里取（books 列表的 last_chapter）
+    getBook: function () { return state.book; }
   };
 })();

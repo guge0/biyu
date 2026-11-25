@@ -29,8 +29,12 @@ def test_runtime_version_exposes_checkout_identity(monkeypatch, tmp_path: Path) 
 
 def test_settings_page_contains_runtime_identity_hook() -> None:
     html = Path("src/biyu/ui/static/settings.html").read_text(encoding="utf-8")
+    shell = Path("src/biyu/ui/static/shell.js").read_text(encoding="utf-8")
     script = Path("src/biyu/ui/static/runtime-identity.js").read_text(encoding="utf-8")
-    assert 'id="runtime-identity"' in html
+    # S-10 3a修正·工单第1条：#runtime-identity 挂点移到 shell.js 生成的页脚右侧（全站），
+    # settings.html 只保留脚本引入；旧导航里的 env-badge 徽章退役
+    assert 'id="runtime-identity"' not in html
+    assert "runtime-identity" in shell
     assert "/runtime-identity.js?v=" in html
     assert "info.version" in script
     assert "info.checkout" not in script
