@@ -4,8 +4,10 @@
 - mask/unmask: 标题行整行、对白与【】标签 → ⟦D1⟧ 占位符锁死不改;
               锁定词 → ⟦K1⟧ 占位符(长词优先替换)
 - clean:      回译稿进守卫前先清洁(中文间多余空白 / 半角 ,;: 换全角 / 占位符后多出的句号)
+- dedash:     确定性去破折号(照 r15 的 fix),每层输出 clean 之后、守卫之前过一遍
 - guard:      回译稿必须原样带回占位符(个数不变)、不留英文、不自造对白、不并段、
-              句末标点不丢、中文后不接半角标点、专名与数字不丢、篇幅 0.7–1.7
+              句末标点不丢、中文后不接半角标点、专名与数字不丢、篇幅 0.7–1.7;
+              S-8-1 新增:不添破折号、段中丢句号、示范泄漏(与示范对重合 12 字以上)
 - risk_marks: 改后文本里需要作者留意的地方(数字变化/计量单位变化/专名缺失)
 """
 from __future__ import annotations
@@ -13,6 +15,7 @@ from __future__ import annotations
 import re
 
 NUM = re.compile(r"\d+(?:\.\d+)?|[零一二三四五六七八九十百千万两]{2,}")
+OVERLAP_CHARS = 12  # 「重合 12 字以上」判定长度(示范抽样剔除与示范泄漏守卫共用)
 _SLOT = re.compile(r"“[^”]*”|【[^】]*】")
 _TOKEN = re.compile(r"⟦[DK]\d+⟧")
 # 标题行:井号开头的 markdown 标题,或整行形如「第…章/节/卷/回」且行内无句读
@@ -94,12 +97,34 @@ def clean(text: str) -> str:
     return re.sub(r"(⟦[DK]\d+⟧)。", r"\1", text)
 
 
+def dedash(text: str) -> str:
+    """确定性去破折号(照 r15 的 fix):——+ / — / -- → 「，」,再收拾「，，」与「，。」。"""
+    text = re.sub(r"——+|--|—", "，", text)
+    text = re.sub(r"，{2,}", "，", text)
+    return text.replace("，。", "。")
+
+
 _SENT_END = re.compile(r"[。！？…!?]$")
 _LETTER_END = re.compile(r"[一-鿿A-Za-z]$")
+# 段中丢句号:句末标点(段内计数)与「80 字以上无句读长串」都用这套字符
+_PARA_ENDS = re.compile(r"[。！？…]")
+_RUN_BREAK = re.compile(r"[。！？；…]")
+_RUN_CHARS = 80
 
 
-def guard(masked: str, out: str, terms: list[str]) -> str:
-    """回译稿守卫:返回 ""=通过,否则返回违规原因(给作者看的短词)。"""
+def _shingles(text: str, width: int = OVERLAP_CHARS) -> "set[str]":
+    """文本里所有 length=width 的滑窗片段(重合判定用)。"""
+    return {text[i:i + width] for i in range(len(text) - width + 1)}
+
+
+def guard(masked: str, out: str, terms: list[str],
+          exemplars: "list[str] | None" = None, *, length: bool = True) -> str:
+    """改写稿守卫:返回 ""=通过,否则返回违规原因(给作者看的短词)。
+
+    exemplars: 本次提示词里用到的示范文本(src/dst),出现与之重合 12 字以上
+               且不在输入里的片段 = 示范泄漏;
+    length=False: 跳过篇幅带(去 AI 味按块改写,合法增删幅度超过 0.7–1.7)。
+    """
     if not out:
         return "空"
     for m in _TOKEN.finditer(masked):
@@ -112,6 +137,8 @@ def guard(masked: str, out: str, terms: list[str]) -> str:
         return "自造对白"
     if re.search(r"[A-Za-z]{3,}", out):
         return "英文残留"
+    if out.count("—") > masked.count("—") or out.count("--") > masked.count("--"):
+        return "破折号"   # 每层输出都过 dedash,改稿里不该多出新破折号
     m_lines = [l for l in masked.splitlines() if l.strip()]
     o_lines = [l for l in out.splitlines() if l.strip()]
     if len(o_lines) < len(m_lines):
@@ -121,14 +148,29 @@ def guard(masked: str, out: str, terms: list[str]) -> str:
         # 改后段末是占位符/引号时不判(对白自带句读,占位符看不出内容)
         if _SENT_END.search(a) and _LETTER_END.search(b):
             return "句末标点"
+    for a, b in zip(m_lines, o_lines):
+        # 段中丢句号(逐段):原段句末标点 ≥3 而改后同段不到原来一半
+        n_a = len(_PARA_ENDS.findall(a))
+        if n_a >= 3 and len(_PARA_ENDS.findall(b)) * 2 < n_a:
+            return "段中丢句号"
+    out_run = max((len(part) for part in _RUN_BREAK.split(out)), default=0)
+    src_run = max((len(part) for part in _RUN_BREAK.split(masked)), default=0)
+    if out_run >= _RUN_CHARS and src_run < _RUN_CHARS:
+        return "段中丢句号"   # 改后出现 80 字以上无句读长串而原文没有
     if re.search(r"[一-鿿”][,;:]", out):
         return "半角标点"
+    if exemplars:
+        out_hits = _shingles(out)
+        masked_hits = _shingles(masked)
+        for ex in exemplars:
+            if _shingles(ex) & out_hits - masked_hits:
+                return "示范泄漏"
     lost = [k for k in terms if masked.count(k) != out.count(k)]
     if lost:
         return "专名:" + "/".join(lost[:3])
     if set(NUM.findall(masked)) - set(NUM.findall(out)):
         return "数字"
-    if not 0.7 <= len(out) / max(1, len(masked)) <= 1.7:
+    if length and not 0.7 <= len(out) / max(1, len(masked)) <= 1.7:
         return "篇幅"
     return ""
 

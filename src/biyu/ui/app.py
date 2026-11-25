@@ -375,6 +375,22 @@ def runtime_version() -> dict[str, object]:
     }
 
 
+@app.get("/api/features")
+def runtime_features() -> dict[str, object]:
+    """S-7a 功能开关一次性下发;页面据此藏入口,不要各自硬编码。"""
+    from biyu.config import feature_enabled
+
+    return {"features": {"zebian": feature_enabled("zebian")}}
+
+
+@app.get("/api/license/status")
+def license_status() -> dict[str, object]:
+    """S-7a 内测授权状态:版本/到期日/剩余天数/各功能是否可用。"""
+    from biyu import licensing
+
+    return licensing.status()
+
+
 @app.post("/api/update/pull")
 def update_pull() -> dict:
     """拉取最新(快进)。运行中的服务不换代码,拉完需重启笔驭生效。"""

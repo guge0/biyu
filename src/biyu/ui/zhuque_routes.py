@@ -4,12 +4,17 @@
 - GET  /status          → {has_key, rewriter:{provider, model, verified, available}}
 - POST /key, DELETE /key → 朱雀 Key 存取,沿用现有模型 Key 的安全存放
 - POST /check {text}    → 整章判定 + 逐窗分数
-- POST /fix {text, terms, estimate_only} → 花钱动作两步走:
-                           estimate_only=true 只回预估;确认后建任务返回 job_id
-- POST /fix-blind {text, terms, targets} → 网页复核模式建任务(不调朱雀,不需要 Key)
+- POST /fix {text, terms, estimate_only, smooth_enabled} → 花钱动作两步走:
+                           estimate_only=true 只回预估;确认后建任务返回 job_id;
+                           smooth_enabled 是旧参数名,内部映射为引擎的 polish_enabled
+- POST /fix-blind {text, terms, targets, layer} → 网页复核模式建任务(不调朱雀,不需要 Key);
+                           layer="zhzh"(默认,示范对为空自动回译)或 "bt"
+- POST /deai {text, terms} → 独立去 AI 味建任务(不碰朱雀;付费功能,过 _license_block 闸)
 - GET  /jobs/{id}       → 轮询进度与结果(内存任务,同一时间只跑一个,重复提交 409)
 - POST /report (multipart: pdf + text)   → 报告 PDF 映射后的逐窗分数
 
+花钱端点(/fix、/fix-blind、/deai)统一过 licensing._license_block 闸
+(/fix、/fix-blind 用 "zhuque_fix",/deai 用 "deai";不允许时 402 license_required)。
 用量按现有 cost_log 方式记账;文本长度上限与现有快检一致(MAX_SCAN_CHARS)。
 """
 from __future__ import annotations
@@ -19,12 +24,14 @@ import logging
 import threading
 import time
 import uuid
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from biyu.config import get_config_path
+from biyu.licensing import check_feature
 from biyu.llm import ModelRegistry
 from biyu.quickcheck import MAX_SCAN_CHARS
 from biyu.secure_config import delete_provider_secret, load_provider_secret, store_provider_secret
@@ -42,18 +49,32 @@ _PROVIDER = "zhuque"
 # 朱雀自己的口径:0.5 以上疑似;引擎改写起点留缓冲取 0.45
 _DISPLAY_RED = 0.5
 _FIXABLE = 0.45
-# 预估口径(粗估,给作者一个量级):每红窗约 6 次回译(每次 2 调)+顺稿 2 调;
-# 朱雀按每次测分≈窗长 token + 整章复测若干遍估
-_EST_GENERATES_PER_RED = 14
+# 预估口径(S-8-1 三层引擎,粗估给作者一个量级),假设:
+# - 每红窗 zhzh 5 次生成(第 1 轮 3 稿 + 都不过线再 2 稿);
+# - 约 30% 的红窗 zhzh 仍不过线,走回译兜底(3 轮×2 稿×中英 2 调 = 12 次);
+# - 每个采用的窗 polish 1 次;整章复测按每窗约 1 次测分走朱雀额度。
+_EST_ZHZH_PER_RED = 5
+_EST_BT_FALLBACK_RATIO = 0.3
+_EST_BT_PER_RED = 12
+_EST_POLISH_PER_RED = 1
 _EST_FALLBACK_PER_CALL = 0.005  # 改写模型没配单价时的保守单次调用价(元)
 
 
 # ---------------------------------------------------------------------------
-# 改写模型解析:优先 GLM(glm-5.2);没配 GLM 回落作者当前选的聊天模型(verified=False)
+# 改写模型解析:优先 GLM(glm-5.2 已验证);没配 GLM 回落 v4_pro(deepseek-v4-pro,
+# 已验证)→ 作者当前选的聊天模型(verified=False)
 # ---------------------------------------------------------------------------
 
 _PROVIDER_LABELS = {"glm": "GLM", "deepseek": "DeepSeek", "kimi": "Kimi", "moonshot": "Kimi",
                     "doubao": "豆包", "gemini": "Gemini", "custom": "自定义"}
+
+# 已验证档(S-8-3):glm-5.2(r12 实测)与 deepseek-v4-pro(TL 11-19 实测,关思考后
+# 最难 5 窗过 3);按 alias 或 model_id 命中,其余一律未验证
+_VERIFIED_MODELS = ("glm-5.2", "deepseek-v4-pro")
+
+
+def _is_verified(alias: str, model_id) -> bool:
+    return any(m in (alias, str(model_id)) for m in _VERIFIED_MODELS)
 
 
 def _rewriter_info() -> dict[str, Any]:
@@ -80,10 +101,21 @@ def _rewriter_info() -> dict[str, Any]:
             continue
         if getattr(adapter, "api_key", ""):
             model_id = models.get(alias, {}).get("model_id") or getattr(adapter, "model_name", alias)
-            # S-6b:只有 glm-5.2(r12 直连实测过文字质量的一档)标已验证,其它 GLM 档一律未验证
-            verified = "glm-5.2" in (alias, str(model_id))
+            # S-6b/S-8-3:已验证集合见 _VERIFIED_MODELS,集合外的 GLM/DeepSeek 档一律未验证
             return {"available": True, "provider": "GLM", "model": str(model_id),
-                    "verified": verified, "adapter": adapter}
+                    "verified": _is_verified(alias, model_id), "adapter": adapter}
+
+    # S-8-3:没配 GLM(或没 Key)时,配置里的 v4_pro 优先于作者当前聊天模型
+    v4_cfg = models.get("v4_pro")
+    if isinstance(v4_cfg, dict) and v4_cfg.get("provider") == "deepseek":
+        try:
+            adapter = registry.get_adapter("v4_pro")
+        except (KeyError, ValueError, FileNotFoundError):
+            adapter = None
+        if adapter is not None and getattr(adapter, "api_key", ""):
+            model_id = v4_cfg.get("model_id") or getattr(adapter, "model_name", "v4_pro")
+            return {"available": True, "provider": "DeepSeek", "model": str(model_id),
+                    "verified": _is_verified("v4_pro", model_id), "adapter": adapter}
 
     try:
         adapter, alias = resolve_ui_adapter(registry)
@@ -109,6 +141,17 @@ def _client_or_error() -> ZhuqueClient:
 def _guard_length(text: str) -> None:
     if len(text) > MAX_SCAN_CHARS:
         raise HTTPException(status_code=413, detail=f"文本超过 {MAX_SCAN_CHARS} 字上限，请分段粘贴")
+
+
+def _license_block(feature: str) -> JSONResponse | None:
+    """S-7a 授权闸:付费功能未授权时回 402(detail=人话 message + code)。允许时返回 None。"""
+    decision = check_feature(feature)
+    if decision.allowed:
+        return None
+    return JSONResponse(
+        status_code=402,
+        content={"detail": decision.message, "code": "license_required"},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -154,10 +197,13 @@ def _spawn_job(kind: str, run, model: str = "") -> str:
         progress = job["progress"]
         progress.update({k: v for k, v in event.items() if k != "stage"})
         progress["phase"] = str(event.get("stage") or progress.get("phase"))
-        if event.get("stage") == "window" and event.get("state") == "done":
-            progress["done"] = int(progress.get("done") or 0) + 1
-            if str(event.get("status") or "").startswith("已过线"):
-                progress["pass"] = int(progress.get("pass") or 0) + 1
+        if event.get("stage") == "window":
+            if event.get("state") == "start":
+                progress["layer"] = ""   # 清上一窗残留的层,前端只看正在改的窗
+            if event.get("state") == "done":
+                progress["done"] = int(progress.get("done") or 0) + 1
+                if str(event.get("status") or "").startswith("已过线"):
+                    progress["pass"] = int(progress.get("pass") or 0) + 1
 
     def _worker() -> None:
         global _RUNNING
@@ -212,6 +258,7 @@ class FixRequest(BaseModel):
     text: str
     terms: list[str] = Field(default_factory=list)
     estimate_only: bool = False
+    smooth_enabled: bool = True   # 旧参数名(整章顺稿),内部映射为引擎的 polish_enabled
 
 
 class FixBlindRequest(BaseModel):
@@ -219,6 +266,13 @@ class FixBlindRequest(BaseModel):
     text: str
     terms: list[str] = Field(default_factory=list)
     targets: list[int] | None = None
+    layer: Literal["zhzh", "bt"] = "zhzh"
+
+
+class DeaiRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: str
+    terms: list[str] = Field(default_factory=list)
 
 
 @router.get("/status")
@@ -272,7 +326,7 @@ async def zhuque_check(req: CheckRequest) -> dict[str, Any]:
 
 
 def _estimate_fix(text: str) -> dict[str, Any]:
-    """粗估一轮自动降分的分钟数、模型费用与朱雀额度(给作者一个量级)。"""
+    """粗估一轮自动降分的分钟数、模型费用与朱雀额度(三层假设见文件头注释)。"""
     cached = _LAST_CHECK
     if cached.get("chars") == len(text) and cached.get("fixable"):
         red = int(cached["fixable"])
@@ -290,7 +344,11 @@ def _estimate_fix(text: str) -> dict[str, Any]:
             per_call = 0.0
     if per_call <= 0:
         per_call = _EST_FALLBACK_PER_CALL
-    generates = red * _EST_GENERATES_PER_RED + max(1, len(text) // engine.WINDOW_CHARS) * 2
+    generates = round(
+        red * (_EST_ZHZH_PER_RED
+               + _EST_BT_FALLBACK_RATIO * _EST_BT_PER_RED
+               + _EST_POLISH_PER_RED)
+    )
     return {
         "red_windows": red,
         "minutes": round(1 + 1.5 * red, 1),
@@ -300,27 +358,36 @@ def _estimate_fix(text: str) -> dict[str, Any]:
     }
 
 
-@router.post("/fix")
-def zhuque_fix(req: FixRequest) -> dict[str, Any]:
+@router.post("/fix", response_model=None)
+def zhuque_fix(req: FixRequest) -> dict[str, Any] | JSONResponse:
     _guard_length(req.text)
     if req.estimate_only:
+        # S-7c：看预估金额不收费，到期后也能看；只拦真正的改写。
         return {"estimate": _estimate_fix(req.text)}
+    blocked = _license_block("zhuque_fix")
+    if blocked is not None:
+        return blocked
     client = _client_or_error()
     info = _rewriter_info()
     if not info["available"]:
         raise HTTPException(status_code=400, detail="改写模型不可用：请先在书架页右上「换 Key / 换模型」里保存 Key。")
     text, terms = req.text, [t.strip() for t in req.terms if t.strip()]
     adapter, model = info["adapter"], str(info["model"])
+    polish_enabled = req.smooth_enabled   # 旧前端传的 smooth_enabled 兼容映射
 
     async def _run(on_event):
-        return await engine.fix_chapter(text, terms, adapter=adapter, scorer=client, on_event=on_event)
+        return await engine.fix_chapter(text, terms, adapter=adapter, scorer=client,
+                                        on_event=on_event, polish_enabled=polish_enabled)
 
     job_id = _spawn_job("fix", _run, model)
     return {"job_id": job_id}
 
 
-@router.post("/fix-blind")
-def zhuque_fix_blind(req: FixBlindRequest) -> dict[str, Any]:
+@router.post("/fix-blind", response_model=None)
+def zhuque_fix_blind(req: FixBlindRequest) -> dict[str, Any] | JSONResponse:
+    blocked = _license_block("zhuque_fix")
+    if blocked is not None:
+        return blocked
     _guard_length(req.text)
     info = _rewriter_info()
     if not info["available"]:
@@ -331,9 +398,31 @@ def zhuque_fix_blind(req: FixBlindRequest) -> dict[str, Any]:
     adapter, model = info["adapter"], str(info["model"])
 
     async def _run(on_event):
-        return await engine.fix_blind(text, terms, targets, adapter=adapter, on_event=on_event)
+        return await engine.fix_blind(text, terms, targets, layer=req.layer,
+                                      adapter=adapter, on_event=on_event)
 
     job_id = _spawn_job("fix-blind", _run, model)
+    return {"job_id": job_id}
+
+
+@router.post("/deai", response_model=None)
+def zhuque_deai(req: DeaiRequest) -> dict[str, Any] | JSONResponse:
+    """独立去 AI 味(不碰朱雀,不需要朱雀 Key;付费功能)。"""
+    blocked = _license_block("deai")
+    if blocked is not None:
+        return blocked
+    _guard_length(req.text)
+    info = _rewriter_info()
+    if not info["available"]:
+        raise HTTPException(status_code=400, detail="改写模型不可用：请先在书架页右上「换 Key / 换模型」里保存 Key。")
+    text = req.text
+    terms = [t.strip() for t in req.terms if t.strip()]
+    adapter, model = info["adapter"], str(info["model"])
+
+    async def _run(on_event):
+        return await engine.deai_text(text, terms, adapter=adapter, on_event=on_event)
+
+    job_id = _spawn_job("deai", _run, model)
     return {"job_id": job_id}
 
 

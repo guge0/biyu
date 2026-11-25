@@ -47,7 +47,7 @@ biyu = "biyu.cli.main:app"
 where = ["src"]
 
 [tool.setuptools.package-data]
-biyu = ["ui/static/*", "ui/static/fonts/*"]
+biyu = ["ui/static/*", "ui/static/fonts/*", "zhuque/data/*"]
 
 [tool.setuptools.exclude-package-data]
 biyu = [

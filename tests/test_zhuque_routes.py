@@ -1,4 +1,5 @@
-"""S-6 · 朱雀路由契约:status / key / check / fix 两步走 / jobs / 409 / 无 Key 文案。
+"""S-6/S-8-1 · 朱雀路由契约:status / key / check / fix 两步走 / fix-blind 分层 /
+deai / jobs / 409 / 无 Key 文案。
 
 client 与 engine 全部打桩,测试不走网络、不烧钱。Key 走测试隔离的加密文件
 (conftest 已设 BIYU_KEYRING_DISABLED=1 与独立 BIYU_USER_CONFIG_DIR)。
@@ -19,11 +20,11 @@ from biyu.ui import zhuque_routes
 CANNED_RESULT = {
     "text": "改好的整章",
     "rows": [{"before": "旧段", "after": "新段", "s0": 0.8, "s1": 0.2, "status": "已过线",
-              "attempts": [], "best_try": None, "risks": []}],
+              "layer": "zhzh", "polished": True, "attempts": [], "best_try": None, "risks": []}],
     "windows": [{"order": 1, "start": 0, "end": 5, "text": "改好的整章", "conf": 0.2, "label": 0}],
     "verdict": {"labels_ratio": {"0": 1.0, "1": 0.0, "2": 0.0}, "softmax_confidence": 0.05},
-    "smooth": {"kept": 1, "total": 1, "adopted": True},
-    "usage": {"generates": 4, "cost_cny": 0.02, "zhuque_tokens": 500},
+    "polish": {"kept": 1, "tried": 1},
+    "usage": {"zhzh": 3, "bt": 0, "polish": 1, "generates": 4, "cost_cny": 0.02, "zhuque_tokens": 500},
     "elapsed_seconds": 1.0,
 }
 
@@ -55,18 +56,25 @@ REWRITER_OK = {"available": True, "provider": "GLM", "model": "glm-5.2",
                "verified": True, "adapter": FakeRewriterAdapter()}
 
 
-async def fake_fix_chapter(text, terms, *, adapter, scorer, on_event=None):
+async def fake_fix_chapter(text, terms, *, adapter, scorer, on_event=None, polish_enabled=True):
     if on_event:
         on_event({"stage": "window", "state": "done", "index": 1, "total": 1,
                   "status": "已过线", "s1": 0.2})
         on_event({"stage": "done"})
-    return dict(CANNED_RESULT)
+    return dict(CANNED_RESULT, polish_enabled=polish_enabled)
 
 
-async def fake_fix_blind(text, terms, targets=None, *, adapter, on_event=None):
+async def fake_fix_blind(text, terms, targets=None, *, layer="zhzh", adapter, on_event=None):
     if on_event:
         on_event({"stage": "done"})
-    return dict(CANNED_RESULT)
+    return dict(CANNED_RESULT, layer=layer)
+
+
+async def fake_deai_text(text, terms, *, adapter, on_event=None):
+    if on_event:
+        on_event({"stage": "done"})
+    return {"text": text, "rows": [], "usage": {"generates": 1, "cost_cny": 0.001, "zhuque_tokens": 0},
+            "elapsed_seconds": 0.1}
 
 
 @pytest.fixture()
@@ -157,6 +165,31 @@ def test_rewriter_renamed_glm_52_still_verified(client, monkeypatch) -> None:
     info = zhuque_routes._rewriter_info()
     assert info["available"] is True and info["verified"] is True
     assert info["model"] == "glm-5.2"
+
+
+def test_rewriter_deepseek_v4_pro_verified_when_no_glm(client, monkeypatch) -> None:
+    """S-8-3:没配 GLM 时,配置里的 v4_pro(deepseek-v4-pro)是已验证档。"""
+    _stub_registry(monkeypatch, {"v4_pro": {"provider": "deepseek",
+                                            "model_id": "deepseek-v4-pro"}})
+    info = zhuque_routes._rewriter_info()
+    assert info["available"] is True and info["verified"] is True
+    assert info["provider"] == "DeepSeek" and info["model"] == "deepseek-v4-pro"
+
+
+def test_rewriter_v4_pro_without_key_falls_back_to_chat_model(client, monkeypatch) -> None:
+    """v4_pro 配了但 DeepSeek 没 Key:仍回落作者当前聊天模型(未验证)。"""
+    _stub_registry(monkeypatch, {
+        "v4_pro": {"provider": "deepseek", "model_id": "deepseek-v4-pro", "api_key": ""},
+        "deepseek-chat": {"provider": "deepseek", "model_id": "deepseek-chat"},
+    })
+    monkeypatch.setattr(
+        zhuque_routes, "resolve_ui_adapter",
+        lambda registry: (SimpleNamespace(api_key="k", model_name="deepseek-chat"),
+                          "deepseek-chat"),
+    )
+    info = zhuque_routes._rewriter_info()
+    assert info["available"] is True and info["verified"] is False
+    assert info["provider"] == "DeepSeek" and info["model"] == "deepseek-chat"
 
 
 def test_rewriter_fallback_model_unverified(client, monkeypatch) -> None:
@@ -279,7 +312,7 @@ def test_second_job_while_running_gets_409(client, monkeypatch) -> None:
     monkeypatch.setattr(zhuque_routes, "_rewriter_info", lambda: REWRITER_OK)
     release = threading.Event()
 
-    async def slow_fix(text, terms, *, adapter, scorer, on_event=None):
+    async def slow_fix(text, terms, *, adapter, scorer, on_event=None, polish_enabled=True):
         while not release.is_set():
             await asyncio.sleep(0.02)
         return dict(CANNED_RESULT)
@@ -322,6 +355,91 @@ def test_fix_blind_without_rewriter_plain_error(client, monkeypatch) -> None:
     resp = client.post("/api/zhuque/fix-blind", json={"text": "一段。"})
     assert resp.status_code == 400
     assert "改写模型不可用" in resp.json()["detail"]
+
+
+def test_fix_blind_passes_layer_through(client, monkeypatch) -> None:
+    """/fix-blind 接受 layer 并透传给引擎(作者对仍红的窗用 bt 再跑)。"""
+    monkeypatch.setattr(zhuque_routes, "_rewriter_info", lambda: REWRITER_OK)
+    seen: dict = {}
+
+    async def spy_fix_blind(text, terms, targets=None, *, layer="zhzh", adapter, on_event=None):
+        seen["layer"] = layer
+        return await fake_fix_blind(text, terms, targets, layer=layer,
+                                    adapter=adapter, on_event=on_event)
+
+    monkeypatch.setattr(zhuque_routes.engine, "fix_blind", spy_fix_blind)
+    resp = client.post("/api/zhuque/fix-blind",
+                       json={"text": "一段。", "targets": [2], "layer": "bt"})
+    assert resp.status_code == 200
+    assert _wait_job(client, resp.json()["job_id"])["result"]["layer"] == "bt"
+    assert seen["layer"] == "bt"
+
+
+def test_fix_blind_rejects_unknown_layer(client, monkeypatch) -> None:
+    monkeypatch.setattr(zhuque_routes, "_rewriter_info", lambda: REWRITER_OK)
+    resp = client.post("/api/zhuque/fix-blind", json={"text": "一段。", "layer": "顺一遍"})
+    assert resp.status_code == 422   # Literal 校验直接拒
+
+
+# ---------- deai(独立去 AI 味,付费功能) ----------
+
+def test_deai_creates_job_without_zhuque_key(client, monkeypatch) -> None:
+    """deai 不碰朱雀、不需要 Key;复用现有 job 机制。"""
+    monkeypatch.setattr(zhuque_routes, "_rewriter_info", lambda: REWRITER_OK)
+    monkeypatch.setattr(zhuque_routes.engine, "deai_text", fake_deai_text)
+    resp = client.post("/api/zhuque/deai", json={"text": "一段要去 AI 味的正文。", "terms": []})
+    assert resp.status_code == 200
+    payload = _wait_job(client, resp.json()["job_id"])
+    assert payload["kind"] == "deai" and payload["status"] == "done"
+    assert payload["result"]["text"] == "一段要去 AI 味的正文。"
+
+
+def test_deai_without_rewriter_plain_error(client, monkeypatch) -> None:
+    unavailable = {"available": False, "provider": None, "model": None,
+                   "verified": False, "adapter": None}
+    monkeypatch.setattr(zhuque_routes, "_rewriter_info", lambda: unavailable)
+    resp = client.post("/api/zhuque/deai", json={"text": "一段。"})
+    assert resp.status_code == 400
+    assert "改写模型不可用" in resp.json()["detail"]
+
+
+def test_deai_oversize_rejected(client, monkeypatch) -> None:
+    monkeypatch.setattr(zhuque_routes, "_rewriter_info", lambda: REWRITER_OK)
+    resp = client.post("/api/zhuque/deai", json={"text": "字" * 200_001})
+    assert resp.status_code == 413
+
+
+# ---------- _license_block 授权闸(check_feature 不允许 → 402) ----------
+
+@pytest.mark.parametrize("path,payload", [
+    ("/api/zhuque/fix", {"text": "一段。"}),
+    ("/api/zhuque/fix-blind", {"text": "一段。"}),
+    ("/api/zhuque/deai", {"text": "一段。"}),
+])
+def test_paid_endpoints_go_through_feature_gate(client, monkeypatch, path, payload) -> None:
+    from biyu.licensing import LicenseDecision
+
+    monkeypatch.setattr(zhuque_routes, "_rewriter_info", lambda: REWRITER_OK)
+    monkeypatch.setattr(zhuque_routes, "check_feature",
+                        lambda feature: LicenseDecision(False, "beta_expired", "内测版已到期"))
+    resp = client.post(path, json=payload)
+    assert resp.status_code == 402
+    assert resp.json() == {"detail": "内测版已到期", "code": "license_required"}
+    assert zhuque_routes._JOBS == {}
+
+
+# ---------- 旧前端兼容 ----------
+
+def test_fix_accepts_legacy_smooth_enabled(client, monkeypatch) -> None:
+    """旧前端传 smooth_enabled=False:路由映射为引擎的 polish_enabled=False。"""
+    _save_key(client)
+    monkeypatch.setattr(zhuque_routes, "_rewriter_info", lambda: REWRITER_OK)
+    monkeypatch.setattr(zhuque_routes.engine, "fix_chapter", fake_fix_chapter)
+    resp = client.post("/api/zhuque/fix",
+                       json={"text": "张今空收刀入鞘。", "smooth_enabled": False})
+    assert resp.status_code == 200
+    payload = _wait_job(client, resp.json()["job_id"])
+    assert payload["result"]["polish_enabled"] is False
 
 
 # ---------- report ----------
