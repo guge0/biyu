@@ -176,6 +176,17 @@ async def _local_only_guard(request: Request, call_next):
     return await call_next(request)
 
 
+# S-10 段3a-6：HTML 一律 no-cache——换版本后浏览器不再吃到旧页面（老板截图的
+# 「旧版 shell」即缓存所致；带 ?v= 指纹的静态资源不受影响，接口返回体非 HTML 也不受影响）。
+@app.middleware("http")
+async def s10_html_no_cache(request: Request, call_next):
+    response = await call_next(request)
+    content_type = response.headers.get("content-type", "")
+    if content_type.startswith("text/html"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @app.on_event("startup")
 async def enforce_runtime_binding() -> None:
     _start_behind_monitor()
