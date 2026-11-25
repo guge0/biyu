@@ -45,20 +45,23 @@ html[data-theme="dark"]{
    透明度照样张：亮色 .45/.45/.40，暗色 .30/.35/.30。
    3b·工单第0条根因1：background-image 列表里不允许纯色，末层 var(--outer-bg) 是纯色时
    **整条声明作废**（computed backgroundImage = none，全站没色团）——末层改写为
-   linear-gradient(var(--outer-bg), var(--outer-bg))，底色照画但不炸列表。 */
+   linear-gradient(var(--outer-bg), var(--outer-bg))，底色照画但不炸列表。
+   3b·0续：色团尺寸加 max(样张px, vw 派生)——样张是按 ~1280 视口定的，固定 px 在 1920/2560
+   视口里色团占比缩小、角点接近底色（暗色 .30 透明度下角点色差只有 9–16，走查 P0 假阳性）。
+   1280 处两值几乎相等（900px≈70.3vw），样张观感不变；大视口色团相对量级与样张一致。 */
 :root{
   --glass-blob-a:#D6AA8C; --glass-blob-b:#96B4AA; --glass-blob-c:#C8BED7; /* JS 未跑时兜底=default */
   --glass-page-bg:
-    radial-gradient(900px 600px at 12% 8%, color-mix(in srgb, var(--glass-blob-a) 45%, transparent), transparent 60%),
-    radial-gradient(800px 700px at 88% 20%, color-mix(in srgb, var(--glass-blob-b) 45%, transparent), transparent 60%),
-    radial-gradient(1000px 700px at 60% 100%, color-mix(in srgb, var(--glass-blob-c) 40%, transparent), transparent 60%),
+    radial-gradient(max(900px, 70.3vw) max(600px, 46.9vw) at 12% 8%, color-mix(in srgb, var(--glass-blob-a) 45%, transparent), transparent 60%),
+    radial-gradient(max(800px, 62.5vw) max(700px, 54.7vw) at 88% 20%, color-mix(in srgb, var(--glass-blob-b) 45%, transparent), transparent 60%),
+    radial-gradient(max(1000px, 78.1vw) max(700px, 54.7vw) at 60% 100%, color-mix(in srgb, var(--glass-blob-c) 40%, transparent), transparent 60%),
     linear-gradient(var(--outer-bg), var(--outer-bg));
 }
 html[data-theme="dark"]{
   --glass-page-bg:
-    radial-gradient(900px 600px at 12% 8%, color-mix(in srgb, var(--glass-blob-a) 30%, transparent), transparent 60%),
-    radial-gradient(800px 700px at 88% 20%, color-mix(in srgb, var(--glass-blob-b) 35%, transparent), transparent 60%),
-    radial-gradient(1000px 700px at 60% 100%, color-mix(in srgb, var(--glass-blob-c) 30%, transparent), transparent 60%),
+    radial-gradient(max(900px, 70.3vw) max(600px, 46.9vw) at 12% 8%, color-mix(in srgb, var(--glass-blob-a) 30%, transparent), transparent 60%),
+    radial-gradient(max(800px, 62.5vw) max(700px, 54.7vw) at 88% 20%, color-mix(in srgb, var(--glass-blob-b) 35%, transparent), transparent 60%),
+    radial-gradient(max(1000px, 78.1vw) max(700px, 54.7vw) at 60% 100%, color-mix(in srgb, var(--glass-blob-c) 30%, transparent), transparent 60%),
     linear-gradient(var(--outer-bg), var(--outer-bg));
 }
 /* 3b·工单第0条根因2：html/body 的不透明底色把负 z 背景层全盖住了——根层叠上下文里，
@@ -84,6 +87,10 @@ html[data-theme="dark"] .btn-secondary,html[data-theme="dark"] .b4,
 html[data-theme="dark"] .destructive{ background:rgba(255, 255, 255, 0.05); }
 /* 选中态（biyu-paper 的 mark 描边勾号）压住半透明底 */
 .b2.current,.b2[aria-pressed="true"]{ background:var(--mark-bg); }
+/* 3b·0续：领 Key 锦囊钮（index 行内 mark 描边+mark 字改由本层管）——暗色 --mark 在
+   surface-subtle+白5% 玻璃底上 4.15<4.5（3a 遗留 P1，3b 验收要求 P1=0），字调亮一档 */
+#key-guide-button{ color:var(--mark); }
+html[data-theme="dark"] #key-guide-button{ color:color-mix(in srgb, var(--mark) 70%, white); }
 
 /* ---------- 输入框 / 下拉：玻璃圆角（复选/单选不自绘胶囊，维持原样） ---------- */
 .field,input[type="text"],input[type="password"],input[type="number"],input[type="url"],
