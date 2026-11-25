@@ -4,19 +4,27 @@
 所以「保存/生成」类按钮在这里只验证「点了不崩、有反馈」，不验证功能本身。
 
 用法：
-  python scripts/click_sweep.py http://127.0.0.1:8084 [输出目录]
+  python scripts/click_sweep.py http://127.0.0.1:8084 [输出目录] [--engine chromium|firefox]
+  --engine：S-10 段3a 起可指定浏览器引擎（老板默认浏览器是 Firefox，验收要求两引擎都跑）。
 需要 playwright（开发环境已装）。退出码 = 出 pageerror 的页数。
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8084").rstrip("/")
-OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("click_sweep_out")
+ap = argparse.ArgumentParser(description="S-7f 点击巡检")
+ap.add_argument("base", nargs="?", default="http://127.0.0.1:8084")
+ap.add_argument("out", nargs="?", default="click_sweep_out")
+ap.add_argument("--engine", default="chromium", choices=["chromium", "firefox"],
+                help="巡检用的浏览器引擎（默认 chromium=本机 Chrome）")
+BASE = ap.parse_args().base.rstrip("/")
+OUT = Path(ap.parse_args().out)
+ENGINE = ap.parse_args().engine
 OUT.mkdir(parents=True, exist_ok=True)
 
 PAGES = [
@@ -70,10 +78,13 @@ def sweep_page(page, url: str) -> dict:
 def main() -> int:
     results = []
     with sync_playwright() as p:
-        try:
-            browser = p.chromium.launch(headless=True)
-        except Exception:  # 没装 playwright 自带浏览器时用本机 Chrome
-            browser = p.chromium.launch(headless=True, channel="chrome")
+        if ENGINE == "firefox":
+            browser = p.firefox.launch(headless=True)
+        else:
+            try:
+                browser = p.chromium.launch(headless=True, channel="chrome")
+            except Exception:  # 没装本机 Chrome 时回落 playwright 自带内核
+                browser = p.chromium.launch(headless=True)
         ctx = browser.new_context(viewport={"width": 1440, "height": 960})
         ctx.on("dialog", lambda d: d.dismiss())
         ctx.route("**/api/**", lambda route: route.abort() if route.request.method != "GET" else route.continue_())
