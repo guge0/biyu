@@ -114,10 +114,13 @@ DETECT_JS = r"""
   }
 
   // 6) 可见弹窗/抽屉超视口（工单 3a-1 新增）：底边 ≤ 视口高、右边 ≤ 视口宽。
-  //    全屏遮罩层（≈视口大小）不算弹窗本体，量的是它里面那张对话框。
+  //    全屏遮罩层（≈视口大小）不算弹窗本体，量的是它里面那张对话框；
+  //    文档流内的元素（position static/relative）随页面滚动，不算浮层。
   const DLG_SEL = '[class*="overlay"],[class*="modal"],[class*="dialog"],[class*="drawer"],[role="dialog"]';
   for (const el of document.querySelectorAll(DLG_SEL)) {
     if (!vis(el)) continue;
+    const ps = getComputedStyle(el).position;
+    if (ps === 'static' || ps === 'relative') continue;
     const r = el.getBoundingClientRect();
     if (r.width >= vw * 0.98 && r.height >= vh * 0.98) continue; // 全屏遮罩
     const bottomOver = Math.round(r.bottom - vh), rightOver = Math.round(r.right - vw);

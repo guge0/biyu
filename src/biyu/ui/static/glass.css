@@ -84,7 +84,11 @@ h1,h2,h3,h4,.card-title,.page-title,.shelf-title,
 .b1,.primary,button.primary,.btn-primary,.selection-primary,
 .biyu-wordmark,.biyu-nav-btn.current,.biyu-sub-pill.current,.biyu-contact-pill,
 .biyu-drawer-title,.stat .v,.sample-preview-item span,.stage-button.current,
-.tier-step-badge{ font-weight:500; }
+.tier-step-badge,details>summary,
+.segmented button[aria-pressed=true],.segmented button.current,
+button.b2.current,button.b2[aria-pressed="true"]{ font-weight:500; }
+.segmented button[aria-pressed=true]::before,.segmented button.current::before,
+button.b2.current::before,button.b2[aria-pressed="true"]::before{ font-weight:500; }
 
 /* 线条图标统一尺寸（.icon 基类在 styles.css，24px；按钮/栏内收成 15px） */
 .biyu-gicon{ width:15px; height:15px; flex:none; vertical-align:-2px; }
@@ -168,6 +172,10 @@ h1,h2,h3,h4,.card-title,.page-title,.shelf-title,
 @media (max-width:1100px){
   .biyu-lbl{display:none}
 }
+
+/* ---------- 3a-4 收尾小修：审查报告长 token 断行、留白栏章号在 Firefox 的行高裁切 ---------- */
+.report-pane li,.report-pane p,.issue-detail blockquote{ overflow-wrap:anywhere; }
+.read-margin .num{ line-height:1.2; }
 
 /* ---------- 红线：正文读稿区永远不透明纸底，不加玻璃 ----------
    .prose/#chapter-read/#official-chapter 的背景与透明度在此重申，

@@ -36,7 +36,8 @@ def test_read_review_edit_skeleton_and_adoption_slip_are_present() -> None:
     assert "function setReadingView" in script
     assert "function requestAdopt" in script
     assert "function cancelIgnoreIssue" in script
-    assert ".workbench .reading-layout.reading-view-read" in css
+    # S-10 3a-3/3a-4:read 视图不再需要专属锚定规则（意见栏常驻右栏 grid-area:rail）
+    assert ".workbench .reading-layout .review-column{grid-area:rail" in css
     assert ".workbench .adopt-slip-list" in css and "overflow-y:auto" in css
     assert "@media (max-width:1040px)" in css
     assert "@media (max-width:720px)" in css
@@ -106,30 +107,18 @@ def test_frontend_quote_normalization_matches_backend_samples() -> None:
 def test_reading_layout_keeps_three_width_contracts() -> None:
     css = CSS.read_text(encoding="utf-8")
     assert "--reading-article-width:744px" in css
-    assert "--reading-review-width:360px" in css
+    assert "--reading-review-width:340px" in css
     assert "grid-template-columns:66px minmax(504px,744px)" in css
     assert "grid-template-columns:minmax(0,1fr) var(--reading-review-width)" in css
+    # S-10 3a-4:意见栏常驻右栏;≤1366 收 300px,≤1000 整条落到正文下方(不挤压不叠)
+    assert re.search(r"@media \(max-width:1366px\)\{[^}]*--reading-review-width:300px", css)
     assert re.search(
-        r"@media \(max-width:1199px\).*?\.reading-layout\.reading-aside-open"
-        r" \.review-column\{[^}]*position:absolute[^}]*grid-column:1/-1[^}]*top:0"
-        r"[^}]*bottom:var\(--reading-actions-height\)",
+        r"@media \(max-width:1000px\).*?grid-template-areas:\"head\" \"main\" \"foot\" \"rail\" \"summ\"",
         css,
         re.S,
     )
     assert re.search(
-        r"@media \(max-width:1199px\).*?\.reading-layout\.reading-aside-open"
-        r" \.reading-actions-side\{[^}]*display:none",
-        css,
-        re.S,
-    )
-    assert re.search(
-        r"@media \(max-width:559px\).*?\.reading-layout\.reading-aside-open"
-        r" \.review-column\{[^}]*width:100%",
-        css,
-        re.S,
-    )
-    assert re.search(
-        r"@media \(max-width:781px\).*?grid-template-columns:40px minmax\(504px,648px\)",
+        r"@media \(max-width:559px\).*?\.reading-layout \.review-column\{[^}]*width:100%",
         css,
         re.S,
     )
@@ -141,10 +130,8 @@ def test_reading_layout_keeps_three_width_contracts() -> None:
     assert re.search(
         r"\.reading-layout \.reading-column\{[^}]*overflow:hidden", css
     )
+    # S-10 段3a-4（工单硬要求）：操作条是文档卡底部的 sticky 条，不再是 old v5.1 的 static 网格行
     assert re.search(
-        r"\.reading-layout \.reading-actions\{[^}]*position:static", css
-    )
-    assert not re.search(
         r"\.reading-layout \.reading-actions\{[^}]*position:sticky", css
     )
     assert re.search(
@@ -319,12 +306,12 @@ def test_reading_chrome_collapses_only_for_idle_pure_reading() -> None:
 
     assert "--reading-actions-height:44px" in css
     assert re.search(r"\.reading-layout\.reading-pure\{[^}]*--reading-actions-height:40px", css)
-    # 2026-10 终局修复:阶段条回归命令行,不再浮成第二条带(两条带同位互覆盖,
-    # 阶段标签/工具条按钮互吃点击)。反向守卫:纯读模式禁止 stage-bar 浮动。
+    # 2026-10 终局修复的延续:纯读模式禁止 stage-bar 浮动(S-10 3a-4 起阶段条在书内栏文档流里,无浮层)
     assert "reading-pure:not([hidden])) .stage-bar{position:fixed" not in css
-    assert re.search(r"\.reading-layout\.reading-pure \.reading-prose-grid\{padding-top:96px\}", css)
+    # S-10 3a-4:固定读稿头废除,96px 顶部让位补偿随之删除
+    assert "padding-top:96px" not in css
     assert re.search(r"\.reading-chrome-hidden \.reading-actions\{[^}]*transform:translateY", css)
-    assert ":has(#reading-decision.reading-chrome-hidden) .stage-bar" in css
+    assert ":has(#reading-decision.reading-chrome-hidden) .biyu-bookbar" in css
     assert re.search(r"reading-chrome-hidden[^}]*\{[^}]*transform:translateY", css)
     assert "transition:transform .18s" in css
     assert "@media (prefers-reduced-motion:reduce)" in css
@@ -366,8 +353,7 @@ def test_narrow_reading_chrome_scrolls_horizontally_without_wrapping() -> None:
         re.S,
     )
     assert re.search(
-        r"@media \(max-width:559px\).*?\.reading-layout\.reading-aside-open"
-        r" \.review-column\{[^}]*width:100%",
+        r"@media \(max-width:559px\).*?\.reading-layout \.review-column\{[^}]*width:100%",
         css,
         re.S,
     )
@@ -437,11 +423,8 @@ def test_v6_owner_visual_rejection_keeps_actions_and_notice_in_their_own_rows() 
     script = JS.read_text(encoding="utf-8")
 
     assert "classList.toggle('reading-has-top-notice',visibleIndex>=0)" in script
-    assert re.search(
-        r"\.workbench\.reading-has-top-notice \.reading-decision-head"
-        r"\{[^}]*top:calc\(52px \+ 44px\)",
-        css,
-    )
+    # S-10 3a-4:读稿头进文档流,通知条自然各占一行,不再需要 fixed 顶偏移补偿
+    assert "top:calc(52px + 44px)" not in css
     assert re.search(
         r"\.reading-actions-main>button\{[^}]*align-self:center",
         css,
@@ -452,7 +435,7 @@ def test_v6_owner_visual_rejection_keeps_review_entry_visible_before_1200px() ->
     css = CSS.read_text(encoding="utf-8")
 
     assert re.search(
-        r"@media \(max-width:1199px\).*?"
+        r"@media \(max-width:900px\).*?"
         r"#active-voiceprint[^}]*display:none.*?"
         r"#reading-word-count[^}]*display:none",
         css,
@@ -462,15 +445,5 @@ def test_v6_owner_visual_rejection_keeps_review_entry_visible_before_1200px() ->
         r"\.reading-review-entry\{[^}]*flex:0 0 auto",
         css,
     )
-    assert re.search(
-        r"@media \(min-width:901px\) and \(max-width:1199px\).*?"
-        r"\.reading-decision-head\{[^}]*left:350px",
-        css,
-        re.S,
-    )
-    assert re.search(
-        r"@media \(min-width:801px\) and \(max-width:1199px\).*?"
-        r"\.workbench-title-row \.toolbar\{[^}]*flex-wrap:nowrap",
-        css,
-        re.S,
-    )
+    # S-10 3a-4:固定读稿头废除;窄屏改为隐藏次要 meta 项,工具行右对齐在文档流里仍成立
+    assert re.search(r"\.reading-head-tools\{[^}]*margin-left:auto", css)

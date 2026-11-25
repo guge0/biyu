@@ -46,7 +46,7 @@ function syncWorkbenchLocation(){
   const book=$('book').value;
   localStorage.setItem(locationDraftKey(book),String(current.chapter));
   const encodedBook=encodeURIComponent(book),chapter=encodeURIComponent(current.chapter);
-  workbenchSelfLink.href=`/workbench.html?book=${encodedBook}&chapter=${chapter}`;
+  if (workbenchSelfLink) workbenchSelfLink.href=`/workbench.html?book=${encodedBook}&chapter=${chapter}`;
   if (memoryLink) memoryLink.href=`/memory.html?book=${encodedBook}&chapter=${chapter}`;
   if (voiceprintLink) voiceprintLink.href=`/voiceprint.html?book=${encodedBook}&chapter=${chapter}`;
 }

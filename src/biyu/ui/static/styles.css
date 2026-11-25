@@ -1512,7 +1512,6 @@ button{font-family:inherit;cursor:default}
 .progress-list{margin:4px 0;padding-left:24px}
 @media (min-width:801px) {
   body:has(.workbench){margin:0}
-  .workbench{height:calc(100vh - 79px);margin:7px auto}
 }
 
 /* S-1：正文 18px / 行距 2.1 (= 37.8px) / 限宽 30 字 (30em) */
@@ -1531,7 +1530,8 @@ button{font-family:inherit;cursor:default}
 }
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media (min-width:801px){
-  .workbench.workbench{height:calc(100vh - var(--workbench-topbar));margin:0 auto;padding:0 20px 8px;gap:0}
+  /* S-10 3a-4：高度由 body flex（两层栏实高）决定，不再按 52px 顶栏假设硬算 */
+  .workbench.workbench{margin:0 auto;padding:0 20px 8px;gap:0}
   .workbench .workbench-title-row{height:var(--workbench-title-row);min-height:var(--workbench-title-row);gap:12px;flex:none}
   .workbench .workbench-title{min-width:0;display:flex;align-items:center}
   .workbench .workbench-title h1{font-size:19px;white-space:nowrap}
@@ -2120,8 +2120,7 @@ hr{border:none;border-top:1px solid var(--rule);margin:26px 0 18px}
   max-width:var(--reading-review-width);
   grid-template-columns:minmax(0,630px) 320px;
 }
-/* S-3 T5 批2(图纸#53):⑤读稿右栏(词族雷达+批注)常显,不再在纯阅读态整栏隐藏;保留选择器锚定列位 */
-.workbench .reading-layout.reading-view-read .review-column{grid-column:2;grid-row:1}
+/* S-3 T5 批2(图纸#53)的旧锚定规则已被 3a-4 的 grid-area:rail 取代（意见栏常驻右栏）。 */
 .workbench .reading-decision-head{flex:none;border-bottom:1px solid var(--rule);padding:0 0 11px;margin-bottom:18px}
 .workbench .reading-head-line,.workbench .reading-meta-line{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .workbench .reading-head-line h2{margin:0;font-family:var(--serif);font-size:27px;font-weight:500}
@@ -2193,56 +2192,46 @@ hr{border:none;border-top:1px solid var(--rule);margin:26px 0 18px}
 }
 @media (prefers-reduced-motion:reduce){.workbench .reading-layout{transition:none}}
 
-/* 读稿定夺 v5.1：老板批准的正文优先骨架（仅本屏） */
+/* ===== S-10 段3a-4 读稿定夺屏：文档卡（工具行/纸面正文/底部操作条）+ 右侧意见栏（样张_工作台） =====
+   高度改由两层栏实际高度决定：body 纵向 flex，main 占满剩余视口（不再 calc(100vh-72px)）。 */
 .workbench{
   --reading-article-width:744px;
-  --reading-review-width:360px;
+  --reading-review-width:340px;
   --reading-actions-height:44px;
   --stroke:var(--rule);
   --solid:var(--ink-solid);
+  /* 正文纸面限高：视口 - 两层栏实高(--chrome-h 由 shell.js 实测) - 工具行/操作条/评章露出量 */
+  --reading-paper-max:calc(100dvh - var(--chrome-h,124px) - 236px);
 }
 body:has(.workbench)>.top-nav{height:52px;min-height:52px}
-.workbench:has(#reading-decision:not([hidden])){width:100%;max-width:none;box-sizing:border-box}
-@media (min-width:801px){
-  .workbench:has(#reading-decision:not([hidden])){height:calc(100dvh - 52px);padding-bottom:0}
-  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row{position:fixed;top:0;right:180px;left:160px;z-index:100;height:52px;min-height:52px;border:0;background:transparent;pointer-events:none}
-  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row .wb-title{display:none}
-  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row .toolbar{margin-left:auto;pointer-events:auto}
-  /* 2026-10 修复:沉浸式把整条命令行设为点击穿透,但阶段标签/更多菜单/版本红点都在穿透区——
-     老板实测全部点不了。白名单补齐这三块。 */
-  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row .stage-bar,
-  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row .workbench-more{pointer-events:auto}
-  .workbench:has(#reading-decision:not([hidden])) .stage-bar{height:44px;min-height:44px}
-  .workbench:has(#reading-decision:not([hidden])) .stage-shell{padding-top:0}
-}
+body:has(.workbench){display:flex;flex-direction:column;min-height:100dvh}
+body:has(.workbench) main.workbench{flex:1 1 auto;min-height:0;width:100%}
+.workbench:has(#reading-decision:not([hidden])){width:100%;max-width:none;box-sizing:border-box;padding-bottom:0}
+.workbench:has(#reading-decision:not([hidden])) .stage-shell{padding-top:0}
 .workbench .reading-layout,
 .workbench .reading-layout.reading-view-review,
 .workbench .reading-layout.reading-view-edit{
   width:100%;max-width:none;height:100%;min-height:0;margin:0;padding:0;
-  display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) var(--reading-actions-height);gap:0;
-  overflow:hidden;background:#fdfbf6;position:relative;
+  display:grid;gap:0 14px;position:relative;overflow:hidden;background:transparent;
+  grid-template-columns:minmax(0,1fr) var(--reading-review-width);
+  grid-template-rows:auto minmax(0,1fr) auto auto;
+  /* 意见栏只占正文行（第2行）：若跨全部行，其内容高度会摊进 auto 行把工具行/操作条撑爆 */
+  grid-template-areas:"head ." "main rail" "foot ." "summ .";
 }
-.workbench .reading-layout.reading-aside-open{grid-template-columns:minmax(0,1fr) var(--reading-review-width)}
 .workbench .reading-layout.reading-pure{--reading-actions-height:40px}
-/* 2026-10 终局修复:阶段条回归第一行命令行(它本就是 title-row 子元素),
-   不再单独浮成第二条带——两条带同位互相覆盖,阶段标签/工具条按钮互吃点击。 */
-.workbench .reading-layout.reading-pure .reading-prose-grid{padding-top:96px}
-/* 2026-10:编辑/正式视图同样让位——固定顶栏在所有读稿视图常驻,排版必须一致 */
-.workbench:has(#reading-decision:not([hidden])) .reading-prose-grid{padding-top:96px}
+/* 文档卡三段共边：工具行（玻璃上沿）+ 纸面正文（不透明，红线区不进玻璃）+ 操作条（玻璃下沿） */
 .workbench .reading-decision-head{
-  position:fixed;top:52px;right:20px;left:20px;z-index:14;min-width:0;height:44px;margin:0;padding:0 0 0 410px;border:0;
-  background:var(--paper); /* 2026-10:整条不透明带,左侧 x<430 区(原裸露)正文从此不再穿透 */
-  pointer-events:none; /* 透明区点击穿透旧病随整条底色一并消除;交互元件单独恢复 */
-  display:flex;align-items:center;gap:18px;font-family:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;
+  grid-area:head;position:static;z-index:auto;min-width:0;min-height:44px;margin:0;padding:9px 16px 8px;border:1px solid var(--glass-border);border-bottom:0;
+  border-radius:var(--r-l) var(--r-l) 0 0;background:var(--glass-bg);
+  pointer-events:auto;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;
 }
-.workbench .reading-decision-head a,.workbench .reading-decision-head button,.workbench .reading-decision-head .segmented,.workbench .reading-decision-head select{pointer-events:auto}
-.workbench .reading-head-line{display:flex;align-items:center;gap:10px;flex:none}
-.workbench .reading-head-tools{margin:0;display:flex;align-items:center;gap:10px}
+.workbench .reading-head-line{display:flex;align-items:center;gap:10px;flex:none;min-width:0;flex-wrap:wrap}
+.workbench .reading-head-tools{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .workbench .reading-meta-line{min-width:0;margin:0;display:flex;align-items:center;gap:9px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;font-size:12.5px}
 .workbench .reading-review-entry{flex:0 0 auto}
-.workbench.reading-has-top-notice .reading-decision-head{top:calc(52px + 44px)}
 .workbench .reading-decision-head>p{display:none}
-.workbench .reading-column{grid-column:1;grid-row:1;height:auto;min-height:0;padding:0;overflow:hidden;background:#fdfbf6}
+.workbench .reading-layout .reading-column{grid-area:main;display:flex;flex-direction:column;height:auto;min-height:300px;max-height:var(--reading-paper-max);padding:0;overflow:hidden;background:var(--surface);border:1px solid var(--glass-border);border-top:0;border-radius:0;position:relative}
 .workbench .reading-prose-grid{flex:1 1 0;height:100%;min-height:0;width:100%;display:grid;grid-template-columns:66px minmax(504px,744px);justify-content:center;align-items:start;gap:20px;padding:8px 24px;overflow-x:hidden;overflow-y:auto;scrollbar-gutter:stable}
 .workbench .reading-prose{height:auto;min-height:100%;overflow:visible}
 .workbench .reading-prose>#chapter-read,.workbench .reading-prose>#chapter-edit,.workbench .reading-prose>#official-chapter{width:100%;height:100%;min-height:0;max-width:744px;max-height:none;margin:0;font-family:"Noto Serif SC","Source Han Serif SC","Songti SC","SimSun",serif;font-size:18px;line-height:1.9}
@@ -2251,8 +2240,12 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 .workbench .reading-prose>#chapter-edit{padding:16px 18px;border:1px dashed var(--btn-border);border-radius:6px;background:#fdfbf6;outline:0;overflow:hidden;resize:none}
 .workbench .reading-layout .read-margin{height:100%;padding:4px 14px 0 0;border-right:1px solid var(--rule)}
 .workbench .reading-layout .read-margin .num{display:block;min-height:35px;color:var(--ink-mute)}
-.workbench .reading-layout .review-column{display:none;grid-column:2;grid-row:1;height:auto;min-height:0;padding:0;border-left:1px solid var(--rule);overflow:hidden;background:#fdfbf6;font-family:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;font-size:13.5px;z-index:20}
-.workbench .reading-layout.reading-aside-open .review-column{display:flex}
+/* S-10 3a-4：意见栏改成常驻右侧 sticky 栏（340px，≤1366 收 300px），栏内独立滚动 */
+.workbench .reading-layout .review-column{grid-area:rail;align-self:start;display:flex;flex-direction:column;height:auto;max-height:var(--rail-max,calc(100dvh - var(--chrome-h,124px) - 40px));min-height:0;padding:0;border:1px solid var(--glass-border);border-radius:var(--r-l);background:var(--glass-bg);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);overflow:hidden auto;position:sticky;top:calc(var(--chrome-h,124px) + 8px);font-family:"Noto Sans SC","Source Han Sans SC","Microsoft YaHei",sans-serif;font-size:13.5px;z-index:20}
+.workbench .reading-layout .review-column > #auditor-radar-card{flex:none}
+.workbench .reading-layout .review-column > .review-list-view,
+.workbench .reading-layout .review-column > .review-detail-view{flex:1 1 auto;min-height:0}
+.workbench .reading-layout #review-summary{grid-area:summ;min-width:0;align-self:start}
 .workbench .review-toolbar{position:sticky;top:0;z-index:3;flex:none;min-height:44px;padding:14px 16px 0;margin:0 0 10px;gap:8px;border-bottom:0;background:#fdfbf6}
 .workbench .review-toolbar details{display:none}
 .workbench .review-list-view,.workbench .review-detail-view{width:100%;height:100%;min-height:0;display:flex;flex-direction:column}
@@ -2295,12 +2288,10 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 .workbench .issue-detail textarea{width:100%;min-height:74px;padding:7px 8px;border:1px solid var(--rule);border-radius:3px;background:var(--paper);font:12.5px/1.7 var(--sans);resize:vertical}
 .workbench .issue-detail-actions,.workbench .issue-detail footer{display:flex;align-items:center;gap:13px;margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
 .workbench .issue-detail footer span{margin-left:auto;color:var(--ink-mute);font-size:12px}
-.workbench .reading-layout .reading-actions{grid-column:1/-1;grid-row:2;height:var(--reading-actions-height);min-height:var(--reading-actions-height);margin:0;padding:0;border-top:1px solid var(--rule);display:grid;grid-template-columns:minmax(0,1fr);background:#fdfbf6;z-index:30;transition:transform .18s ease,opacity .18s ease}
-.workbench .reading-layout.reading-aside-open .reading-actions{grid-template-columns:minmax(0,1fr) var(--reading-review-width)}
+.workbench .reading-layout .reading-actions{grid-area:foot;position:sticky;bottom:40px;height:var(--reading-actions-height);min-height:var(--reading-actions-height);margin:0;padding:0;border:1px solid var(--glass-border);border-top:0;border-radius:0 0 var(--r-l) var(--r-l);display:flex;align-items:stretch;background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);z-index:30;transition:transform .18s ease,opacity .18s ease}
 .workbench .reading-actions-main{min-width:0;width:min(830px,100%);height:100%;margin:0 auto;padding-left:86px;display:flex;align-items:center;gap:12px;position:relative}
 .workbench .reading-actions-main>button{align-self:center}
-.workbench .reading-actions-side{display:block;border-left:1px solid var(--rule)}
-.workbench .reading-layout:not(.reading-aside-open) .reading-actions-side{display:none}
+.workbench .reading-actions-side{display:none}
 .workbench .reading-actions-main>#adopt-button{min-width:0;height:32px;padding:7px 18px;background:none;color:var(--ink);border:1px solid var(--stroke);font-size:13.5px;line-height:1.2;transition:background .14s ease,color .14s ease,border-color .14s ease}
 .workbench .reading-actions-main>#adopt-button:not(:disabled):hover,.workbench .reading-actions-main>#adopt-button:not(:disabled):focus-visible{background:var(--solid);color:var(--paper);border-color:var(--solid)}
 .workbench .reading-actions-main>#adopt-button:disabled{background:none!important;color:var(--ink-faint);border:1px solid var(--rule)!important}
@@ -2326,79 +2317,54 @@ body:has(.workbench)>.top-nav{height:52px;min-height:52px}
 .workbench .history-slip-foot span{color:var(--ink-mute);font-size:12px}
 .workbench .reading-dirty-note{margin-left:auto;color:var(--mark);font-size:12px}
 .workbench .reading-aside-backdrop{display:none}
-.workbench:has(#reading-decision.reading-chrome-hidden) .stage-bar,.workbench .reading-decision-head{transition:transform .18s ease,opacity .18s ease}
-.workbench:has(#reading-decision.reading-chrome-hidden) .stage-bar,.workbench .reading-layout.reading-chrome-hidden .reading-decision-head{transform:translateY(-100%);opacity:0;pointer-events:none}
-.workbench .reading-layout.reading-chrome-hidden .reading-actions{transform:translateY(calc(100% + 1px));opacity:0;pointer-events:none}
+/* S-10 3a-4：纯读滚动时 收敛读稿 chrome——文档卡工具行/操作条淡出（不再位移让位），
+   书内栏（含阶段条）整体淡出；机制沿用 reading-chrome-hidden 类，JS 契约不变。 */
+.workbench .reading-decision-head,.workbench .reading-layout .reading-actions{transition:transform .18s ease,opacity .18s ease}
+body:has(#reading-decision.reading-chrome-hidden) .biyu-bookbar{opacity:0;pointer-events:none;transition:opacity .18s ease}
+.workbench .reading-layout.reading-chrome-hidden .reading-decision-head{transform:translateY(-8px);opacity:0;pointer-events:none}
+.workbench .reading-layout.reading-chrome-hidden .reading-actions{transform:translateY(8px);opacity:0;pointer-events:none}
 .reading-readonly-tag{margin-left:10px;padding:1px 6px;border:1px solid var(--rule);border-radius:3px;color:var(--ink-mute);font-size:11.5px;font-family:var(--sans)}
 .workbench>#error-banner,.workbench>#failure-card,.workbench>#setup-restore-notice,.workbench>#memory-banner{box-sizing:border-box;max-height:44px;margin:0;overflow:hidden}
-@media (min-width:801px) and (max-width:1199px){
-  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row{left:110px;right:135px}
-  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row .toolbar{flex-wrap:nowrap}
+/* S-10 3a-4 响应式：≤1366 意见栏收 300px；≤1000 意见栏整条落到正文下方（不挤压不叠） */
+@media (max-width:1366px){
+  .workbench{--reading-review-width:300px}
 }
-@media (min-width:901px) and (max-width:1199px){
-  .workbench .reading-decision-head{left:350px;right:14px}
-}
-@media (max-width:1199px){
-  .workbench .reading-layout.reading-aside-open{grid-template-columns:minmax(0,1fr)}
-  .workbench .reading-layout.reading-aside-open .reading-aside-backdrop{display:block;position:absolute;top:0;right:0;bottom:var(--reading-actions-height);left:0;z-index:18;border:0;background:rgba(247,243,233,.48)}
-  .workbench .reading-layout.reading-aside-open .review-column{position:absolute;grid-column:1/-1;top:0;right:0;bottom:var(--reading-actions-height);width:360px;height:auto;box-shadow:-14px 0 34px rgba(55,44,25,.12);transition:transform .18s ease}
-  .workbench .reading-layout.reading-aside-open .reading-actions{grid-template-columns:minmax(0,1fr)}
-  .workbench .reading-layout.reading-aside-open .reading-actions-side{display:none}
-  .workbench .reading-meta-line .dot:nth-of-type(n+2),.workbench .reading-meta-line #stale-badge{display:none}
-  .workbench .reading-meta-line #active-voiceprint{display:none}
-  .workbench .reading-meta-line #reading-word-count{display:none}
-}
-/* J-1：1200–1299px 若把 360px 意见栏并排，会把 744px 正文挤窄；沿用浮层避免读／审重排。 */
-@media (min-width:1200px) and (max-width:1299px){
-  .workbench .reading-layout.reading-aside-open{grid-template-columns:minmax(0,1fr)}
-  .workbench .reading-layout.reading-aside-open .reading-aside-backdrop{display:block;position:absolute;top:0;right:0;bottom:var(--reading-actions-height);left:0;z-index:18;border:0;background:rgba(247,243,233,.48)}
-  .workbench .reading-layout.reading-aside-open .review-column{position:absolute;grid-column:1/-1;top:0;right:0;bottom:var(--reading-actions-height);width:360px;height:auto;box-shadow:-14px 0 34px rgba(55,44,25,.12);transition:transform .18s ease}
-  .workbench .reading-layout.reading-aside-open .reading-actions{grid-template-columns:minmax(0,1fr)}
-  .workbench .reading-layout.reading-aside-open .reading-actions-side{display:none}
+@media (max-width:1000px){
+  .workbench .reading-layout,
+  .workbench .reading-layout.reading-view-review,
+  .workbench .reading-layout.reading-view-edit{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto minmax(0,1fr) auto auto auto;
+    grid-template-areas:"head" "main" "foot" "rail" "summ";
+  }
+  .workbench .reading-layout .review-column{max-height:46vh;margin-top:14px}
+  .workbench .reading-prose-grid{grid-template-columns:1fr;gap:12px}
+  .workbench .reading-layout .read-margin{min-height:0;display:flex;gap:9px;align-items:baseline;border-right:0;border-bottom:1px solid var(--rule);padding:0 0 8px;text-align:left}
+  .workbench .reading-layout .read-margin .unit,.workbench .reading-layout .read-margin .meta{display:inline;margin:0}
 }
 @media (max-width:900px){
-  .workbench .reading-decision-head{left:210px;right:14px;gap:10px}
-  .workbench .reading-meta-line #active-voiceprint,.workbench .reading-meta-line #reading-word-count{display:none}
+  .workbench .reading-meta-line #active-voiceprint{display:none}
+  .workbench .reading-meta-line #reading-word-count{display:none}
   .workbench .reading-layout .reading-actions{padding-inline:14px}
 }
 @media (max-width:800px){
   body:has(.workbench)>.top-nav{justify-content:flex-start;white-space:nowrap;overflow-x:auto;overflow-y:hidden}
   body:has(.workbench)>.top-nav .nav-brand,body:has(.workbench)>.top-nav .nav-links{flex:none}
-  .workbench:has(#reading-decision.reading-pure:not([hidden])) .stage-bar{right:14px;left:14px}
-  .workbench:has(#reading-decision:not([hidden])){height:calc(100dvh - 52px);margin:0;padding:0 14px;gap:0;overflow:hidden}
-  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row{position:fixed;top:0;right:132px;left:96px;z-index:100;height:52px;min-height:52px;margin:0;border:0;background:transparent;pointer-events:none}
-  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row .wb-title{display:none}
-  .workbench:has(#reading-decision:not([hidden])) .workbench-title-row .toolbar{height:52px;margin:0 auto;display:flex;flex-wrap:nowrap;align-items:center;pointer-events:auto}
-  .workbench:has(#reading-decision:not([hidden])) .toolbar .sep,
-  .workbench:has(#reading-decision:not([hidden])) #previous-chapter,
-  .workbench:has(#reading-decision:not([hidden])) #next-chapter,
-  .workbench:has(#reading-decision:not([hidden])) #load,
-  .workbench:has(#reading-decision:not([hidden])) #open-import{display:none}
-  .workbench:has(#reading-decision:not([hidden])) .stage-bar{height:44px;min-height:44px;flex:none;flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;overflow-y:hidden}
-  .workbench:has(#reading-decision:not([hidden])) .stage-bar .stage-button{flex:0 0 auto}
-  .workbench .reading-decision-head{white-space:nowrap;overflow-x:auto;overflow-y:hidden}
-  .workbench:has(#reading-decision:not([hidden])) .stage-shell{flex:1 1 auto;min-height:0;padding-top:0}
+  .workbench:has(#reading-decision:not([hidden])){padding:0 14px}
+  .workbench .stage-bar{white-space:nowrap;overflow-x:auto}
 }
 @media (max-width:781px){
-  .workbench:has(#reading-decision:not([hidden])) .stage-button:not(.current){display:flex}
-  .workbench .reading-decision-head{left:130px;right:14px;justify-content:flex-end}
   .workbench .reading-decision-head #reading-state,
   .workbench .reading-decision-head #copy-chapter,
   .workbench .reading-decision-head #reading-check-state,
   .workbench .reading-meta-line>.dot{display:none}
-  .workbench .reading-head-line,.workbench .reading-meta-line{flex:none;overflow:visible}
-  .workbench .reading-prose-grid{grid-template-columns:40px minmax(504px,648px);justify-content:start;gap:14px;padding:8px 14px;overflow-x:auto}
-  .workbench .reading-layout .read-margin{display:block;border-right:1px solid var(--rule);border-bottom:0;padding:4px 8px 0 0;text-align:center}
-  .workbench .reading-layout .read-margin .unit{display:block;margin-top:8px}
-  .workbench .reading-actions-main{padding-left:54px}
-  .workbench .reading-actions-main>#adopt-button{min-width:0}
 }
 @media (min-width:600px) and (max-width:781px){.workbench .reading-prose-grid{overflow-x:hidden}}
 @media (max-width:559px){
-  .workbench .reading-layout.reading-aside-open .review-column{width:100%}
+  .workbench .reading-layout .review-column{width:100%}
 }
 @media (prefers-reduced-motion:reduce){
-  .workbench .reading-layout .reading-actions,.workbench .reading-decision-head,.workbench:has(#reading-decision:not([hidden])) .stage-bar{transition:none!important}
+  .workbench .reading-layout .reading-actions,.workbench .reading-decision-head,body:has(#reading-decision.reading-chrome-hidden) .biyu-bookbar{transition:none!important}
 }
 
 /* 2026-10 意见直达按钮:读稿页标题栏,有意见时恒显 */
