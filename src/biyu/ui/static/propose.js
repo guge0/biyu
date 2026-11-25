@@ -264,15 +264,15 @@
     if (meta.warning) {
       scanCacheBadge.classList.add("cache-warn");
       scanCacheBadge.innerHTML =
-        '<span class="cache-icon">⚠️</span>' + esc(meta.warning);
+        '<span class="cache-icon"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg></span>' + esc(meta.warning);
     } else if (meta.cached) {
       scanCacheBadge.classList.add("cache-hit");
       scanCacheBadge.innerHTML =
-        '<span class="cache-icon">📊</span>榜单数据 · ' + esc(meta.cache_date || "") + " · 缓存";
+        '<span class="cache-icon"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-chart"/></svg></span>榜单数据 · ' + esc(meta.cache_date || "") + " · 缓存";
     } else {
       scanCacheBadge.classList.add("cache-fresh");
       scanCacheBadge.innerHTML =
-        '<span class="cache-icon">📊</span>榜单数据 · ' + esc(meta.cache_date || "") + " · 现扫";
+        '<span class="cache-icon"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-chart"/></svg></span>榜单数据 · ' + esc(meta.cache_date || "") + " · 现扫";
     }
   }
 
@@ -358,7 +358,7 @@
     if (rb.source !== "llm") {
       // 失败/降级
       body.innerHTML =
-        '<div class="redblue-fallback">⚠️ 本次红蓝海对照未生成(' +
+        '<div class="redblue-fallback"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg> 本次红蓝海对照未生成(' +
         sourceLabel(rb.source) + "),可重跑。</div>";
       warn.hidden = true;
       return;
@@ -395,7 +395,7 @@
     // 死海/荒漠显风险警示
     if (isRisk) {
       warn.hidden = false;
-      warn.textContent = "⚠️ 象限定性为「" + rb.quadrant +
+      warn.innerHTML = "<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg> 象限定性为「" + esc(rb.quadrant) +
         "」:供给侧或需求侧存在明显弱势,建议结合行业经验慎重判断。";
     } else {
       warn.hidden = true;
@@ -405,12 +405,12 @@
   function renderAnalysis(analysis) {
     const body = $("analysis-body");
     if (!analysis) {
-      body.innerHTML = '<div class="redblue-fallback">⚠️ 市场套路归纳数据缺失。</div>';
+      body.innerHTML = '<div class="redblue-fallback"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg> 市场套路归纳数据缺失。</div>';
       return;
     }
     if (analysis.source !== "llm") {
       body.innerHTML =
-        '<div class="redblue-fallback">⚠️ 市场套路归纳未生成(' +
+        '<div class="redblue-fallback"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg> 市场套路归纳未生成(' +
         sourceLabel(analysis.source) + "),可重跑。</div>";
       return;
     }
@@ -445,7 +445,7 @@
     // T7.5 兜底:scan_cache 缺失 → 显式标"证据链不全"
     if (!data || !data.scan_cache) {
       return '<div class="evidence-header evidence-missing">' +
-        '<span class="evidence-icon">⚠️</span>' +
+        '<span class="evidence-icon"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg></span>' +
         '<span>扫榜缓存缺失,证据链不全(数据来自早期 propose,无 scan_cache 字段)。</span>' +
         '</div>';
     }
@@ -458,13 +458,13 @@
       : "(平台未提供)";
     if (!cacheDate) {
       return '<div class="evidence-header evidence-missing">' +
-        '<span class="evidence-icon">⚠️</span>' +
+        '<span class="evidence-icon"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg></span>' +
         '<span>扫榜日期缺失,证据链不全(缓存元数据无 cache_date)。</span>' +
         '</div>';
     }
     const cacheMode = cached ? "缓存命中" : "现扫";
     return '<div class="evidence-header">' +
-      '<span class="evidence-icon">📊</span>' +
+      '<span class="evidence-icon"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-chart"/></svg></span>' +
       '<span>扫榜日期:<b>' + esc(cacheDate) + '</b> · 平台:' + esc(platformText) +
       ' · ' + esc(cacheMode) + '</span>' +
       '</div>';
@@ -513,12 +513,12 @@
   function renderCraft(craft) {
     const body = $("craft-body");
     if (!craft) {
-      body.innerHTML = '<div class="redblue-fallback">⚠️ 创作规律数据缺失。</div>';
+      body.innerHTML = '<div class="redblue-fallback"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg> 创作规律数据缺失。</div>';
       return;
     }
     let note = "";
     if (craft.source === "template_fallback") {
-      note = '<div class="craft-fallback-note">⚠️ LLM 失败,已降级到蒸馏模板。</div>';
+      note = '<div class="craft-fallback-note"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg> LLM 失败,已降级到蒸馏模板。</div>';
     } else if (craft.source === "template") {
       note = '<div class="craft-fallback-note">未调 LLM,使用蒸馏模板。</div>';
     }

@@ -799,7 +799,7 @@
       btn.type = "button";
       btn.className = "b2 bs";
       btn.dataset.seal = seal.key;
-      btn.textContent = (seal.achieved ? "💮 " : "◻ ") + seal.title;
+      btn.innerHTML = (seal.achieved ? '<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-award"/></svg> ' : "◻ ") + seal.title;
       btn.addEventListener("click", () => renderSealTab(seal.key));
       tabs.appendChild(btn);
     });
@@ -925,7 +925,7 @@
           "」！机器起草、作者钦定，本地优先的 AI 网文工作站。内测作者群：892467108";
         if (navigator.clipboard) navigator.clipboard.writeText(text);
         $("seal-copy").textContent = "已复制 ✓";
-        setTimeout(() => { $("seal-copy").textContent = "📋 复制群晒单文案"; }, 1600);
+        setTimeout(() => { $("seal-copy").innerHTML = '<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-clipboard"/></svg> 复制群晒单文案'; }, 1600);
       });
       $("seal-save-poster").addEventListener("click", saveSealPoster);
     }

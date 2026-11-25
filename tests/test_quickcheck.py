@@ -120,7 +120,7 @@ def test_quickcheck_paste_button_reads_clipboard() -> None:
     js = _src("quickcheck.js")
     assert "navigator.clipboard.readText()" in js
     assert "已读入剪贴板" in js
-    assert 'qc-paste-btn").textContent = "📋 粘贴我的小说稿"' in js  # 反馈后复原
+    assert 'biyu-icon-clipboard' in js and "粘贴我的小说稿" in js  # S-10 3a-2 emoji→线条图标,反馈后复原保留
     assert "$(\"qc-input\").focus();" in js  # 回落路径保留
 
 

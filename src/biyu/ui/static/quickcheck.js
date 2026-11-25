@@ -245,7 +245,7 @@
           $("qc-input").value = text;
           updateCharCount();
           $("qc-paste-btn").textContent = "已读入剪贴板 ✓";
-          setTimeout(() => { $("qc-paste-btn").textContent = "📋 粘贴我的小说稿"; }, 1600);
+          setTimeout(() => { $("qc-paste-btn").innerHTML = "<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-clipboard"/></svg> 粘贴我的小说稿"; }, 1600);
           return;
         }
       }
@@ -264,7 +264,7 @@
   $("qc-copy-clean").addEventListener("click", () => {
     if (navigator.clipboard) navigator.clipboard.writeText(activeText());
     $("qc-copy-clean").textContent = "已复制 ✓";
-    setTimeout(() => { $("qc-copy-clean").textContent = "📋 复制纯文本"; }, 1500);
+    setTimeout(() => { $("qc-copy-clean").innerHTML = "<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-clipboard"/></svg> 复制纯文本"; }, 1500);
   });
   $("qc-save-new").addEventListener("click", saveAsNewBook);
   $("qc-save-existing").addEventListener("click", saveToExisting);

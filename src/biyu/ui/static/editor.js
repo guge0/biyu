@@ -100,12 +100,12 @@
     } else if (level === "mixed") {
       placeholderBanner.classList.add("banner-mixed");
       placeholderBanner.innerHTML =
-        '<strong>⚠ 混合模式</strong> · ' + escapeHtml(label) +
+        '<strong><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg> 混合模式</strong> · ' + escapeHtml(label) +
         ' · 部分角色仍在占位(PLACEHOLDER_FLAGS 未翻 False)';
     } else {
       placeholderBanner.classList.add("banner-placeholder");
       placeholderBanner.innerHTML =
-        '<strong>⚠ 占位模式</strong> · ' + escapeHtml(label) +
+        '<strong><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-alert"/></svg> 占位模式</strong> · ' + escapeHtml(label) +
         ' · 当前仅代查资料,编辑人格未接真 LLM(PLACEHOLDER_FLAGS=True)';
     }
   }
@@ -416,7 +416,7 @@
     // 工具名
     const nameLine = document.createElement("div");
     nameLine.className = "tool-call-name";
-    nameLine.textContent = "🔧 " + (tc.name || "工具调用");
+    nameLine.innerHTML = "<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-tool"/></svg>" + esc(tc.name || "工具调用");
     card.appendChild(nameLine);
 
     // 参数摘要(始终显)
