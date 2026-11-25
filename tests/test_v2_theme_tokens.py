@@ -206,7 +206,7 @@ EXPECTED_THEME_PRESETS: dict[str, dict[str, str]] = {
         "--ink-solid": "#E8E0D2",
         "--ink-soft": "#B0A797",
         "--ink-mute": "#948B7C",
-        "--ink-faint": "#8A8172",
+        "--ink-faint": "#948B7C",
         "--rule": "rgba(255, 248, 235, 0.08)",
         "--rule-strong": "#36312A",
         "--rule-soft": "#2C2822",

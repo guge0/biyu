@@ -1111,11 +1111,21 @@ function resolveDirty() {
     $('leave-stay').onclick=()=>{$('leave-dialog').hidden=true;resolve(false);};
   });
 }
-async function navigateChapter(chapter) {
-  if(busy)return; const old=Number(current.chapter||$('chapter').value||1); if(chapter!==old&&!await resolveDirty()){$('chapter').value=old;return;}
+async function navigateChapter(chapter, fallback) {
+  if(busy)return;
+  // S-10 3a修正（点击巡检抓到）：状态未载入时按钮禁用态有竞态（applyNavigationState 要等快照），
+  // 第 1 章点「上一章」会真发 chapter=0 吃 404——这里兜底夹住
+  if(Number(chapter)<1){$('chapter').value=Math.max(1,Number(current.chapter||1));return;}
+  const old=Number(current.chapter||$('chapter').value||1); if(chapter!==old&&!await resolveDirty()){$('chapter').value=old;return;}
   const status=$('entry-status');status.hidden=false;status.textContent='正在读取本章…';$('chapter').disabled=true;$('chapter').value=Math.max(1,chapter);
   try{dirty.clear();syncDirtyUi();generationVoiceprintWorkspace=null;generationVoiceprintBook='';generationVoiceprintDirty=false;generationVoiceprintError=false;clearTransientStatus();await fetchSnapshot();syncWorkbenchLocation();await refreshActiveVoiceprint();if(current.axes.step==='outline'){const r=await api(`/books/${encodeURIComponent($('book').value)}/chapters/${current.chapter}/outline-template`);$('outline').value=(await r.json()).content;toggleView('outline-edit');render({preserveDirty:true});}}
-  catch(error){$('chapter').value=old;showError(error.message);}finally{$('chapter').disabled=false;status.hidden=true;}
+  catch(error){
+    $('chapter').value=old;
+    // S-10 3a修正（点击巡检抓到）：草稿/URL 章号超出这本书的实际章数（换书或章节变动后残留）
+    // ——回落第 1 章重读，而不是甩「Not Found」错误条（只回落一层，防循环）
+    if(/Not Found/i.test(String(error.message))&&Number(chapter)>1&&!fallback){await navigateChapter(1,true);return;}
+    showError(error.message);
+  }finally{$('chapter').disabled=false;status.hidden=true;}
 }
 function appendLog(text) { if (!text) return; $('log').textContent += text + '\n'; $('log').scrollTop = $('log').scrollHeight; }
 async function stream(action, extra={}, confirmed=false, options={}) {
@@ -1377,8 +1387,8 @@ $('planning-skip-toggle').onclick=async()=>{
   }catch(error){showError(error.message);toggle.checked=!toggle.checked;}
   finally{toggle.disabled=false;}
 };
-$('previous-chapter').onclick=()=>navigateChapter(Number(current.chapter||1)-1);
-$('next-chapter').onclick=()=>navigateChapter(Number(current.chapter||1)+1);
+$('previous-chapter').onclick=()=>{if(!current.chapter)return;navigateChapter(Number(current.chapter)-1);};
+$('next-chapter').onclick=()=>{if(!current.chapter)return;navigateChapter(Number(current.chapter)+1);};
 $('chapter').addEventListener('change',()=>navigateChapter(Number($('chapter').value||1)));
 $('chapter').addEventListener('keydown',event=>{if(event.key==='Enter'){$('chapter').blur();}});
 $('complete-chapter').onclick=()=>navigateChapter(Number(current.chapter||1)+1);
@@ -1435,7 +1445,7 @@ $('regenerate-confirm').onclick=async()=>{const button=$('regenerate-confirm');i
 $('regenerate-cancel').onclick=closeRegenerateGate;
 $('setup-restore-ack').onclick=acknowledgeSetupRestoreNotice;
 $('save-generation-voiceprint').onclick=saveGenerationVoiceprintSelection;
-$('prefill-outline').onclick=async()=>{try{const r=await api(`/books/${encodeURIComponent($('book').value)}/chapters/${$('chapter').value}/outline-template`);$('outline').value=(await r.json()).content;markDirty('outline');toggleView('outline-edit');}catch(e){showError(e.message);}};
+$('prefill-outline').onclick=async()=>{if(!current.chapter||!$('book').value)return;try{const r=await api(`/books/${encodeURIComponent($('book').value)}/chapters/${$('chapter').value}/outline-template`);$('outline').value=(await r.json()).content;markDirty('outline');toggleView('outline-edit');}catch(e){showError(e.message);}};
 ['outline','planning'].forEach(id=>$(id).addEventListener('input',()=>{markDirty(id);applyActionState();})); $('chapter-edit').addEventListener('input',()=>{sizeChapterEditor();markDirty('chapter');current.review_stale=true;renderIssues();renderReadingDecisionState();applyActionState();});
 $('general-comment').addEventListener('input',()=>{$('general-comment-status').textContent=$('general-comment').value.trim()?'已填写':'未填写';markDirty('annotations');});
 document.querySelectorAll('input[name="revision-mode"]').forEach(input=>input.addEventListener('change',()=>markDirty('annotations')));

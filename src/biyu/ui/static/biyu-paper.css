@@ -254,12 +254,12 @@ a.quiet{color:var(--ink-mute);border:none;font-size:13px}
 .segmented{display:inline-flex;background:var(--surface-subtle);border:1px solid var(--rule-strong);border-radius:var(--r-md);padding:3px;gap:2px}
 .segmented button{
   height:28px;padding:0 13px;font-size:12.5px;font-weight:500;border:none;border-radius:6px;
-  background:transparent;color:var(--ink-mute);transition:all .15s ease;
+  background:transparent;color:var(--ink-soft);transition:all .15s ease;
 }
 .segmented button:hover{color:var(--ink)}
 .segmented button + button{border-left:none}
 .segmented button[aria-pressed=true],.segmented button.current{
-  background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  background:var(--surface);color:var(--ink);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 
 /* ---------- 徽章与状态角标 ---------- */
 .badge,.pill,.meta-chip,.status-badge,.genre-chip{

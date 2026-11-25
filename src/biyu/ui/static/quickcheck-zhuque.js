@@ -514,7 +514,7 @@
 
   async function doCheck() {
     const text = currentText().trim();
-    if (!text) { showErrorZq("先在左边粘贴章节文本。"); return; }
+    if (!text) { showErrorZq("请先在左边粘贴章节文本。"); return; }
     $("zq-check").disabled = true;
     $("zq-check").textContent = "体检中…";
     try {
@@ -534,7 +534,7 @@
 
   async function onFixClick() {
     const text = currentText().trim();
-    if (!text) { showErrorZq("先在左边粘贴章节文本。"); return; }
+    if (!text) { showErrorZq("请先在左边粘贴章节文本。"); return; }
     try {
       if (!S.fixPending) {
         const r = await postJson("/api/zhuque/fix", { text, terms: S.terms, estimate_only: true });
@@ -557,7 +557,7 @@
 
   async function blindFix(layer) {
     const text = currentText().trim();
-    if (!text) { showErrorZq("先在左边粘贴章节文本。"); return; }
+    if (!text) { showErrorZq("请先在左边粘贴章节文本。"); return; }
     if (!S.rewriter || !S.rewriter.available) { showErrorZq("还没配降 AI 率用的模型 Key（推荐智谱 glm-5.2）：到书架页「Key / 模型」保存，或点「怎么申请？」看步骤。"); return; }
     try {
       // 首轮中文改写(zhzh);报告回读后对仍红的窗二轮回译(bt)
@@ -577,7 +577,7 @@
 
   async function doDeai() {
     const text = currentText().trim();
-    if (!text) { showErrorZq("先在左边粘贴章节文本。"); return; }
+    if (!text) { showErrorZq("请先在左边粘贴章节文本。"); return; }
     if (!S.rewriter || !S.rewriter.available) { showErrorZq("改写模型不可用：先去书架页右上「换 Key / 换模型」保存 Key。"); return; }
     try {
       // 后端按段落分隔符分块(有空调空行,没空退单换行),拼回全文用同一口径

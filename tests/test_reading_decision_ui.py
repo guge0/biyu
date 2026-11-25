@@ -123,7 +123,9 @@ def test_reading_layout_keeps_three_width_contracts() -> None:
         re.S,
     )
     assert re.search(
-        r"\.reading-prose-grid\{[^}]*flex:1 1 0[^}]*min-height:0"
+        # S-10 3a修正：flex 基准 0→auto——纸面高度由内容撑开（超上限栏内滚），
+        # 原基准 0 在去掉 300px 地板后会把纸面塌成一条
+        r"\.reading-prose-grid\{[^}]*flex:1 1 auto[^}]*min-height:0"
         r"[^}]*overflow-y:auto[^}]*scrollbar-gutter:stable",
         css,
     )

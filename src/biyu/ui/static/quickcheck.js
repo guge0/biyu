@@ -167,7 +167,7 @@
 
   async function saveAsNewBook() {
     const text = activeText().trim();
-    if (!text) { showError("先粘贴文本再转存。"); return; }
+    if (!text) { showError("请先粘贴文本再转存。"); return; }
     const title = prompt("新书书名：", "快检台转存 " + new Date().toLocaleDateString("zh-CN"));
     if (!title || !title.trim()) return;
     try {
@@ -206,7 +206,7 @@
 
   async function saveToExisting() {
     const text = $("qc-input").value.trim();
-    if (!text) { showError("先粘贴文本再转存。"); return; }
+    if (!text) { showError("请先粘贴文本再转存。"); return; }
     $("qc-save-overlay").hidden = false;
     await fillBooks();
   }

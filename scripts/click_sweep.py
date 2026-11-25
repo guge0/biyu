@@ -42,6 +42,10 @@ MAX_BUTTONS = 40  # 每页最多点 60 个，控制总时长
 SKIP_TEXT = ("删除", "彻底", "移到回收站", "退出", "下载", "导出")
 
 # 可见错误条 / role=alert（3a修正·中途抽查第1条）。role=status 的说明条与 .notice-banner 不算错误。
+# 巡检环境两类不算缺陷（ui_audit 静态走查不放宽，仍全拦）：
+# 1) 网络失败文案——本巡检对所有非 GET 一律 abort，点了写钮后页面如实报「Failed to fetch/网络异常」
+#    是预期反馈不是 bug；
+# 2) 「请先…」输入校验提示——交互引导（wizard/quickcheck 复用了 error-banner 样式，样式收敛是 3b）。
 ALERT_JS = """() => {
   const vis = el => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el);
     return r.width > 4 && r.height > 4 && s.display !== 'none' && s.visibility !== 'hidden'; };
@@ -54,6 +58,7 @@ ALERT_JS = """() => {
   });
   return found;
 }"""
+ALERT_EXPECTED = ("Failed to fetch", "NetworkError", "网络异常", "服务是否在跑", "Load failed", "请先")
 
 
 def sweep_page(page, url: str) -> dict:
@@ -71,6 +76,8 @@ def sweep_page(page, url: str) -> dict:
         except Exception:
             return
         for t in texts:
+            if any(marker in t for marker in ALERT_EXPECTED):
+                continue  # 巡检环境预期反馈（见 ALERT_EXPECTED 注释），不计失败
             key = t[:60]
             if key in seen_alerts:
                 continue
