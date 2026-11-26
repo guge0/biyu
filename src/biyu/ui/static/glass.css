@@ -41,8 +41,8 @@ html[data-theme="dark"]{
    3e·工单第1条：层次定为 壁纸 → 护眼蒙层 → 彩色雾面（最上层）→ 玻璃栏卡——
    有壁纸时雾面画进 .biyu-shell-bg-mist（z=-1，蒙层之上、内容之下），壁纸/蒙层再浓雾面也在；
    无壁纸时雾面仍由 html 画布 + 壁纸层双画提供（3b 已验收的观感不动），雾面层隐藏。
-   透明度分档：无壁纸 亮 .45/.45/.40 · 暗 .30/.35/.30（3a修正值）；有壁纸略降一档——
-   亮 .34/.34/.30（工单给的 0.30–0.35 档）· 暗 .26/.30/.26。
+   透明度：亮 .45/.45/.40 · 暗 .30/.35/.30（3a修正值），有壁纸无壁纸同档——
+   3f·工单：3e 的「有壁纸略降一档」作废，老板要样张 B 的观感，删去降档规则。
    3a修正·工单第6条：老板选 B 就是选色块——原 13–38% 的混色几乎看不见、暗色整片黑。
    三团色为每主题派生令牌 --glass-blob-a/b/c（default/dark 直接取样张色，其余按主题色相派生）。
    3b·工单第0条根因1：background-image 列表里不允许纯色，末层 var(--outer-bg) 是纯色时
@@ -62,10 +62,8 @@ html[data-theme="dark"]{
   --glass-page-bg: var(--glass-mist), linear-gradient(var(--outer-bg), var(--outer-bg));
 }
 html[data-theme="dark"]{ --glass-blob-alpha-a:30%; --glass-blob-alpha-b:35%; --glass-blob-alpha-c:30%; }
-/* 3e·工单第1条：有壁纸档（雾面画在蒙层之上，略降透明度但明显可见）。
-   用正向选择器（data-bg="preset"/"custom"）——壳未挂/属性未写时按无壁纸档，首帧不闪 */
-html[data-bg="preset"],html[data-bg="custom"]{ --glass-blob-alpha-a:34%; --glass-blob-alpha-b:34%; --glass-blob-alpha-c:30%; }
-html[data-theme="dark"][data-bg="preset"],html[data-theme="dark"][data-bg="custom"]{ --glass-blob-alpha-a:26%; --glass-blob-alpha-b:30%; --glass-blob-alpha-c:26%; }
+/* 3f·工单：3e 加的有壁纸降档两则规则（data-bg=preset/custom → 亮 .34/.34/.30 · 暗 .26/.30/.26）
+   整段删除——有壁纸时雾面浓度与无壁纸同档（上行 :root/dark 值，样张 B），mist 层结构不动 */
 /* 3b·工单第0条根因2：html/body 的不透明底色把负 z 背景层全盖住了——根层叠上下文里，
    z-index:-2/-1 的 fixed 背景层画在 body 自身背景**之下**，body 不透明则壁纸与渐变永远不可见。
    根层一律透明；同一份 --glass-page-bg 同时画在 html 画布上兜底（shell.js 未跑/报错时
