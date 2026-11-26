@@ -51,6 +51,7 @@ def test_shelf_surfaces_backup_state_and_recycle_bin() -> None:
     script = Path("src/biyu/ui/static/app.js").read_text(encoding="utf-8")
     panel = Path("src/biyu/ui/static/backup-panel.js").read_text(encoding="utf-8")
     styles = Path("src/biyu/ui/static/styles.css").read_text(encoding="utf-8")
+    glass = Path("src/biyu/ui/static/glass.css").read_text(encoding="utf-8")
     assert 'id="backup-status"' in html
     assert 'id="backup-settings-button"' in html
     assert 'id="backup-overlay"' in html
@@ -59,7 +60,10 @@ def test_shelf_surfaces_backup_state_and_recycle_bin() -> None:
     assert "/api/backup/settings" in panel
     assert "/api/backup/run" in panel
     assert panel.index('const enabled = $("backup-auto").checked') < panel.index('render({ ...current, enabled, destination, state: "running" })')
-    assert ".setup-card.backup-panel{width:min(520px,100%)" in styles
+    # S-10 段3d：备份面板宽限与玻璃面由 glass.css 统一弹窗规则接管（640px 一档），
+    # styles.css 旧 520px 纸面硬编码（3a-5 起已是死码）随段3d 退役，合同跟改。
+    assert "width:min(640px, 100vw - 32px)" in glass
+    assert ".setup-card.backup-panel{width:min(520px" not in styles
     assert "overflow-wrap:anywhere" in styles
     assert "移到回收站" in script
     assert "备份并移入中" not in script
