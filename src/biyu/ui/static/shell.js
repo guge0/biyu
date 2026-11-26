@@ -837,7 +837,7 @@
         '<button type="button" class="b2 bs current" data-tab="paste">① 粘贴正文</button>' +
         '<button type="button" class="b2 bs" data-tab="txt">② 本地 .txt/.md 批量</button>' +
         '<button type="button" class="b2 bs" data-tab="legacy">③ 旧版 biyu 数据根迁移</button></div>' +
-        '<div id="biyu-import-body"></div>' +
+        '<div id="biyu-import-body" class="biyu-modal-body"></div>' +
         '<div class="biyu-modal-actions"><button type="button" class="b3" id="biyu-import-close">取消</button></div>' +
         '</div>';
       document.body.appendChild(overlay);
@@ -1092,6 +1092,7 @@
       overlay.innerHTML =
         '<div class="biyu-modal" role="dialog" aria-modal="true" aria-labelledby="biyu-contact-title">' +
         '<h2 id="biyu-contact-title">' + shellIcon('chat') + ' 笔驭 (biyu) 作者交流群与问题反馈</h2>' +
+        '<div class="biyu-modal-body">' +
         '<div class="card" style="background:var(--surface-subtle);margin-bottom:14px">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px">' +
         '<div><div style="font-size:15px;font-weight:500">官方内测作者交流 QQ 群：<code style="color:var(--mark);font-size:15px">892467108</code></div>' +
@@ -1104,7 +1105,7 @@
         '<p class="eyebrow" style="margin:12px 0 6px">遇到报错？</p>' +
         '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
         '<button type="button" class="b2 bs" id="biyu-diag-export">导出诊断包</button>' +
-        '<span id="biyu-diag-status" style="font-size:12px;color:var(--ink-soft)">只含版本、花费和运行日志，不含 Key 和书稿正文</span></div>' +
+        '<span id="biyu-diag-status" style="font-size:12px;color:var(--ink-soft)">只含版本、花费和运行日志，不含 Key 和书稿正文</span></div></div>' +
         '<div class="biyu-modal-actions">' +
         '<button type="button" class="b3" id="biyu-contact-close">关闭</button>' +
         '<button type="button" class="b1" id="biyu-contact-send">提交反馈</button></div>' +

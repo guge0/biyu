@@ -259,70 +259,62 @@ html[data-theme="dark"] .biyu-bookbar .biyu-chapnav .b3:disabled{color:var(--ink
 .modal,.setup-card,.biyu-modal,.import-modal,
 .adopt-slip,.regenerate-slip,.history-slip{
   width:min(640px, 100vw - 32px);max-width:640px;max-height:calc(100vh - 48px);
-  background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:var(--r-l);
+  background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:20px;
   box-shadow:var(--glass-shadow);
   backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  display:flex;flex-direction:column;overflow:hidden;padding:0;gap:0;
 }
-/* 通用卡（h3 题头 + 内容 + .modal-actions）：题头/按钮行 sticky 常驻，中间滚 */
-.modal{ display:flex;flex-direction:column;overflow-y:auto; }
-.modal h3{
-  position:sticky;top:0;z-index:1;margin:-28px -30px 10px;padding:26px 30px 10px;
-  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
-  border-radius:var(--r-l) var(--r-l) 0 0;
+/* 3d·工单1/2/3：卡不滚——题头与按钮行常驻静态，中间 .modal-body 是唯一滚动者；
+   全卡只有一块 --glass-strong 面，题头/按钮行不再自带玻璃底与圆角（旧做法是
+   sticky 带 + 自绘玻璃面，和卡面叠出「两层框/三段色」）；分段只用 1px --rule 细线 */
+.modal > h3,.setup-card > h2,.biyu-modal > h2{
+  flex:none;margin:0;padding:20px 30px 12px;
+  border-bottom:1px solid var(--rule);
+  background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;
 }
-.modal .modal-actions{
-  position:sticky;bottom:0;z-index:1;margin:auto -30px -28px;padding:16px 30px 26px;margin-top:auto;
-  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
-  border-top:1px solid var(--rule-soft);border-radius:0 0 var(--r-l) var(--r-l);
+.modal-body,.biyu-modal-body{
+  flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+  padding:14px 30px 12px;
 }
-.modal > p{ flex:none; }
-/* setup-card（新建书/备份/领Key锦囊/钤印/回收站确认等表单卡，h2 题头） */
-.setup-card{ display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden; }
-.setup-card h2{
-  position:sticky;top:0;z-index:1;margin:-28px -30px 10px;padding:26px 30px 10px;
-  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
-  border-radius:var(--r-l) var(--r-l) 0 0;
+.modal > .modal-actions,.setup-card > .modal-actions,.biyu-modal > .biyu-modal-actions{
+  flex:none;margin:0;padding:14px 30px 18px;
+  border-top:1px solid var(--rule);
+  background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;
 }
-.setup-card .modal-actions{
-  position:sticky;bottom:0;z-index:1;margin:auto -30px -28px;padding:16px 30px 26px;margin-top:auto;
-  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
-  border-top:1px solid var(--rule-soft);border-radius:0 0 var(--r-l) var(--r-l);
+/* 题头/滚动区/按钮行之外的直接子元素（保存状态、候选稿说明等脚注行） */
+.modal > p,.setup-card > p,.modal > .disabled-reason,.modal > .naming-apply-result{
+  flex:none;margin:0;padding:4px 30px 12px;
 }
-/* Key / 模型连接（#setup-overlay）：样张_Key配置 的排布——题头与按钮行常驻，表体滚 */
-#setup-overlay .setup-card{
-  width:min(640px, 100vw - 32px);max-width:640px;max-height:calc(100vh - 48px);
-  border-radius:var(--r-l);background:var(--glass-strong);border:1px solid var(--glass-border);
-  box-shadow:var(--glass-shadow);
-  backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+/* 壳弹窗（导入向导 / 反馈）侧距随 shell.css 旧 24/26；弹窗体内的标签页级行动条
+   （渲染在 .biyu-modal-body 里）保持 shell.css 基础行样式，只有直接子代做卡脚 */
+.biyu-modal > h2{ padding:22px 26px 12px; }
+.biyu-modal > .biyu-modal-actions{ padding:14px 26px 20px; }
+.biyu-modal-body{ padding:12px 26px; }
+/* 壳弹窗题头区的说明行与标签页行（.biyu-modal-body 之外的直接子元素）补侧距 */
+.biyu-modal > p,.biyu-modal > .row{ padding-left:26px;padding-right:26px; }
+/* 3d·工单4：输入框/下拉框照样张_Key配置——圆角 12px、令牌底色（--surface）、聚焦清楚描边。
+   只圈文本类控件与 select（checkbox/radio/file/range/color 不在内，备份开关等自定义控件不受扰） */
+.modal input[type="text"],.modal input[type="password"],.modal input[type="number"],.modal input[type="url"],.modal input[type="email"],.modal input:not([type]),
+.modal select,.setup-card input[type="text"],.setup-card input[type="password"],.setup-card input[type="number"],.setup-card input[type="url"],.setup-card input[type="email"],.setup-card input:not([type]),
+.setup-card select,.biyu-modal select{
+  width:100%;min-height:40px;box-sizing:border-box;padding:9px 12px;
+  border:1px solid var(--rule);border-radius:12px;
+  background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px;
 }
-#setup-overlay .setup-card h2{
-  position:sticky;top:0;z-index:1;margin:-28px -30px 10px;padding:26px 44px 10px 30px;
-  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
-  border-radius:var(--r-l) var(--r-l) 0 0;
+.modal input[type="text"]:focus,.modal input[type="password"]:focus,.modal input[type="number"]:focus,.modal input[type="url"]:focus,.modal input[type="email"]:focus,.modal input:not([type]):focus,
+.modal select:focus,.setup-card input[type="text"]:focus,.setup-card input[type="password"]:focus,.setup-card input[type="number"]:focus,.setup-card input[type="url"]:focus,.setup-card input[type="email"]:focus,.setup-card input:not([type]):focus,
+.setup-card select:focus,.biyu-modal select:focus{
+  outline:none;border-color:var(--ink-solid);box-shadow:0 0 0 1px var(--ink-solid) inset;
 }
-#setup-overlay .setup-card .modal-actions{
-  position:sticky;bottom:0;z-index:1;margin:auto -30px -28px;padding:16px 30px 26px;
-  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
-  border-top:1px solid var(--rule-soft);border-radius:0 0 var(--r-l) var(--r-l);
-}
-/* 备份面板（原 520 宽、方角硬编码一并进统一规则） */
-.setup-card.backup-panel{ width:min(640px, 100vw - 32px);max-width:640px;border-radius:var(--r-l)!important; }
-/* 壳弹窗（导入向导 / 反馈）：shell.css 旧 88vh 限制并入统一规则 */
-.biyu-modal{ display:flex;flex-direction:column;overflow-y:auto;max-height:calc(100vh - 48px);padding:24px 26px; }
-.biyu-modal h2{
-  position:sticky;top:0;z-index:1;margin:-24px -26px 12px;padding:22px 26px 12px;
-  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
-  border-radius:var(--r-l) var(--r-l) 0 0;
-}
-.biyu-modal .biyu-modal-actions{
-  position:sticky;bottom:0;z-index:1;margin:auto -26px -24px;padding:14px 26px 22px;margin-top:auto;
-  background:var(--glass-strong);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
-  border-top:1px solid var(--rule-soft);border-radius:0 0 var(--r-l) var(--r-l);
-}
-/* 工作台三张专用 slip：结构已合（头/尾 flex:none + 列表内滚），并入统一尺寸与玻璃面 */
-.workbench .adopt-slip{ width:min(640px, 100vw - 32px);max-height:calc(100vh - 48px);background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:var(--r-l);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2); }
-.workbench .regenerate-slip{ width:min(640px, 100vw - 32px);background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:var(--r-l);box-shadow:var(--glass-shadow);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2); }
-.workbench .history-slip{ width:min(640px, 100vw - 32px);max-height:calc(100vh - 48px);background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:var(--r-l);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2); }
+/* Key / 模型连接（#setup-overlay）：题头右侧给「×」留位（×在卡右上角内侧） */
+#setup-overlay .setup-card > h2{ padding:22px 48px 12px 30px; }
+/* 工作台三张专用 slip：结构已合（头/尾 flex:none + 列表内滚）。
+   styles.css 的 (0,2,0) 旧窄幅/纸面/方角压不过统一规则的 (0,1,0)，此处同特异性压回统一值 */
+.workbench .adopt-slip{ width:min(640px, 100vw - 32px);max-height:calc(100vh - 48px);background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:20px;backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2); }
+.workbench .regenerate-slip{ width:min(640px, 100vw - 32px);background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:20px;box-shadow:var(--glass-shadow);backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2); }
+.workbench .history-slip{ width:min(640px, 100vw - 32px);max-height:calc(100vh - 48px);background:var(--glass-strong);border:1px solid var(--glass-border);border-radius:20px;backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2); }
+/* history-slip 头/脚的 surface 死底退役——与 slip 玻璃面同块面，只留 1px --rule 分段线 */
+.workbench .history-slip-head,.workbench .history-slip-foot{ background:transparent; }
 .workbench .regenerate-slip.reading-paper,.workbench .history-slip.reading-paper,.workbench .run-card.reading-paper,.workbench .reading-failure-card.reading-paper{ background:var(--glass-strong); }
 /* 外观抽屉（另定宽 400，不超屏；限高计入 72px 顶偏移；玻璃面） */
 .biyu-theme-drawer{

@@ -238,8 +238,10 @@
       renameModal.innerHTML =
         '<div class="modal">' +
         '<h3>改名</h3>' +
+        '<div class="modal-body">' +
         '<p>为新书名输入名称:</p>' +
         '<input id="rename-input" class="rename-input" type="text" placeholder="输入新书名…" />' +
+        '</div>' +
         '<div class="modal-actions">' +
         '<button id="rename-cancel" class="btn-secondary" type="button">取消</button>' +
         '<button id="rename-confirm" class="btn-primary" type="button">确认</button>' +

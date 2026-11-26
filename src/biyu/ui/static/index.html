@@ -5,9 +5,9 @@
   <script src="/theme-boot.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>笔驭作者工作台 · 书架</title>
-  <link rel="stylesheet" href="/styles.css?v=s3b1">
+  <link rel="stylesheet" href="/styles.css?v=s3d1">
   <link rel="stylesheet" href="/biyu-paper.css?v=s3c1">
-  <link rel="stylesheet" href="/shell.css?v=s3b1"><link rel="stylesheet" href="/glass.css?v=s3b1">
+  <link rel="stylesheet" href="/shell.css?v=s3b1"><link rel="stylesheet" href="/glass.css?v=s3d1">
 </head>
 <body>
   <!-- 旧版顶部导航：S-1 起由 shell.js 接管渲染；此块保留导航契约锚点，运行时隐藏 -->
@@ -147,13 +147,15 @@
   <div id="create-book-overlay" class="modal-overlay" hidden>
     <form id="create-book-form" class="setup-card">
       <h2>新建书</h2>
-      <p>这里只建立写作档案，不会调用模型。</p>
-      <label>书名<input id="create-book-title" required maxlength="120"></label>
-      <label>题材<select id="create-book-genre" required>
-        <option value="xuanhuan">玄幻</option><option value="qihuan">奇幻</option>
-        <option value="dushi">都市</option><option value="kehuan">科幻</option>
-        <option value="lishi">历史</option><option value="xuanyi">悬疑</option>
-      </select></label>
+      <div class="modal-body">
+        <p>这里只建立写作档案，不会调用模型。</p>
+        <label>书名<input id="create-book-title" required maxlength="120"></label>
+        <label>题材<select id="create-book-genre" required>
+          <option value="xuanhuan">玄幻</option><option value="qihuan">奇幻</option>
+          <option value="dushi">都市</option><option value="kehuan">科幻</option>
+          <option value="lishi">历史</option><option value="xuanyi">悬疑</option>
+        </select></label>
+      </div>
       <div class="modal-actions">
         <button id="create-book-cancel" class="btn-secondary" type="button">取消</button>
         <button id="create-book-submit" class="btn-primary" type="submit">创建</button>
@@ -166,23 +168,25 @@
     <form id="setup-form" class="setup-card">
       <button id="setup-close" class="setup-close" type="button" aria-label="关闭">×</button>
       <h2 id="setup-heading">连接模型</h2>
-      <p id="setup-description">API Key 只存进系统钥匙串；系统会用一次极短请求校验连通性。</p>
-      <p id="setup-key-state" class="status-text">API Key：未配置</p>
-      <label>服务商<select id="setup-provider" required></select></label>
-      <div id="setup-custom-fields" hidden>
-        <label>接口地址<input id="setup-base-url" autocomplete="off" placeholder="https://example.com/v1"></label>
-        <label>模型 ID<input id="setup-model-id" autocomplete="off" placeholder="按服务商文档填写"></label>
-        <p class="setup-hint">要能按 OpenAI 那套接口对话。本地模型也可以，例如 http://127.0.0.1:11434/v1</p>
-        <p class="setup-warning">你的 Key 会发给上面这个地址。确认它是你信任的地方。</p>
+      <div class="modal-body">
+        <p id="setup-description">API Key 只存进系统钥匙串；系统会用一次极短请求校验连通性。</p>
+        <p id="setup-key-state" class="status-text">API Key：未配置</p>
+        <label>服务商<select id="setup-provider" required></select></label>
+        <div id="setup-custom-fields" hidden>
+          <label>接口地址<input id="setup-base-url" autocomplete="off" placeholder="https://example.com/v1"></label>
+          <label>模型 ID<input id="setup-model-id" autocomplete="off" placeholder="按服务商文档填写"></label>
+          <p class="setup-hint">要能按 OpenAI 那套接口对话。本地模型也可以，例如 http://127.0.0.1:11434/v1</p>
+          <p class="setup-warning">你的 Key 会发给上面这个地址。确认它是你信任的地方。</p>
+        </div>
+        <p id="setup-landing" class="setup-hint"></p>
+        <label>API Key<input id="setup-key" type="password" autocomplete="off" required placeholder="留空表示继续用现在这把 Key"></label>
+        <p class="setup-hint">还没有 Key？<a href="/?keyguide=deepseek">怎么申请？</a>（30 秒步骤，DeepSeek / 智谱 / 朱雀都有）</p>
+        <button id="setup-multi-toggle" class="setup-link" type="button" aria-expanded="false">同时配置其他服务商</button>
+        <div id="setup-multi-provider-fields" class="setup-multi-provider-fields" hidden></div>
+        <label id="setup-model-legacy" hidden>模型<select id="setup-model"></select></label>
+        <button id="setup-advanced" class="setup-link" type="button" aria-expanded="false">分别指定每个环节用什么模型</button>
+        <div id="setup-advanced-fields" hidden></div>
       </div>
-      <p id="setup-landing" class="setup-hint"></p>
-      <label>API Key<input id="setup-key" type="password" autocomplete="off" required placeholder="留空表示继续用现在这把 Key"></label>
-      <p class="setup-hint">还没有 Key？<a href="/?keyguide=deepseek">怎么申请？</a>（30 秒步骤，DeepSeek / 智谱 / 朱雀都有）</p>
-      <button id="setup-multi-toggle" class="setup-link" type="button" aria-expanded="false">同时配置其他服务商</button>
-      <div id="setup-multi-provider-fields" class="setup-multi-provider-fields" hidden></div>
-      <label id="setup-model-legacy" hidden>模型<select id="setup-model"></select></label>
-      <button id="setup-advanced" class="setup-link" type="button" aria-expanded="false">分别指定每个环节用什么模型</button>
-      <div id="setup-advanced-fields" hidden></div>
       <div class="modal-actions">
         <button id="setup-cancel" class="btn-secondary" type="button" hidden>取消</button>
         <button id="setup-submit" class="btn-primary" type="submit">保存并试一下连接</button>
@@ -194,21 +198,23 @@
   <div id="backup-overlay" class="modal-overlay" hidden>
     <section id="backup-panel" class="setup-card backup-panel" role="dialog" aria-modal="true" aria-labelledby="backup-heading" tabindex="-1">
       <h2 id="backup-heading">备份</h2>
-          <p class="backup-note">把你写的书复制一份到另一个位置。它不是防灾措施：如果副本仍在这台机器上，机器丢失或损坏时会和原件一起丢失。</p>
-      <label class="backup-switch-row">
-        <input id="backup-auto" type="checkbox" role="switch">
-        <span class="backup-switch-track" aria-hidden="true"><span></span></span>
-        <span>自动备份</span>
-      </label>
-      <p class="backup-hint">打开之后，每次启动笔驭备一次；笔驭一直开着的话，每 24 小时再备一次。</p>
-      <label class="backup-directory-label" for="backup-directory">备份到</label>
-      <div class="backup-directory-row">
-        <input id="backup-directory" type="text" spellcheck="false" placeholder="比如 D:\BiyuBackup" aria-describedby="backup-directory-hint">
-        <button id="backup-choose-directory" class="btn-secondary" type="button">选个位置</button>
-        <button id="backup-open-directory" class="btn-secondary" type="button">打开文件夹</button>
+      <div class="modal-body">
+        <p class="backup-note">把你写的书复制一份到另一个位置。它不是防灾措施：如果副本仍在这台机器上，机器丢失或损坏时会和原件一起丢失。</p>
+        <label class="backup-switch-row">
+          <input id="backup-auto" type="checkbox" role="switch">
+          <span class="backup-switch-track" aria-hidden="true"><span></span></span>
+          <span>自动备份</span>
+        </label>
+        <p class="backup-hint">打开之后，每次启动笔驭备一次；笔驭一直开着的话，每 24 小时再备一次。</p>
+        <label class="backup-directory-label" for="backup-directory">备份到</label>
+        <div class="backup-directory-row">
+          <input id="backup-directory" type="text" spellcheck="false" placeholder="比如 D:\BiyuBackup" aria-describedby="backup-directory-hint">
+          <button id="backup-choose-directory" class="btn-secondary" type="button">选个位置</button>
+          <button id="backup-open-directory" class="btn-secondary" type="button">打开文件夹</button>
+        </div>
+        <p id="backup-directory-hint" class="backup-hint">也可以直接把路径粘贴进输入框，按回车保存。留最近 7 天，另外每周留一份，共 4 周。</p>
+        <div id="backup-detail" class="backup-detail" role="status" aria-live="polite">备份状态读取中…</div>
       </div>
-      <p id="backup-directory-hint" class="backup-hint">也可以直接把路径粘贴进输入框，按回车保存。留最近 7 天，另外每周留一份，共 4 周。</p>
-      <div id="backup-detail" class="backup-detail" role="status" aria-live="polite">备份状态读取中…</div>
       <div class="modal-actions">
         <button id="backup-run" class="btn-secondary" type="button">现在备份一次</button>
         <button id="backup-close" class="btn-secondary" type="button">关掉</button>
@@ -219,8 +225,10 @@
   <div id="trash-book-overlay" class="modal-overlay" hidden>
     <section class="setup-card" role="dialog" aria-modal="true" aria-labelledby="trash-book-heading" tabindex="-1">
       <h2 id="trash-book-heading">移到回收站</h2>
-      <p id="trash-book-message"></p>
-      <p id="trash-book-counts" class="status-text"></p>
+      <div class="modal-body">
+        <p id="trash-book-message"></p>
+        <p id="trash-book-counts" class="status-text"></p>
+      </div>
       <div class="modal-actions">
         <button id="trash-book-cancel" class="btn-secondary" type="button">算了</button>
         <button id="trash-book-confirm" class="btn-primary" type="button">移到回收站</button>
@@ -232,19 +240,21 @@
   <div id="key-guide-overlay" class="modal-overlay" hidden>
     <section class="setup-card" role="dialog" aria-modal="true" aria-labelledby="key-guide-heading" style="max-width:620px">
       <h2 id="key-guide-heading"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-key"/></svg> 怎么申请和填写 Key</h2>
-      <p class="status-text" style="margin:0 0 12px">笔驭用你自己的 Key 直连模型服务商：书稿从你的电脑直接发往服务商，笔驭不经手、不赚差价。写作用 DeepSeek 或智谱任选其一；降 AI 率用智谱；体检用朱雀。</p>
-      <div class="row" role="tablist" style="margin-bottom:14px">
-        <button class="b2 bs key-guide-tab current" data-tab="deepseek" type="button">① DeepSeek（写作）</button>
-        <button class="b2 bs key-guide-tab" data-tab="glm" type="button">② 智谱 GLM（降 AI 率 / 写作）</button>
-        <button class="b2 bs key-guide-tab" data-tab="zhuque" type="button">③ 朱雀（体检）</button>
-      </div>
-      <p id="key-guide-configured" class="status-text" style="margin:0 0 8px"></p>
-      <div class="list" id="key-guide-steps"></div>
-      <div style="background:var(--surface-subtle);border:1px solid var(--rule);border-radius:var(--r-md);padding:12px 16px;margin-top:12px">
-        <label for="key-guide-input" style="display:block;font-size:12px;font-weight:600;color:var(--ink-mute);margin-bottom:6px">把复制到的 Key 粘贴在这里（只存在你自己电脑里）：</label>
-        <div class="row" style="gap:8px">
-          <input id="key-guide-input" class="setup-input" type="password" placeholder="粘贴 API Key…" autocomplete="off" style="flex:1">
-          <button id="key-guide-save" class="btn-primary" type="button">一键测试并保存</button>
+      <div class="modal-body">
+        <p class="status-text" style="margin:0 0 12px">笔驭用你自己的 Key 直连模型服务商：书稿从你的电脑直接发往服务商，笔驭不经手、不赚差价。写作用 DeepSeek 或智谱任选其一；降 AI 率用智谱；体检用朱雀。</p>
+        <div class="row" role="tablist" style="margin-bottom:14px">
+          <button class="b2 bs key-guide-tab current" data-tab="deepseek" type="button">① DeepSeek（写作）</button>
+          <button class="b2 bs key-guide-tab" data-tab="glm" type="button">② 智谱 GLM（降 AI 率 / 写作）</button>
+          <button class="b2 bs key-guide-tab" data-tab="zhuque" type="button">③ 朱雀（体检）</button>
+        </div>
+        <p id="key-guide-configured" class="status-text" style="margin:0 0 8px"></p>
+        <div class="list" id="key-guide-steps"></div>
+        <div style="background:var(--surface-subtle);border:1px solid var(--rule);border-radius:var(--r-md);padding:12px 16px;margin-top:12px">
+          <label for="key-guide-input" style="display:block;font-size:12px;font-weight:600;color:var(--ink-mute);margin-bottom:6px">把复制到的 Key 粘贴在这里（只存在你自己电脑里）：</label>
+          <div class="row" style="gap:8px">
+            <input id="key-guide-input" class="setup-input" type="password" placeholder="粘贴 API Key…" autocomplete="off" style="flex:1">
+            <button id="key-guide-save" class="btn-primary" type="button">一键测试并保存</button>
+          </div>
         </div>
       </div>
       <div class="modal-actions">
@@ -257,8 +267,10 @@
   <div id="seals-overlay" class="modal-overlay" hidden>
     <section class="setup-card" role="dialog" aria-modal="true" aria-labelledby="seals-heading" style="max-width:620px">
       <h2 id="seals-heading"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-award"/></svg> 朱批钤印 · 笔驭作者主权里程碑纪念签</h2>
-      <div class="row" id="seal-tabs" style="margin-bottom:14px"></div>
-      <div class="seal-scroll-box" id="seal-scroll"></div>
+      <div class="modal-body">
+        <div class="row" id="seal-tabs" style="margin-bottom:14px"></div>
+        <div class="seal-scroll-box" id="seal-scroll"></div>
+      </div>
       <div class="modal-actions">
         <button id="seals-close" class="btn-secondary" type="button">收起印匣</button>
         <button id="seal-copy" class="btn-secondary" type="button"><svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-clipboard"/></svg> 复制群晒单文案</button>
@@ -272,7 +284,7 @@
   <script src="/cn-num.js"></script>
   <script src="/setup.js?v=model-config-v2"></script>
   <script src="/backup-panel.js?v=z1-1"></script>
-  <script src="/app.js?v=s3b1"></script>
-  <script src="/shell.js?v=s3b1" defer></script>
+  <script src="/app.js?v=s3d1"></script>
+  <script src="/shell.js?v=s3d1" defer></script>
 </body>
 </html>

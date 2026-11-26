@@ -5,9 +5,9 @@
   <script src="/theme-boot.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>笔驭作者工作台 · 新建作品</title>
-  <link rel="stylesheet" href="/styles.css?v=s3b1">
+  <link rel="stylesheet" href="/styles.css?v=s3d1">
   <link rel="stylesheet" href="/biyu-paper.css?v=s3c1">
-  <link rel="stylesheet" href="/shell.css?v=s3b1"><link rel="stylesheet" href="/glass.css?v=s3b1">
+  <link rel="stylesheet" href="/shell.css?v=s3b1"><link rel="stylesheet" href="/glass.css?v=s3d1">
 </head>
 <body>
   <!-- 旧版顶部导航：S-1 起由 shell.js 接管渲染；此块保留导航契约锚点，运行时隐藏 -->
@@ -147,14 +147,16 @@
   <div id="wizard-manual-overlay" class="modal-overlay" hidden>
     <form id="wizard-manual-form" class="setup-card">
       <h2>手动新建作品（只建本地写作档案，不调用模型）</h2>
-      <p>适合已经有完整构思的认真型作者：直接建立本地书籍目录，随后在工作台手填设定或直接写第一章。</p>
-      <label>书名（必填）<input id="wizard-manual-title" required maxlength="120" placeholder="输入新书名…"></label>
-      <label>题材<select id="wizard-manual-genre">
-        <option value="xuanhuan">玄幻</option><option value="qihuan">奇幻</option>
-        <option value="dushi">都市</option><option value="kehuan">科幻</option>
-        <option value="lishi">历史</option><option value="xuanyi" selected>悬疑</option>
-        <option value="qingxiaoshuo">轻小说</option>
-      </select></label>
+      <div class="modal-body">
+        <p>适合已经有完整构思的认真型作者：直接建立本地书籍目录，随后在工作台手填设定或直接写第一章。</p>
+        <label>书名（必填）<input id="wizard-manual-title" required maxlength="120" placeholder="输入新书名…"></label>
+        <label>题材<select id="wizard-manual-genre">
+          <option value="xuanhuan">玄幻</option><option value="qihuan">奇幻</option>
+          <option value="dushi">都市</option><option value="kehuan">科幻</option>
+          <option value="lishi">历史</option><option value="xuanyi" selected>悬疑</option>
+          <option value="qingxiaoshuo">轻小说</option>
+        </select></label>
+      </div>
       <div class="modal-actions">
         <button id="wizard-manual-cancel" class="btn-secondary" type="button">取消</button>
         <button id="wizard-manual-submit" class="btn-primary" type="submit">创建空白作品并进入设定</button>
@@ -167,6 +169,6 @@
   <script src="/genre.js?v=shelf-close-1"></script>
   <script src="/cn-num.js"></script>
   <script src="/wizard.js?v=s3t4-1"></script>
-  <script src="/shell.js?v=s3b1" defer></script>
+  <script src="/shell.js?v=s3d1" defer></script>
 </body>
 </html>

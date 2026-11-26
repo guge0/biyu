@@ -5,9 +5,9 @@
   <script src="/theme-boot.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>⚡ 独立快检 / 去AI味 · 笔驭</title>
-  <link rel="stylesheet" href="/styles.css?v=s3b1">
+  <link rel="stylesheet" href="/styles.css?v=s3d1">
   <link rel="stylesheet" href="/biyu-paper.css?v=s3c1">
-  <link rel="stylesheet" href="/shell.css?v=s3b1"><link rel="stylesheet" href="/glass.css?v=s3b1">
+  <link rel="stylesheet" href="/shell.css?v=s3b1"><link rel="stylesheet" href="/glass.css?v=s3d1">
   <link rel="stylesheet" href="/quickcheck-zhuque.css?v=s3b1">
 </head>
 <body>
@@ -184,9 +184,11 @@
   <div id="qc-save-overlay" class="modal-overlay" hidden>
     <section class="setup-card" role="dialog" aria-modal="true" aria-labelledby="qc-save-title">
       <h2 id="qc-save-title">存入现有书</h2>
-      <p class="status-text">以候选稿身份追加为所选书的新章；导入本身不花钱、不改设定。</p>
-      <label>选择书<select id="qc-save-book"></select></label>
-      <label>从第几章开始<input id="qc-save-chapter" type="number" min="1" value="1"></label>
+      <div class="modal-body">
+        <p class="status-text">以候选稿身份追加为所选书的新章；导入本身不花钱、不改设定。</p>
+        <label>选择书<select id="qc-save-book"></select></label>
+        <label>从第几章开始<input id="qc-save-chapter" type="number" min="1" value="1"></label>
+      </div>
       <div class="modal-actions">
         <button id="qc-save-cancel" class="btn-secondary" type="button">取消</button>
         <button id="qc-save-confirm" class="btn-primary" type="button">以候选稿存入</button>
@@ -198,6 +200,6 @@
   <script src="/cn-num.js"></script>
   <script src="/quickcheck.js?v=s3t7-1"></script>
   <script src="/quickcheck-zhuque.js"></script>
-  <script src="/icons.js"></script><script src="/shell.js?v=s3b1" defer></script>
+  <script src="/icons.js"></script><script src="/shell.js?v=s3d1" defer></script>
 </body>
 </html>

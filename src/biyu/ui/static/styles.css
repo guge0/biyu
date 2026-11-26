@@ -1713,8 +1713,7 @@ button{font-family:inherit;cursor:default}
 .book-genre.tag{border-radius:3px}
 .btn-rename{font-size:12px;color:var(--ink-faint)}
 
-/* modal 圆角收敛（U-1：唯一 overlay/弹窗定义见末尾 U-1 段） */
-.modal,.setup-card{border-radius:10px !important}
+/* modal 圆角收敛（U-1）——3d 起唯一定义在 glass.css 统一弹窗规则（20px 样张_B），此处旧 !important 覆盖退役 */
 
 /* 环境/峰谷徽标收敛 */
 .env-badge{border-radius:3px;font-weight:400}
@@ -1834,10 +1833,9 @@ label{min-height:0}
 .status-other{border-color:var(--rule);color:var(--ink-mute)}
 .status-error{border-color:var(--mark);color:var(--mark)}
 
-/* ---------- U-1.8 弹窗：唯一定义 ---------- */
+/* ---------- U-1.8 弹窗：遮罩与字体基线（弹窗面/圆角/结构唯一定义在 glass.css 统一规则，3d 起） ---------- */
 .modal-overlay{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:rgba(38,33,25,.32);padding:24px}
 .modal-overlay[hidden]{display:none}
-.modal,.setup-card{background:var(--paper);border-radius:10px;max-width:460px;width:100%;padding:26px 28px;box-shadow:none;border:1px solid var(--rule)}
 .modal h3,.setup-card h3{font-family:var(--serif);font-size:20px;font-weight:400;margin:0 0 10px}
 .modal p,.setup-card p{font-size:14px;margin:0 0 18px;line-height:1.7}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap}
@@ -1851,18 +1849,17 @@ label{min-height:0}
 /* ---------- Z-1 备份面板 ---------- */
 .backup-status-trigger{display:block;border:0;background:transparent;padding:0;margin:0 0 10px;color:var(--ink-mute);font:inherit;font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;text-align:left}
 .backup-status-trigger.backup-status-failed{color:var(--mark)}
-.setup-card.backup-panel{width:min(520px,100%);max-width:520px;min-width:0;max-height:calc(100dvh - 32px);padding:28px 30px 24px;border-radius:2px!important;overflow-x:hidden;overflow-y:auto}
+/* （Z-1 备份面板旧 520 宽/方角/padding 硬编码已退役——glass.css 统一弹窗规则接管） */
 
 /* Model configuration follows the v3 window prototype rather than the generic modal skin. */
-#setup-overlay .setup-card{width:min(600px,calc(100vw - 32px));max-width:600px;max-height:calc(100dvh - 32px);padding:28px 30px 24px;border-radius:2px!important;background:var(--surface);border:1px solid var(--rule);box-shadow:none;overflow-y:auto;gap:0}
 #setup-overlay .setup-card{position:relative}
 #setup-overlay .setup-close{position:absolute;right:14px;top:10px;border:0;background:transparent;color:var(--ink-faint);font-size:24px;line-height:1;cursor:pointer;padding:4px 8px}
 #setup-overlay .setup-multi-provider-fields{border-top:1px solid var(--rule-soft);margin:0 0 10px;padding-top:8px}
 #setup-overlay .setup-multi-provider-fields label{margin:10px 0}
 #setup-overlay [hidden]{display:none!important}
-#setup-overlay .setup-card h2{font-family:var(--serif);font-size:24px;font-weight:400;margin:0 0 10px}
+#setup-overlay .setup-card h2{font-family:var(--serif);font-size:24px;font-weight:400}
 #setup-overlay .setup-card label{display:grid;gap:7px;margin:0 0 18px;color:var(--ink-soft);font-size:13px}
-#setup-overlay .setup-card input,#setup-overlay .setup-card select{width:100%;min-height:40px;padding:10px 12px;border:1px solid var(--btn-border);border-radius:2px;background:var(--paper);font-size:13.5px;color:var(--ink)}
+/* （输入框/下拉框旧方角纸底行已退役——glass.css「弹窗输入框照样张」统一规则接管：圆角12px/令牌底/聚焦描边） */
 #setup-overlay .setup-hint{font-size:12px;color:var(--ink-faint);line-height:1.8;margin:7px 0 18px}
 #setup-overlay .setup-warning{font-size:13px;color:var(--mark);line-height:1.8;margin:0 0 18px}
 #setup-overlay .setup-link{display:block;width:100%;padding:10px 12px;background:transparent;border:0;border-top:1px solid var(--rule-soft);color:var(--ink-soft);text-align:left;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:13px}
@@ -1872,7 +1869,7 @@ label{min-height:0}
 #setup-overlay .setup-stage-head strong{font-size:14.5px;font-weight:400;color:var(--ink)}
 #setup-overlay .setup-stage-why{font-size:12px;color:var(--ink-faint);line-height:1.7}
 #setup-overlay .setup-follow{padding:10px 12px;border:1px dashed var(--btn-border);color:var(--ink-faint);font-size:13px;background:var(--paper)}
-.backup-panel #backup-heading{font-size:24px;margin:0 0 10px}
+.backup-panel #backup-heading{font-size:24px;margin:0}
 .backup-panel>*{min-width:0;max-width:100%}
 .backup-panel .backup-note{color:var(--ink-mute);font-size:13px;line-height:1.9}
 .backup-switch-row{display:flex;align-items:center;gap:10px;margin:18px 0 4px;cursor:pointer;font-size:14px}

@@ -5,8 +5,8 @@
   <script src="/theme-boot.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>笔驭作者工作台 · 立项屏</title>
-  <link rel="stylesheet" href="/styles.css?v=s3b1">
-<link rel="stylesheet" href="/biyu-paper.css?v=s3c1"><link rel="stylesheet" href="/shell.css?v=s3b1"><link rel="stylesheet" href="/glass.css?v=s3b1"></head>
+  <link rel="stylesheet" href="/styles.css?v=s3d1">
+<link rel="stylesheet" href="/biyu-paper.css?v=s3c1"><link rel="stylesheet" href="/shell.css?v=s3b1"><link rel="stylesheet" href="/glass.css?v=s3d1"></head>
 <body>
   <!-- 顶部 nav(T2)-->
   <nav class="top-nav">
@@ -110,7 +110,9 @@
   <div id="softcap-modal" class="modal-overlay" hidden>
     <div class="modal">
       <h3>已到软顶,确认继续花钱吗?</h3>
-      <p id="softcap-modal-text"></p>
+      <div class="modal-body">
+        <p id="softcap-modal-text"></p>
+      </div>
       <div class="modal-actions">
         <button type="button" id="softcap-cancel" class="btn-secondary">取消</button>
         <button type="button" id="softcap-confirm" class="btn-primary">确认继续</button>
@@ -122,10 +124,12 @@
   <div id="naming-apply-modal" class="modal-overlay" hidden>
     <div class="modal">
       <h3>选用书名</h3>
-      <p>将书名应用到哪本书?(会更新该书 display_name)</p>
-      <div class="naming-apply-preview" id="naming-apply-preview"></div>
-      <label for="naming-apply-book" style="font-size:13px;color:var(--ink-dim);display:block;margin:12px 0 4px;">目标书:</label>
-      <select id="naming-apply-book" class="rename-input" style="width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:14px;font-family:inherit;background:var(--paper);color:var(--ink);"></select>
+      <div class="modal-body">
+        <p>将书名应用到哪本书?(会更新该书 display_name)</p>
+        <div class="naming-apply-preview" id="naming-apply-preview"></div>
+        <label for="naming-apply-book" style="font-size:13px;color:var(--ink-dim);display:block;margin:12px 0 4px;">目标书:</label>
+        <select id="naming-apply-book" class="rename-input" style="width:100%;padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:14px;font-family:inherit;background:var(--paper);color:var(--ink);"></select>
+      </div>
       <div class="modal-actions">
         <button type="button" id="naming-apply-cancel" class="btn-secondary">取消</button>
         <button type="button" id="naming-apply-confirm" class="btn-primary">应用</button>
@@ -135,5 +139,5 @@
   </div>
 
   <script src="/propose.js?v=s3b1"></script>
-<script src="/icons.js"></script><script src="/shell.js?v=s3b1" defer></script></body>
+<script src="/icons.js"></script><script src="/shell.js?v=s3d1" defer></script></body>
 </html>
