@@ -869,7 +869,7 @@
     contactPill.className = 'biyu-contact-pill';
     contactPill.id = 'biyu-contact-pill';
     contactPill.title = '内测作者交流 Q 群与问题反馈';
-    contactPill.innerHTML = shellIcon('chat') + '<span>内测 Q 群：892467108 · 反馈</span>';
+    contactPill.innerHTML = shellIcon('chat') + '<span>内测 Q 群：462502077 · 反馈</span>';
     contactPill.addEventListener('click', openContactFeedback);
     rightGroup.appendChild(contactPill);
     // S-10 3a修正·工单第1条：运行时身份标从书内栏移到页脚右侧（原来只在 workbench/settings 有挂点）。
@@ -880,7 +880,7 @@
     runtime.textContent = state.version ? '笔驭 v' + state.version : '';
     runtime.title = '点击查看新版获取方式';
     runtime.addEventListener('click', () => {
-      showToast('获取新版：请到内测 Q 群（892467108）或官网下载页获取最新安装包；本机数据不受影响。');
+      showToast('获取新版：请到内测 Q 群（462502077）或官网下载页获取最新安装包；本机数据不受影响。');
     });
     rightGroup.appendChild(runtime);
     bar.appendChild(leftGroup);
@@ -1134,9 +1134,9 @@
       const body = await resp.json().catch(() => ({}));
       if (!resp.ok || !body.ok) throw new Error(body.detail || '生成失败');
       if (statusEl) {
-        say('已生成：' + body.path + '。请把这个文件发到 Q 群 892467108。');
+        say('已生成：' + body.path + '。请把这个文件发到 Q 群 462502077。');
       } else {
-        btn.textContent = '已生成 ✓ 发 Q 群 892467108';
+        btn.textContent = '已生成 ✓ 发 Q 群 462502077';
         setTimeout(() => { btn.textContent = label; }, 2600);
       }
       const a = document.createElement('a'); a.href = body.download; a.download = body.name; document.body.appendChild(a); a.click(); a.remove();
@@ -1171,7 +1171,7 @@
         '<div class="biyu-modal-body">' +
         '<div class="card" style="background:var(--surface-subtle);margin-bottom:14px">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:8px">' +
-        '<div><div style="font-size:15px;font-weight:500">官方内测作者交流 QQ 群：<code style="color:var(--mark);font-size:15px">892467108</code></div>' +
+        '<div><div style="font-size:15px;font-weight:500">官方内测作者交流 QQ 群：<code style="color:var(--mark);font-size:15px">462502077</code></div>' +
         '<div style="font-size:12.5px;color:var(--ink-mute)">群里交流用法、反馈问题，开发者会在群里答疑；使用资料会陆续在群里分享</div></div>' +
         '<button type="button" class="b2 bs" id="biyu-contact-copy">复制群号</button></div>' +
         '<div style="font-size:12px;color:var(--ink-soft);border-top:1px solid var(--rule);padding-top:8px">' +
@@ -1195,7 +1195,7 @@
         exportDiagnostics(event.target, document.getElementById('biyu-diag-status'));
       });
       document.getElementById('biyu-contact-copy').addEventListener('click', (event) => {
-        if (navigator.clipboard) navigator.clipboard.writeText('892467108');
+        if (navigator.clipboard) navigator.clipboard.writeText('462502077');
         event.target.textContent = '已复制 ✓';
         setTimeout(() => { event.target.textContent = '复制群号'; }, 1500);
       });
@@ -1204,7 +1204,7 @@
         // S-7：反馈邮箱还没开通，先复制文字，请作者发到 Q 群
         const btn = document.getElementById('biyu-contact-send');
         if (navigator.clipboard && text) navigator.clipboard.writeText(text);
-        btn.textContent = text ? '已复制，请发到 Q 群 892467108' : '先写几句再提交';
+        btn.textContent = text ? '已复制，请发到 Q 群 462502077' : '先写几句再提交';
         setTimeout(() => { btn.textContent = '提交反馈'; }, 2500);
       });
     }

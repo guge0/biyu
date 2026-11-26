@@ -303,7 +303,7 @@ def test_settings_static_page_has_required_floor_and_tier_copy() -> None:
     assert "写手和导演每一章都会读这里" in html
     assert "设定没有读取成功" in js
     assert "服务还是旧版本" in js
-    assert 'src="/settings.js?v=u2-1"' in html
+    assert 'src="/settings.js?v=qq1"' in html
 
 
 def test_character_projection_has_five_human_sections_and_preserves_unmapped_fields(

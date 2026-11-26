@@ -51,7 +51,7 @@ $('read-tab').onclick=()=>{if(current&&!creatingCharacter)selectCell(current.id)
   const btn = document.getElementById("contact-copy-group");
   if (!btn) return;
   btn.addEventListener("click", () => {
-    if (navigator.clipboard) navigator.clipboard.writeText("892467108");
+    if (navigator.clipboard) navigator.clipboard.writeText("462502077");
     btn.textContent = "已复制 ✓";
     setTimeout(() => { btn.textContent = "复制 Q 群号"; }, 1500);
   });

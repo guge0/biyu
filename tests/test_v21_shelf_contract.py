@@ -113,7 +113,7 @@ def test_book_more_menu_flips_upward_near_viewport_bottom() -> None:
 def test_shell_contact_pill() -> None:
     shell = _src("shell.js")
     assert "biyu-contact-pill" in shell
-    assert "892467108" in shell
+    assert "462502077" in shell
     assert "openContactFeedback" in shell
     css = _src("shell.css")
     assert ".biyu-contact-pill" in css

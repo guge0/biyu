@@ -122,7 +122,7 @@ def build_diagnostics_zip(data_root: Path, config_path: Path | None) -> bytes:
         zf.writestr(
             "说明.txt",
             "这是笔驭诊断包：只含版本、系统、脱敏配置、花费记录和运行日志尾部；不含任何 Key 和书稿正文。\n"
-            "请发到内测 Q 群 892467108。\n",
+            "请发到内测 Q 群 462502077。\n",
         )
     return buf.getvalue()
 

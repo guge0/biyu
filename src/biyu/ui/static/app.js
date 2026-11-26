@@ -785,7 +785,7 @@
       '<p style="font-size:13px;color:#5A5144;margin:0 0 12px">' + seal.detail + "</p>" +
       sealSvg(SEAL_CHARS[key]) +
       '<p style="font-family:var(--serif);font-size:14.5px;color:#2E2820;margin:8px auto 12px;max-width:28em;line-height:1.75">' + SEAL_QUOTES[key] + "</p>" +
-      '<div style="font-size:11.5px;color:#827868;border-top:1px dashed #D2C5A8;padding-top:10px">笔驭 biyu · 本地优先 AI 网文工作站&nbsp;|&nbsp;内测作者群：892467108</div>';
+      '<div style="font-size:11.5px;color:#827868;border-top:1px dashed #D2C5A8;padding-top:10px">笔驭 biyu · 本地优先 AI 网文工作站&nbsp;|&nbsp;内测作者群：462502077</div>';
     document.querySelectorAll("#seal-tabs .b2").forEach((btn) => {
       btn.classList.toggle("current", btn.dataset.seal === key);
     });
@@ -853,7 +853,7 @@
     lines.forEach((line, i) => ctx.fillText(line, 320, 470 + i * 34, 540));
     ctx.fillStyle = "#827868";
     ctx.font = "13px sans-serif";
-    ctx.fillText("笔驭 biyu · 本地优先 AI 网文工作站 | 内测作者群：892467108", 320, 700);
+    ctx.fillText("笔驭 biyu · 本地优先 AI 网文工作站 | 内测作者群：462502077", 320, 700);
     canvas.toBlob((blob) => {
       if (!blob) return;
       const url = URL.createObjectURL(blob);
@@ -924,7 +924,7 @@
       $("seal-copy").addEventListener("click", () => {
         const seal = (sealState && sealState.seals || []).find((s) => s.key === activeSealKey);
         const text = "【笔驭 · 朱批钤印】我达成了「" + ((seal && seal.title) || "里程碑") +
-          "」！机器起草、作者钦定，本地优先的 AI 网文工作站。内测作者群：892467108";
+          "」！机器起草、作者钦定，本地优先的 AI 网文工作站。内测作者群：462502077";
         if (navigator.clipboard) navigator.clipboard.writeText(text);
         $("seal-copy").textContent = "已复制 ✓";
         setTimeout(() => { $("seal-copy").innerHTML = '<svg class="icon biyu-gicon" aria-hidden="true"><use href="#biyu-icon-clipboard"/></svg> 复制群晒单文案'; }, 1600);
