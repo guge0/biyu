@@ -51,3 +51,9 @@ docs/交接/
 # S-3 packaging build outputs (home payload staging + electron deps)
 packaging/home-staging/
 packaging/electron/node_modules/
+
+# 第三方设计技能（开发用，不随产品发布）
+.claude/skills/ui-ux-pro-max/
+.claude/skills/stitch-design-md/
+# 本地巡检输出
+click_sweep_out*/

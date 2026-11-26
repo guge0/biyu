@@ -6,7 +6,9 @@
 
 ![书架](docs/images/shelf.png)
 
-![书籍页](docs/images/book.png)
+![章节工作台：细纲、方案、生成、读稿、采用，一条路走完一章](docs/images/workbench.png)
+
+![快检台：本地 AI 味体检、朱雀体检与降 AI 率](docs/images/quickcheck.png)
 
 ## 主要功能
 
