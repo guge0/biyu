@@ -38,11 +38,13 @@ html[data-theme="dark"]{
 }
 
 /* ---------- 页面背景：无壁纸时用柔彩雾面渐变（每主题三团色，样张量级） ----------
-   壁纸（xuan/mist/bamboo/自定义上传）优先：shell.js 的 --bg-image 有图时压在渐变上层，
-   「遮罩/模糊」滑块照旧作用于壁纸层；无壁纸（data-bg="none"）时护眼蒙层让位给渐变。
+   3e·工单第1条：层次定为 壁纸 → 护眼蒙层 → 彩色雾面（最上层）→ 玻璃栏卡——
+   有壁纸时雾面画进 .biyu-shell-bg-mist（z=-1，蒙层之上、内容之下），壁纸/蒙层再浓雾面也在；
+   无壁纸时雾面仍由 html 画布 + 壁纸层双画提供（3b 已验收的观感不动），雾面层隐藏。
+   透明度分档：无壁纸 亮 .45/.45/.40 · 暗 .30/.35/.30（3a修正值）；有壁纸略降一档——
+   亮 .34/.34/.30（工单给的 0.30–0.35 档）· 暗 .26/.30/.26。
    3a修正·工单第6条：老板选 B 就是选色块——原 13–38% 的混色几乎看不见、暗色整片黑。
-   三团色改为每主题派生令牌 --glass-blob-a/b/c（default/dark 直接取样张色，其余按主题色相派生），
-   透明度照样张：亮色 .45/.45/.40，暗色 .30/.35/.30。
+   三团色为每主题派生令牌 --glass-blob-a/b/c（default/dark 直接取样张色，其余按主题色相派生）。
    3b·工单第0条根因1：background-image 列表里不允许纯色，末层 var(--outer-bg) 是纯色时
    **整条声明作废**（computed backgroundImage = none，全站没色团）——末层改写为
    linear-gradient(var(--outer-bg), var(--outer-bg))，底色照画但不炸列表。
@@ -51,19 +53,19 @@ html[data-theme="dark"]{
    1280 处两值几乎相等（900px≈70.3vw），样张观感不变；大视口色团相对量级与样张一致。 */
 :root{
   --glass-blob-a:#D6AA8C; --glass-blob-b:#96B4AA; --glass-blob-c:#C8BED7; /* JS 未跑时兜底=default */
-  --glass-page-bg:
-    radial-gradient(max(900px, 70.3vw) max(600px, 46.9vw) at 12% 8%, color-mix(in srgb, var(--glass-blob-a) 45%, transparent), transparent 60%),
-    radial-gradient(max(800px, 62.5vw) max(700px, 54.7vw) at 88% 20%, color-mix(in srgb, var(--glass-blob-b) 45%, transparent), transparent 60%),
-    radial-gradient(max(1000px, 78.1vw) max(700px, 54.7vw) at 60% 100%, color-mix(in srgb, var(--glass-blob-c) 40%, transparent), transparent 60%),
-    linear-gradient(var(--outer-bg), var(--outer-bg));
+  /* 雾面只画色团、不铺底色（铺底会盖死壁纸纹理）；--glass-page-bg 在其下再垫一层底色 */
+  --glass-blob-alpha-a:45%; --glass-blob-alpha-b:45%; --glass-blob-alpha-c:40%;
+  --glass-mist:
+    radial-gradient(max(900px, 70.3vw) max(600px, 46.9vw) at 12% 8%, color-mix(in srgb, var(--glass-blob-a) var(--glass-blob-alpha-a), transparent), transparent 60%),
+    radial-gradient(max(800px, 62.5vw) max(700px, 54.7vw) at 88% 20%, color-mix(in srgb, var(--glass-blob-b) var(--glass-blob-alpha-b), transparent), transparent 60%),
+    radial-gradient(max(1000px, 78.1vw) max(700px, 54.7vw) at 60% 100%, color-mix(in srgb, var(--glass-blob-c) var(--glass-blob-alpha-c), transparent), transparent 60%);
+  --glass-page-bg: var(--glass-mist), linear-gradient(var(--outer-bg), var(--outer-bg));
 }
-html[data-theme="dark"]{
-  --glass-page-bg:
-    radial-gradient(max(900px, 70.3vw) max(600px, 46.9vw) at 12% 8%, color-mix(in srgb, var(--glass-blob-a) 30%, transparent), transparent 60%),
-    radial-gradient(max(800px, 62.5vw) max(700px, 54.7vw) at 88% 20%, color-mix(in srgb, var(--glass-blob-b) 35%, transparent), transparent 60%),
-    radial-gradient(max(1000px, 78.1vw) max(700px, 54.7vw) at 60% 100%, color-mix(in srgb, var(--glass-blob-c) 30%, transparent), transparent 60%),
-    linear-gradient(var(--outer-bg), var(--outer-bg));
-}
+html[data-theme="dark"]{ --glass-blob-alpha-a:30%; --glass-blob-alpha-b:35%; --glass-blob-alpha-c:30%; }
+/* 3e·工单第1条：有壁纸档（雾面画在蒙层之上，略降透明度但明显可见）。
+   用正向选择器（data-bg="preset"/"custom"）——壳未挂/属性未写时按无壁纸档，首帧不闪 */
+html[data-bg="preset"],html[data-bg="custom"]{ --glass-blob-alpha-a:34%; --glass-blob-alpha-b:34%; --glass-blob-alpha-c:30%; }
+html[data-theme="dark"][data-bg="preset"],html[data-theme="dark"][data-bg="custom"]{ --glass-blob-alpha-a:26%; --glass-blob-alpha-b:30%; --glass-blob-alpha-c:26%; }
 /* 3b·工单第0条根因2：html/body 的不透明底色把负 z 背景层全盖住了——根层叠上下文里，
    z-index:-2/-1 的 fixed 背景层画在 body 自身背景**之下**，body 不透明则壁纸与渐变永远不可见。
    根层一律透明；同一份 --glass-page-bg 同时画在 html 画布上兜底（shell.js 未跑/报错时
@@ -76,6 +78,9 @@ html{
 }
 body{ background:transparent; }
 .biyu-shell-bg-wallpaper{ background-image:var(--bg-image, none), var(--glass-page-bg); }
+/* 3e·工单第1条：彩色雾面层（.biyu-shell-bg-mist 结构规则在 shell.css，z=-1 蒙层之上）——
+   只在有壁纸时存在；无壁纸时隐藏（无壁纸的雾面由 html 画布 + 壁纸层双画提供，观感不动） */
+html[data-bg="none"] .biyu-shell-bg-mist{ display:none; }
 html[data-bg="none"] .biyu-shell-bg-overlay{ opacity:0; }
 
 /* ---------- 按钮：主按钮实心胶囊 / 次按钮半透明描边胶囊 / 文字按钮无框 ---------- */
@@ -108,6 +113,52 @@ textarea,select:not([multiple]){ border-radius:var(--r-m); }
 /* 正文纸面与不透明稿纸区不吃玻璃（红线，见文末） */
 .prose,#chapter-read,#official-chapter,.reading-prose>#chapter-read,.reading-prose>#official-chapter,
 #chapter-edit,.editing-pane{ backdrop-filter:none; -webkit-backdrop-filter:none; }
+
+/* ---------- 3e·工单第2条：全站大块实心卡面收玻璃 ----------
+   只换面（--glass-bg + blur），不动各家的框线——迎宾条琥珀线/耕读历绿线/体检窗线 tone/
+   概览卡边/声纹页卡片边都保留；输入控件与正文纸面不在其列（红线见文末）。
+   名单=Grep background:(#fff|white|var(--surface)) 全站命中里的大块容器：
+   书架迎宾条+耕读历（工单点名）、快检台粘贴卡与朱雀窗线、横幅/错误条、概览页六种卡、
+   好句卡、声纹页八种卡、设定面板、记忆页条目、书页入口卡。 */
+.welcome-strip,.calendar-strip-card,.empty-state,.qc-editor-box,
+.banner,.error-banner,.notice-banner,.placeholder-banner,
+.breakpoint-card,.breakpoint-empty,.metric-card,.export-bar,.chapter-list,.matrix-cell,
+.good-sentence-card,.zq-win,
+.voice-section,.summary-card,.voice-card,.voice-line,.catalog-item,.guard,
+.source-warning,.import-card,.import-blocked,.ready-note,
+.settings-pane,.memory-entry,.entry-card{
+  background:var(--glass-bg);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
+/* 玻璃卡内部的实心底退役（与 3d 弹窗三段式同一规矩：分段只用细线，不再垫死底）：
+   返修意见行照样张 .issue 透明；细纲事实校验条随所在玻璃卡 */
+.issue,.outline-fact-status{ background:transparent; }
+/* 意见栏（玻璃卡）内部 sticky 头/脚：内容从底下滚过，垫玻璃面不垫死底（同 .stage-panel>.action-row） */
+.workbench .review-toolbar,
+.workbench .revision-actions{
+  background:var(--glass-strong);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
+/* 窄屏媒体查询里 .workbench .notice-banner 的 (0,2,0) 死底，同特异性在此压回玻璃面 */
+.workbench .notice-banner{
+  background:var(--glass-bg);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
+/* 工作台读稿卡外框照样张补齐：三段共边里工具行（玻璃上沿）此前没挂模糊，纸面中段不透明保留（红线） */
+.workbench .reading-decision-head{
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
+/* 页脚状态栏（栏不是卡，但全宽实心条会切断雾面）：玻璃栏待遇，同全局栏 */
+.biyu-statusbar{
+  background:var(--glass-strong);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
+/* 浮层菜单/弹卡（同 .biyu-bookmenu-list 待遇）：版本详情浮层、读稿「更多」菜单 */
+.version-details,.workbench .reading-more-menu{
+  background:var(--glass-strong);border-color:var(--glass-border);
+  backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+}
 
 /* ---------- 字重锁 400/500：收敛历史 600/700（audit fw500 计数对应项） ---------- */
 h1,h2,h3,h4,.card-title,.page-title,.shelf-title,

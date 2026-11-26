@@ -1195,7 +1195,13 @@
     const overlay = document.createElement('div');
     overlay.className = 'biyu-shell-bg-overlay';
     overlay.setAttribute('aria-hidden', 'true');
-    document.body.insertBefore(overlay, document.body.firstChild);
+    // S-10 3e：彩色雾面层挂在蒙层之上（壁纸 → 蒙层 → 雾面 → 玻璃栏卡），
+    // 有壁纸/蒙层再浓色团也在；无壁纸时由 glass.css 隐藏（html 画布 + 壁纸层双画提供雾面）
+    const mist = document.createElement('div');
+    mist.className = 'biyu-shell-bg-mist';
+    mist.setAttribute('aria-hidden', 'true');
+    document.body.insertBefore(mist, document.body.firstChild);
+    document.body.insertBefore(overlay, mist);
     document.body.insertBefore(wallpaper, overlay);
     // S-10 3a-2：壳注入即声明当前背景类型（默认无壁纸→渐变）；偏好返回后 applyBackgroundTokens 修正
     document.documentElement.dataset.bg = state.background.type;

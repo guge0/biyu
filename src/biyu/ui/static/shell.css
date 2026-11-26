@@ -4,9 +4,11 @@
    值照搬 reference_biyu_ai_v2.html；类名加 biyu- 前缀避免与页面旧类碰撞。
    ========================================================================== */
 
-/* ---------- 背景壁纸层与可调纸感蒙层 ---------- */
+/* ---------- 背景壁纸层与可调纸感蒙层 ----------
+   S-10 3e：层次定为 壁纸(-3) → 护眼蒙层(-2) → 彩色雾面(-1) → 内容。
+   雾面层保证任何壁纸/蒙层设置下色团都在（玻璃栏卡背后有颜色可透）。 */
 .biyu-shell-bg-wallpaper{
-  position:fixed;inset:0;z-index:-2;
+  position:fixed;inset:0;z-index:-3;
   background-image:var(--bg-image);
   background-size:cover;background-position:center;background-repeat:no-repeat;
   filter:blur(var(--bg-blur));
@@ -14,10 +16,15 @@
   transition:filter .25s ease,opacity .25s ease;
 }
 .biyu-shell-bg-overlay{
-  position:fixed;inset:0;z-index:-1;
+  position:fixed;inset:0;z-index:-2;
   background-color:var(--paper);
   opacity:var(--bg-overlay-alpha);
   transition:background-color .25s ease,opacity .2s ease;
+}
+.biyu-shell-bg-mist{
+  position:fixed;inset:0;z-index:-1;
+  background-image:var(--glass-mist);
+  pointer-events:none;
 }
 
 /* ---------- 窗口控制钮（S-5 Electron，S-10 3a-3 起挂在全局栏工具区） ----------
