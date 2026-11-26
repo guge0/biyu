@@ -19,10 +19,15 @@
    3a修正·工单第6条：全局栏/书内栏/弹窗原用 0.85 不透明——几乎是实心白，透不出背景色块。
    照样张 B 收到 .55–.65：栏/弹窗 .62（亮）·.58（暗），卡片 .55，blur(18px) saturate(1.2)。
    3g·工单第1条：老板要「卡片透明度放到 0.4 之下」——卡片 .38、栏/弹窗 .45（亮暗同 alpha，
-   RGB 各守本色）；浅色辅文对比度若不达标加深文字令牌，不许把卡片调回不透明。 */
+   RGB 各守本色）；浅色辅文对比度若不达标加深文字令牌，不许把卡片调回不透明。
+   3h·工单第1条：一直压在滚动内容上的栏（全局栏/底部状态栏/面板内 sticky 工具行）另立
+   --glass-chrome .85 + blur(24px)——0.45 压在书卡上会把衬线大标题透出来叠在栏字上；
+   chrome 不跟「卡片透明度」滑块走（applyGlassTokens 只写 bg/strong，本令牌不进滑块）。
+   书内栏 .biyu-bookbar 在文档流里不盖内容，照旧 --glass-strong；浮层菜单/弹窗/抽屉照旧。 */
 :root{
   --glass-bg:rgba(255, 255, 255, 0.38);      /* 卡片玻璃面 */
-  --glass-strong:rgba(255, 255, 255, 0.45);  /* 全局栏 / 书内栏 / 弹窗（样张 --bar-bg） */
+  --glass-strong:rgba(255, 255, 255, 0.45);  /* 书内栏 / 弹窗 / 浮层菜单（样张 --bar-bg） */
+  --glass-chrome:rgba(255, 255, 255, 0.85);  /* 3h 固定/粘滞栏：盖在滚动内容上不透字 */
   --glass-border:rgba(255, 255, 255, 0.70);
   --glass-blur:18px;
   --glass-shadow:0 8px 32px rgba(40, 36, 28, 0.10);
@@ -30,13 +35,14 @@
 html[data-theme="dark"]{
   --glass-bg:rgba(34, 31, 28, 0.38);
   --glass-strong:rgba(30, 28, 26, 0.45);
+  --glass-chrome:rgba(30, 28, 26, 0.85);
   --glass-border:rgba(255, 255, 255, 0.10);
   --glass-shadow:0 8px 32px rgba(0, 0, 0, 0.35);
 }
 /* 不支持 backdrop-filter 的引擎：玻璃退成 0.96 不透明（样张同款退化） */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
-  :root{ --glass-bg:rgba(255, 255, 255, 0.96); --glass-strong:rgba(255, 255, 255, 0.96); }
-  html[data-theme="dark"]{ --glass-bg:rgba(34, 31, 28, 0.96); --glass-strong:rgba(30, 28, 26, 0.96); }
+  :root{ --glass-bg:rgba(255, 255, 255, 0.96); --glass-strong:rgba(255, 255, 255, 0.96); --glass-chrome:rgba(255, 255, 255, 0.96); }
+  html[data-theme="dark"]{ --glass-bg:rgba(34, 31, 28, 0.96); --glass-strong:rgba(30, 28, 26, 0.96); --glass-chrome:rgba(30, 28, 26, 0.96); }
 }
 
 /* ---------- 页面背景：无壁纸时用柔彩雾面渐变（每主题三团色，样张量级） ----------
@@ -134,11 +140,11 @@ textarea,select:not([multiple]){ border-radius:var(--r-m); }
 /* 玻璃卡内部的实心底退役（与 3d 弹窗三段式同一规矩：分段只用细线，不再垫死底）：
    返修意见行照样张 .issue 透明；细纲事实校验条随所在玻璃卡 */
 .issue,.outline-fact-status{ background:transparent; }
-/* 意见栏（玻璃卡）内部 sticky 头/脚：内容从底下滚过，垫玻璃面不垫死底（同 .stage-panel>.action-row） */
+/* 意见栏（玻璃卡）内部 sticky 头/脚：内容从底下滚过，3h 起按固定栏待遇用 chrome 面不透字 */
 .workbench .review-toolbar,
 .workbench .revision-actions{
-  background:var(--glass-strong);
-  backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  background:var(--glass-chrome);
+  backdrop-filter:blur(24px) saturate(1.2); -webkit-backdrop-filter:blur(24px) saturate(1.2);
 }
 /* 窄屏媒体查询里 .workbench .notice-banner 的 (0,2,0) 死底，同特异性在此压回玻璃面 */
 .workbench .notice-banner{
@@ -149,10 +155,16 @@ textarea,select:not([multiple]){ border-radius:var(--r-m); }
 .workbench .reading-decision-head{
   backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
 }
-/* 页脚状态栏（栏不是卡，但全宽实心条会切断雾面）：玻璃栏待遇，同全局栏 */
+/* 读稿区脚条（styles.css 的 sticky bottom 脚，压在正文滚动内容上）：3h 起同固定栏待遇 chrome 面 */
+.workbench .reading-layout .reading-actions{
+  background:var(--glass-chrome);
+  backdrop-filter:blur(24px) saturate(1.2); -webkit-backdrop-filter:blur(24px) saturate(1.2);
+}
+/* 页脚状态栏（position:fixed 全宽压在内容上）：3h 起用 chrome 面不透字（工单实测书卡滚到
+   底部时衬线大标题从 0.45 面上透出来），模糊也升 24px */
 .biyu-statusbar{
-  background:var(--glass-strong);
-  backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  background:var(--glass-chrome);
+  backdrop-filter:blur(24px) saturate(1.2); -webkit-backdrop-filter:blur(24px) saturate(1.2);
 }
 /* 浮层菜单/弹卡（同 .biyu-bookmenu-list 待遇）：版本详情浮层、读稿「更多」菜单 */
 .version-details,.workbench .reading-more-menu{
@@ -174,13 +186,14 @@ button.b2.current::before,button.b2[aria-pressed="true"]::before{ font-weight:50
 /* 线条图标统一尺寸（.icon 基类在 styles.css，24px；按钮/栏内收成 15px） */
 .biyu-gicon{ width:15px; height:15px; flex:none; vertical-align:-2px; }
 
-/* ---------- 3a-3 全局栏（第一层，浮条玻璃，sticky；样张 .gbar） ---------- */
+/* ---------- 3a-3 全局栏（第一层，浮条玻璃，sticky；样张 .gbar） ----------
+   3h·工单第1条：sticky 常压在滚动内容上，面改 --glass-chrome .85 + blur(24px) 不透字 */
 .biyu-titlebar{
   position:sticky; top:10px; z-index:120; display:flex; align-items:center; gap:var(--sp-2);
   height:52px; margin:10px 16px 0; padding:0 var(--sp-4); flex-wrap:nowrap; box-sizing:border-box;
-  background:var(--glass-strong); border:1px solid var(--glass-border); border-radius:var(--r-l);
+  background:var(--glass-chrome); border:1px solid var(--glass-border); border-radius:var(--r-l);
   box-shadow:var(--glass-shadow); user-select:none;
-  backdrop-filter:blur(var(--glass-blur)) saturate(1.2); -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  backdrop-filter:blur(24px) saturate(1.2); -webkit-backdrop-filter:blur(24px) saturate(1.2);
 }
 .biyu-brand{display:inline-flex;align-items:center;gap:8px;font-family:var(--serif);font-size:var(--text-lg);margin-right:var(--sp-3);white-space:nowrap;border-bottom:none;color:var(--ink);flex:none}
 .biyu-seal{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:7px;background:var(--accent);color:var(--accent-fg);font-style:normal;font-size:15px;font-weight:500;flex:none}
@@ -291,11 +304,12 @@ html[data-theme="dark"] .biyu-bookbar .biyu-chapnav .b3:disabled{color:var(--ink
 
 /* ---------- 3a修正·工单第2条（后半）：其它阶段的主按钮同理常驻 ----------
    ①–④ 阶段面板（细纲/方案/生成）内容超一屏时面板内滚，「保存并确认」等主操作行
-   sticky 在面板底边，不滚到底看不见（样张 .act 做法）。 */
+   sticky 在面板底边，不滚到底看不见（样张 .act 做法）。
+   3h·工单第1条：sticky 行压在面板滚动内容上，面改 --glass-chrome 不透字。 */
 .stage-panel>.action-row{
   position:sticky;bottom:0;z-index:5;
-  background:var(--glass-strong);
-  backdrop-filter:blur(var(--glass-blur)) saturate(1.2);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(1.2);
+  background:var(--glass-chrome);
+  backdrop-filter:blur(24px) saturate(1.2);-webkit-backdrop-filter:blur(24px) saturate(1.2);
   padding:10px 0 4px;border-top:1px solid var(--rule-soft);
 }
 
