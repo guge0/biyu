@@ -28,6 +28,10 @@ _SAVED_FILE_RE = re.compile(r"^[0-9a-f]{32}\.(png|jpg|jpeg|webp)$")
 
 _OVERLAY_MIN, _OVERLAY_MAX = 65, 98
 _BLUR_MIN, _BLUR_MAX = 0, 20
+# S-10 3g·工单第2条：玻璃个性化两字段（雾面浓度乘数 % / 卡片透明度），缺字段回默认值不报错
+_MIST_MIN, _MIST_MAX = 0, 200
+_GLASS_MIN, _GLASS_MAX = 0.20, 0.90
+_MIST_DEFAULT, _GLASS_DEFAULT = 100, 0.38
 _MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
 _MEDIA_TYPES = {
@@ -44,6 +48,8 @@ class BackgroundPrefs(BaseModel):
     file: str | None = None
     overlay: float = 90
     blur: float = 0
+    mist: float = _MIST_DEFAULT
+    glass: float = _GLASS_DEFAULT
 
 
 class UiPrefs(BaseModel):
@@ -71,15 +77,18 @@ def _default_prefs() -> dict[str, Any]:
             "file": None,
             "overlay": 90,
             "blur": 0,
+            "mist": _MIST_DEFAULT,
+            "glass": _GLASS_DEFAULT,
         },
     }
 
 
-def _clamp(value: float, low: float, high: float) -> float:
+def _clamp(value: float, low: float, high: float, fallback: float) -> float:
+    """夹取范围；解析不了（缺键/类型错）回落 fallback（各字段默认值）。"""
     try:
         number = float(value)
     except (TypeError, ValueError):
-        return low if low == 0 else high
+        return fallback
     return max(low, min(high, number))
 
 
@@ -110,8 +119,10 @@ def _sanitize_background(raw: Any) -> dict[str, Any]:
         "type": bg_type,
         "preset": preset,
         "file": file_name,
-        "overlay": _clamp(raw.get("overlay", 90), _OVERLAY_MIN, _OVERLAY_MAX),
-        "blur": _clamp(raw.get("blur", 0), _BLUR_MIN, _BLUR_MAX),
+        "overlay": _clamp(raw.get("overlay", 90), _OVERLAY_MIN, _OVERLAY_MAX, 90),
+        "blur": _clamp(raw.get("blur", 0), _BLUR_MIN, _BLUR_MAX, 0),
+        "mist": _clamp(raw.get("mist", _MIST_DEFAULT), _MIST_MIN, _MIST_MAX, _MIST_DEFAULT),
+        "glass": _clamp(raw.get("glass", _GLASS_DEFAULT), _GLASS_MIN, _GLASS_MAX, _GLASS_DEFAULT),
     }
 
 

@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  const THEME_PRESETS = /*S1-THEME-BEGIN*/{"default": {"name": "温润手稿 · 云宣白卡 (默认)", "--paper": "#F3F1EA", "--surface": "#FFFFFF", "--surface-subtle": "#F9F8F3", "--ink": "#1F1C18", "--ink-solid": "#26221C", "--ink-soft": "#524C42", "--ink-mute": "#6E685C", "--ink-faint": "#7A7366", "--rule": "rgba(38, 33, 25, 0.08)", "--rule-strong": "#DED8CA", "--rule-soft": "#EFECE4", "--numeral": "#C4BDAE", "--mark": "#A64B38", "--mark-bg": "#F6E6E1", "--accent": "#26221C", "--accent-fg": "#FAF8F3", "--btn-border": "#D5CEBF", "--outer-bg": "#E5E1D6", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#D6AA8C", "--glass-blob-b": "#96B4AA", "--glass-blob-c": "#C8BED7"}, "lingshu": {"name": "灵枢青瓷 · 松石绿 (对标竞品)", "--paper": "#F4F5F0", "--surface": "#FFFFFF", "--surface-subtle": "#F8FAF7", "--ink": "#1A2421", "--ink-solid": "#1D5B50", "--ink-soft": "#42544E", "--ink-mute": "#5A6B65", "--ink-faint": "#66786F", "--rule": "rgba(29, 91, 80, 0.09)", "--rule-strong": "#D5DFDC", "--rule-soft": "#EBF0EE", "--numeral": "#B5C4BF", "--mark": "#1D5B50", "--mark-bg": "#E1F0EC", "--accent": "#1D5B50", "--accent-fg": "#FFFFFF", "--btn-border": "#C4D4CE", "--outer-bg": "#E2E7E4", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#BFD3BC", "--glass-blob-b": "#9CC6B4", "--glass-blob-c": "#C6CBB8"}, "parchment": {"name": "古籍羊皮 · 暖杏护眼", "--paper": "#F3ECD8", "--surface": "#FCF8EE", "--surface-subtle": "#F7F1E1", "--ink": "#2B2318", "--ink-solid": "#30271B", "--ink-soft": "#5E513F", "--ink-mute": "#6F6350", "--ink-faint": "#7E7159", "--rule": "rgba(48, 39, 27, 0.09)", "--rule-strong": "#DDD3BC", "--rule-soft": "#EAE1CC", "--numeral": "#BFB399", "--mark": "#9E4735", "--mark-bg": "#F2DCD4", "--accent": "#382B1E", "--accent-fg": "#FCF8EE", "--btn-border": "#C8B99E", "--outer-bg": "#DFD5BE", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#DEC08E", "--glass-blob-b": "#C6B48E", "--glass-blob-c": "#D1BFA6"}, "celadon": {"name": "宋刻竹青 · 润眼茶白", "--paper": "#EBF0EA", "--surface": "#F9FBF9", "--surface-subtle": "#F1F5F0", "--ink": "#1F2821", "--ink-solid": "#232D25", "--ink-soft": "#4A594D", "--ink-mute": "#5C6B60", "--ink-faint": "#687769", "--rule": "rgba(35, 45, 37, 0.09)", "--rule-strong": "#CFDAD1", "--rule-soft": "#E1EAE2", "--numeral": "#B0C0B3", "--mark": "#8E4A3B", "--mark-bg": "#EFE0DC", "--accent": "#2B4738", "--accent-fg": "#F9FBF9", "--btn-border": "#B8C7BB", "--outer-bg": "#D8E2D9", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#BCCFAE", "--glass-blob-b": "#A6C8B4", "--glass-blob-c": "#C9D0B6"}, "stone": {"name": "澄心冷灰 · 碑拓质感", "--paper": "#EFECE6", "--surface": "#FAF9F6", "--surface-subtle": "#F4F2ED", "--ink": "#22201C", "--ink-solid": "#262420", "--ink-soft": "#54514B", "--ink-mute": "#6A665E", "--ink-faint": "#75716A", "--rule": "rgba(38, 36, 32, 0.08)", "--rule-strong": "#D8D4CC", "--rule-soft": "#E6E2DA", "--numeral": "#BDB8AE", "--mark": "#964B3B", "--mark-bg": "#EFE0DC", "--accent": "#262420", "--accent-fg": "#FAF9F6", "--btn-border": "#C4BFB5", "--outer-bg": "#DAD6CE", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#C9C0B4", "--glass-blob-b": "#B7BFC4", "--glass-blob-c": "#CBBFC8"}, "pure": {"name": "素练极简 · 现代纯白", "--paper": "#F6F7F9", "--surface": "#FFFFFF", "--surface-subtle": "#F9FAFB", "--ink": "#111827", "--ink-solid": "#1E293B", "--ink-soft": "#4B5563", "--ink-mute": "#545B68", "--ink-faint": "#6E7684", "--rule": "rgba(17, 24, 39, 0.07)", "--rule-strong": "#E5E7EB", "--rule-soft": "#F3F4F6", "--numeral": "#CBD5E1", "--mark": "#B93829", "--mark-bg": "#FEE2E2", "--accent": "#18181B", "--accent-fg": "#FFFFFF", "--btn-border": "#D1D5DB", "--outer-bg": "#E5E7EB", "--glass-bg": "rgba(255, 255, 255, 0.55)", "--glass-strong": "rgba(255, 255, 255, 0.62)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#CFD9E4", "--glass-blob-b": "#CAD4CC", "--glass-blob-c": "#DCD8E4"}, "dark": {"name": "玄墨夜读 · 暗色纸感", "--paper": "#181614", "--surface": "#221F1C", "--surface-subtle": "#282420", "--ink": "#DDD5C7", "--ink-solid": "#E8E0D2", "--ink-soft": "#B0A797", "--ink-mute": "#948B7C", "--ink-faint": "#948B7C", "--rule": "rgba(255, 248, 235, 0.08)", "--rule-strong": "#36312A", "--rule-soft": "#2C2822", "--numeral": "#4A4339", "--mark": "#D47660", "--mark-bg": "#38221C", "--accent": "#D47660", "--accent-fg": "#181614", "--btn-border": "#484138", "--outer-bg": "#0F0E0C", "--glass-bg": "rgba(34, 31, 28, 0.55)", "--glass-strong": "rgba(30, 28, 26, 0.58)", "--glass-border": "rgba(255, 255, 255, 0.10)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(0, 0, 0, 0.35)", "--glass-blob-a": "#A05A3C", "--glass-blob-b": "#325A50", "--glass-blob-c": "#463C64"}}/*S1-THEME-END*/;
+  const THEME_PRESETS = /*S1-THEME-BEGIN*/{"default": {"name": "温润手稿 · 云宣白卡 (默认)", "--paper": "#F3F1EA", "--surface": "#FFFFFF", "--surface-subtle": "#F9F8F3", "--ink": "#1F1C18", "--ink-solid": "#26221C", "--ink-soft": "#524C42", "--ink-mute": "#615B50", "--ink-faint": "#676156", "--rule": "rgba(38, 33, 25, 0.08)", "--rule-strong": "#DED8CA", "--rule-soft": "#EFECE4", "--numeral": "#C4BDAE", "--mark": "#A64B38", "--mark-bg": "#F6E6E1", "--accent": "#26221C", "--accent-fg": "#FAF8F3", "--btn-border": "#D5CEBF", "--outer-bg": "#E5E1D6", "--glass-bg": "rgba(255, 255, 255, 0.38)", "--glass-strong": "rgba(255, 255, 255, 0.45)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#D6AA8C", "--glass-blob-b": "#96B4AA", "--glass-blob-c": "#C8BED7"}, "lingshu": {"name": "灵枢青瓷 · 松石绿 (对标竞品)", "--paper": "#F4F5F0", "--surface": "#FFFFFF", "--surface-subtle": "#F8FAF7", "--ink": "#1A2421", "--ink-solid": "#1D5B50", "--ink-soft": "#42544E", "--ink-mute": "#53635D", "--ink-faint": "#596961", "--rule": "rgba(29, 91, 80, 0.09)", "--rule-strong": "#D5DFDC", "--rule-soft": "#EBF0EE", "--numeral": "#B5C4BF", "--mark": "#1D5B50", "--mark-bg": "#E1F0EC", "--accent": "#1D5B50", "--accent-fg": "#FFFFFF", "--btn-border": "#C4D4CE", "--outer-bg": "#E2E7E4", "--glass-bg": "rgba(255, 255, 255, 0.38)", "--glass-strong": "rgba(255, 255, 255, 0.45)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#BFD3BC", "--glass-blob-b": "#9CC6B4", "--glass-blob-c": "#C6CBB8"}, "parchment": {"name": "古籍羊皮 · 暖杏护眼", "--paper": "#F3ECD8", "--surface": "#FCF8EE", "--surface-subtle": "#F7F1E1", "--ink": "#2B2318", "--ink-solid": "#30271B", "--ink-soft": "#5E513F", "--ink-mute": "#655947", "--ink-faint": "#6B5F4A", "--rule": "rgba(48, 39, 27, 0.09)", "--rule-strong": "#DDD3BC", "--rule-soft": "#EAE1CC", "--numeral": "#BFB399", "--mark": "#9E4735", "--mark-bg": "#F2DCD4", "--accent": "#382B1E", "--accent-fg": "#FCF8EE", "--btn-border": "#C8B99E", "--outer-bg": "#DFD5BE", "--glass-bg": "rgba(255, 255, 255, 0.38)", "--glass-strong": "rgba(255, 255, 255, 0.45)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#DEC08E", "--glass-blob-b": "#C6B48E", "--glass-blob-c": "#D1BFA6"}, "celadon": {"name": "宋刻竹青 · 润眼茶白", "--paper": "#EBF0EA", "--surface": "#F9FBF9", "--surface-subtle": "#F1F5F0", "--ink": "#1F2821", "--ink-solid": "#232D25", "--ink-soft": "#4A594D", "--ink-mute": "#546257", "--ink-faint": "#5A685C", "--rule": "rgba(35, 45, 37, 0.09)", "--rule-strong": "#CFDAD1", "--rule-soft": "#E1EAE2", "--numeral": "#B0C0B3", "--mark": "#8E4A3B", "--mark-bg": "#EFE0DC", "--accent": "#2B4738", "--accent-fg": "#F9FBF9", "--btn-border": "#B8C7BB", "--outer-bg": "#D8E2D9", "--glass-bg": "rgba(255, 255, 255, 0.38)", "--glass-strong": "rgba(255, 255, 255, 0.45)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#BCCFAE", "--glass-blob-b": "#A6C8B4", "--glass-blob-c": "#C9D0B6"}, "stone": {"name": "澄心冷灰 · 碑拓质感", "--paper": "#EFECE6", "--surface": "#FAF9F6", "--surface-subtle": "#F4F2ED", "--ink": "#22201C", "--ink-solid": "#262420", "--ink-soft": "#54514B", "--ink-mute": "#605C54", "--ink-faint": "#66625C", "--rule": "rgba(38, 36, 32, 0.08)", "--rule-strong": "#D8D4CC", "--rule-soft": "#E6E2DA", "--numeral": "#BDB8AE", "--mark": "#964B3B", "--mark-bg": "#EFE0DC", "--accent": "#262420", "--accent-fg": "#FAF9F6", "--btn-border": "#C4BFB5", "--outer-bg": "#DAD6CE", "--glass-bg": "rgba(255, 255, 255, 0.38)", "--glass-strong": "rgba(255, 255, 255, 0.45)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#C9C0B4", "--glass-blob-b": "#B7BFC4", "--glass-blob-c": "#CBBFC8"}, "pure": {"name": "素练极简 · 现代纯白", "--paper": "#F6F7F9", "--surface": "#FFFFFF", "--surface-subtle": "#F9FAFB", "--ink": "#111827", "--ink-solid": "#1E293B", "--ink-soft": "#4B5563", "--ink-mute": "#545B68", "--ink-faint": "#626A78", "--rule": "rgba(17, 24, 39, 0.07)", "--rule-strong": "#E5E7EB", "--rule-soft": "#F3F4F6", "--numeral": "#CBD5E1", "--mark": "#B93829", "--mark-bg": "#FEE2E2", "--accent": "#18181B", "--accent-fg": "#FFFFFF", "--btn-border": "#D1D5DB", "--outer-bg": "#E5E7EB", "--glass-bg": "rgba(255, 255, 255, 0.38)", "--glass-strong": "rgba(255, 255, 255, 0.45)", "--glass-border": "rgba(255, 255, 255, 0.70)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(40, 36, 28, 0.10)", "--glass-blob-a": "#CFD9E4", "--glass-blob-b": "#CAD4CC", "--glass-blob-c": "#DCD8E4"}, "dark": {"name": "玄墨夜读 · 暗色纸感", "--paper": "#181614", "--surface": "#221F1C", "--surface-subtle": "#282420", "--ink": "#DDD5C7", "--ink-solid": "#E8E0D2", "--ink-soft": "#B0A797", "--ink-mute": "#948B7C", "--ink-faint": "#948B7C", "--rule": "rgba(255, 248, 235, 0.08)", "--rule-strong": "#36312A", "--rule-soft": "#2C2822", "--numeral": "#4A4339", "--mark": "#D47660", "--mark-bg": "#38221C", "--accent": "#D47660", "--accent-fg": "#181614", "--btn-border": "#484138", "--outer-bg": "#0F0E0C", "--glass-bg": "rgba(34, 31, 28, 0.38)", "--glass-strong": "rgba(30, 28, 26, 0.45)", "--glass-border": "rgba(255, 255, 255, 0.10)", "--glass-blur": "18px", "--glass-shadow": "0 8px 32px rgba(0, 0, 0, 0.35)", "--glass-blob-a": "#A05A3C", "--glass-blob-b": "#325A50", "--glass-blob-c": "#463C64"}}/*S1-THEME-END*/;
 
   const WALLPAPER_PRESETS = /*S1-WALLPAPER-BEGIN*/{"none": "none", "xuan": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Crect width='600' height='600' fill='%23EFECE2'/%3E%3Cg stroke='%23C9C0AC' stroke-width='0.8' opacity='0.45' fill='none'%3E%3Cpath d='M0 120 Q 150 90 300 130 T 600 110'/%3E%3Cpath d='M0 280 Q 180 310 350 260 T 600 290'/%3E%3Cpath d='M0 450 Q 120 420 280 460 T 600 440'/%3E%3C/g%3E%3Ccircle cx='480' cy='140' r='90' fill='%23DFD6C3' opacity='0.35'/%3E%3Ccircle cx='140' cy='460' r='130' fill='%23E3DAC8' opacity='0.4'/%3E%3C/svg%3E\")", "mist": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3ClinearGradient id='g1' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23DCE5E2'/%3E%3Cstop offset='100%25' stop-color='%23F2EFE6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1200' height='800' fill='url(%23g1)'/%3E%3Cpath d='M0 540 Q 240 420 520 500 T 1020 460 L 1200 510 L 1200 800 L 0 800 Z' fill='%23BACAC4' opacity='0.45'/%3E%3Cpath d='M0 620 Q 320 520 680 600 T 1200 560 L 1200 800 L 0 800 Z' fill='%239EB3AC' opacity='0.45'/%3E%3Cpath d='M0 700 Q 420 640 820 710 T 1200 680 L 1200 800 L 0 800 Z' fill='%23839B94' opacity='0.4'/%3E%3Ccircle cx='920' cy='210' r='54' fill='%23C87D6A' opacity='0.38'/%3E%3C/svg%3E\")", "bamboo": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='700' viewBox='0 0 900 700'%3E%3Crect width='900' height='700' fill='%23EAEFE8'/%3E%3Cg stroke='%238BA190' stroke-linecap='round' opacity='0.35' fill='none'%3E%3Cline x1='760' y1='0' x2='730' y2='700' stroke-width='6'/%3E%3Cline x1='810' y1='80' x2='795' y2='700' stroke-width='4'/%3E%3Cpath d='M750 180 Q 680 150 640 190' stroke-width='3'/%3E%3Cpath d='M745 320 Q 670 300 610 340' stroke-width='3'/%3E%3Cpath d='M798 260 Q 850 230 885 265' stroke-width='2.5'/%3E%3C/g%3E%3C/svg%3E\")"}/*S1-WALLPAPER-END*/;
 
@@ -28,11 +28,18 @@
   const BG_NAMES = { none: '无背景图 · 纯净纸底', xuan: '宣纸云纹 · 手工纤维', mist: '江南烟雨 · 水墨远山', bamboo: '宋刻竹影 · 案头清风' };
   const OVERLAY = { min: 65, max: 98, uploadAuto: 82, presetAuto: 84, presetAutoAbove: 92, default: 90 };
   const BLUR = { min: 0, max: 20, default: 0 };
+  // S-10 3g·工单第2条：玻璃个性化两滑块。雾面浓度=三团色 alpha 的乘数（%），卡片透明度直驱
+  // --glass-bg 的 alpha，--glass-strong 取 min(0.95, 值+0.07)。默认值=CSS 令牌值（乘 100% 不写行内）。
+  const MIST = { min: 0, max: 200, default: 100 };
+  const GLASS = { min: 0.2, max: 0.9, default: 0.38 };
+  // 雾面基准档（与 glass.css :root / html[data-theme=dark] 的 --glass-blob-alpha-* 一致，改要两处同步）
+  const BLOB_BASE = { light: [45, 45, 40], dark: [30, 35, 30] };
 
   const state = {
     themeKey: 'default',
     custom: null,
-    background: { type: 'none', preset: null, file: null, overlay: OVERLAY.default, blur: BLUR.default },
+    background: { type: 'none', preset: null, file: null, overlay: OVERLAY.default, blur: BLUR.default,
+      mist: MIST.default, glass: GLASS.default },
     version: null,
     dataRoot: null,
     dataRootTemporary: false,
@@ -78,7 +85,9 @@
         preset: state.background.preset,
         file: state.background.file,
         overlay: state.background.overlay,
-        blur: state.background.blur
+        blur: state.background.blur,
+        mist: state.background.mist,
+        glass: state.background.glass
       }
     };
     fetch('/api/ui/prefs', {
@@ -154,6 +163,7 @@
     state.themeKey = key;
     applyThemeTokens(key);
     applyCustomColors();
+    applyGlassTokens();
     syncThemeInputs();
     schedulePersist();
     showToast('已切换主题：' + THEME_PRESETS[key].name);
@@ -173,8 +183,10 @@
   function resetAppearance() {
     state.custom = null;
     applyThemeTokens(state.themeKey);
-    state.background = { type: 'none', preset: null, file: null, overlay: OVERLAY.default, blur: BLUR.default };
+    state.background = { type: 'none', preset: null, file: null, overlay: OVERLAY.default, blur: BLUR.default,
+      mist: MIST.default, glass: GLASS.default };
     applyBackgroundTokens();
+    applyGlassTokens();
     syncThemeInputs();
     syncBackgroundInputs();
     schedulePersist();
@@ -197,6 +209,34 @@
     root.style.setProperty('--bg-blur', state.background.blur + 'px');
   }
 
+  // S-10 3g·工单第2条：玻璃个性化落行内令牌。默认值不写行内（CSS 令牌兜底自洽），
+  // 非默认才覆盖；这样 cacheThemeTokens 缓存/服务端 boot 回放都只带用户真正改过的量。
+  function applyGlassTokens() {
+    const root = document.documentElement;
+    const dark = state.themeKey === 'dark';
+    const mist = clampNumber(state.background.mist, MIST.min, MIST.max, MIST.default);
+    ['a', 'b', 'c'].forEach((key, i) => {
+      const token = '--glass-blob-alpha-' + key;
+      if (mist === MIST.default) root.style.removeProperty(token);
+      else root.style.setProperty(token,
+        (Math.round(BLOB_BASE[dark ? 'dark' : 'light'][i] * mist / 10) / 10) + '%');
+    });
+    // 不支持 backdrop-filter 的引擎玻璃已退 0.96 实心（applyThemeTokens/CSS 同款退化），
+    // 个性化 alpha 无意义且会伤可读性，跳过
+    if (!supportsBackdropFilter()) return;
+    const glass = clampNumber(state.background.glass, GLASS.min, GLASS.max, GLASS.default);
+    if (glass === GLASS.default) {
+      root.style.removeProperty('--glass-bg');
+      root.style.removeProperty('--glass-strong');
+      return;
+    }
+    const preset = THEME_PRESETS[state.themeKey] || THEME_PRESETS.default;
+    const swapAlpha = (rgba, alpha) => rgba.replace(/^(rgba?\([^)]*,\s*)[\d.]+(\))$/, '$1' + alpha + '$2');
+    root.style.setProperty('--glass-bg', swapAlpha(preset['--glass-bg'], glass));
+    root.style.setProperty('--glass-strong', swapAlpha(preset['--glass-strong'],
+      Math.min(0.95, Math.round((glass + 0.07) * 100) / 100)));
+  }
+
   function syncBackgroundInputs() {
     const activeKey = state.background.type === 'preset' ? state.background.preset
       : (state.background.type === 'custom' ? 'custom' : 'none');
@@ -212,11 +252,21 @@
     const blurLabel = document.getElementById('biyu-bg-blur-label');
     if (blurSlider) blurSlider.value = state.background.blur;
     if (blurLabel) blurLabel.textContent = state.background.blur + 'px';
+    // 3g·工单第2条：玻璃个性化两滑块随状态回显
+    const mistSlider = document.getElementById('biyu-glass-mist-slider');
+    const mistLabel = document.getElementById('biyu-glass-mist-label');
+    if (mistSlider) mistSlider.value = state.background.mist;
+    if (mistLabel) mistLabel.textContent = Math.round(clampNumber(state.background.mist, MIST.min, MIST.max, MIST.default)) + '%';
+    const alphaSlider = document.getElementById('biyu-glass-alpha-slider');
+    const alphaLabel = document.getElementById('biyu-glass-alpha-label');
+    if (alphaSlider) alphaSlider.value = clampNumber(state.background.glass, GLASS.min, GLASS.max, GLASS.default);
+    if (alphaLabel) alphaLabel.textContent = clampNumber(state.background.glass, GLASS.min, GLASS.max, GLASS.default).toFixed(2);
   }
 
   function setWallpaperPreset(key) {
     if (key === 'none') {
-      state.background = { type: 'none', preset: null, file: null, overlay: state.background.overlay, blur: state.background.blur };
+      state.background = { type: 'none', preset: null, file: null, overlay: state.background.overlay, blur: state.background.blur,
+        mist: state.background.mist, glass: state.background.glass };
       applyBackgroundTokens();
       syncBackgroundInputs();
       schedulePersist();
@@ -249,6 +299,23 @@
     applyBackgroundTokens();
     const label = document.getElementById('biyu-bg-blur-label');
     if (label) label.textContent = Math.round(state.background.blur) + 'px';
+    schedulePersist();
+  }
+
+  // S-10 3g·工单第2条：雾面浓度 / 卡片透明度两滑块（实时预览，schedulePersist 350ms 防抖落盘，照现有滑块）
+  function updateMist(value) {
+    state.background.mist = clampNumber(value, MIST.min, MIST.max, MIST.default);
+    applyGlassTokens();
+    const label = document.getElementById('biyu-glass-mist-label');
+    if (label) label.textContent = Math.round(state.background.mist) + '%';
+    schedulePersist();
+  }
+
+  function updateGlassAlpha(value) {
+    state.background.glass = clampNumber(value, GLASS.min, GLASS.max, GLASS.default);
+    applyGlassTokens();
+    const label = document.getElementById('biyu-glass-alpha-label');
+    if (label) label.textContent = state.background.glass.toFixed(2);
     schedulePersist();
   }
 
@@ -408,6 +475,12 @@
       '纸感蒙层浓度（护眼防花眼）：', OVERLAY.min, OVERLAY.max, OVERLAY.default, '%', updateOverlay));
     drawer.appendChild(sliderRow('biyu-bg-blur-slider', 'biyu-bg-blur-label',
       '背景柔焦模糊度：', BLUR.min, BLUR.max, BLUR.default, 'px', updateBlur));
+    // 3g·工单第2条：玻璃个性化两滑块加在「遮罩/模糊」旁。透明度滑杆步进 0.01、显示两位小数
+    drawer.appendChild(sliderRow('biyu-glass-mist-slider', 'biyu-glass-mist-label',
+      '彩色雾面浓度（三团色，玻璃卡后）：', MIST.min, MIST.max, MIST.default, '%', updateMist));
+    drawer.appendChild(sliderRow('biyu-glass-alpha-slider', 'biyu-glass-alpha-label',
+      '卡片玻璃透明度：', GLASS.min, GLASS.max, GLASS.default, '', updateGlassAlpha,
+      0.01, (v) => v.toFixed(2)));
 
     const colorLabel = document.createElement('p');
     colorLabel.className = 'biyu-eyebrow';
@@ -449,7 +522,7 @@
     return drawer;
   }
 
-  function sliderRow(id, labelId, text, min, max, value, unit, onInput) {
+  function sliderRow(id, labelId, text, min, max, value, unit, onInput, step, fmt) {
     const row = document.createElement('div');
     row.className = 'biyu-slider-row';
     const label = document.createElement('span');
@@ -458,7 +531,7 @@
     prefix.textContent = text;
     const strong = document.createElement('strong');
     strong.id = labelId;
-    strong.textContent = value + unit;
+    strong.textContent = (fmt ? fmt(value) : value) + unit;
     label.appendChild(prefix);
     label.appendChild(strong);
     const input = document.createElement('input');
@@ -466,6 +539,7 @@
     input.id = id;
     input.min = String(min);
     input.max = String(max);
+    if (step) input.step = String(step);
     input.value = String(value);
     input.addEventListener('input', () => onInput(input.value));
     row.appendChild(label);
@@ -1168,7 +1242,9 @@
         preset: bg.preset || null,
         file: bg.file || null,
         overlay: clampNumber(bg.overlay, OVERLAY.min, OVERLAY.max, OVERLAY.default),
-        blur: clampNumber(bg.blur, BLUR.min, BLUR.max, BLUR.default)
+        blur: clampNumber(bg.blur, BLUR.min, BLUR.max, BLUR.default),
+        mist: clampNumber(bg.mist, MIST.min, MIST.max, MIST.default),
+        glass: clampNumber(bg.glass, GLASS.min, GLASS.max, GLASS.default)
       };
       if (state.background.type === 'custom' && !state.background.file) state.background.type = 'none';
       if (state.background.type === 'preset' && !WALLPAPER_PRESETS[state.background.preset]) {
@@ -1249,6 +1325,7 @@
     if (!hasCachedTheme()) {
       applyThemeTokens(state.themeKey);
       applyBackgroundTokens();
+      applyGlassTokens();
     }
     // S-10 3a修正·工单第8条：偏好（主题/背景）先行——/api/books 在大库上首拉 2s+，
     // 主题跟它绑在同一链上会让首帧亮 300ms+ 才变暗；主题令牌要尽早落缓存（theme-boot 首帧回放用）。
@@ -1256,6 +1333,7 @@
       applyThemeTokens(state.themeKey);
       applyCustomColors();
       applyBackgroundTokens();
+      applyGlassTokens();
       syncThemeInputs();
       syncBackgroundInputs();
       cacheThemeTokens();
@@ -1267,6 +1345,7 @@
         applyThemeTokens(state.themeKey);
         applyCustomColors();
         applyBackgroundTokens();
+        applyGlassTokens();
         syncThemeInputs();
         syncBackgroundInputs();
         cacheThemeTokens();

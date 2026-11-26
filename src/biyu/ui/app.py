@@ -23,7 +23,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -483,6 +483,13 @@ def render_static_html(path: Path) -> str:
         html = re.sub(r"(<head[^>]*>)", lambda m: m.group(1) + inline, html, count=1)
         html = re.sub(r"(<html[^>]*?)(>)",
                       lambda m: m.group(1) + f' data-theme="{theme_key}"' + m.group(2), html, count=1)
+    # S-10 3g·工单第3条：浏览器标签图标——16 页共用本函数，统一注入两条 icon link
+    #（现代浏览器选 SVG，老引擎退 ICO）；页面内全局栏「驭」品牌块不是浏览器图标，不动。
+    html = re.sub(r"(<head[^>]*>)",
+                  lambda m: m.group(1)
+                  + '<link rel="icon" type="image/svg+xml" href="/favicon.svg">'
+                  + '<link rel="icon" href="/favicon.ico" sizes="any">',
+                  html, count=1)
     return html
 
 
@@ -543,7 +550,34 @@ def _server_theme_boot_css() -> tuple[str, str]:
     parts.append(f"--bg-image: {image};")
     parts.append(f"--bg-overlay-alpha: {overlay:.2f};")
     parts.append(f"--bg-blur: {int(blur)}px;")
+    # S-10 3g·工单第2条：玻璃个性化随首帧注入——只在非默认时覆盖（与 shell.js applyGlassTokens
+    # 同构：雾面浓度乘三团色基准档，卡片透明度直驱 --glass-bg，strong=min(0.95, 值+0.07)；
+    # 默认值不写，HTML 出栈带的 preset 令牌本身已是 0.38/0.45）。
+    mist = _clampf(bg.get("mist"), 0.0, 200.0, 100.0)
+    glass = _clampf(bg.get("glass"), 0.20, 0.90, 0.38)
+    if abs(mist - 100.0) > 1e-9:
+        base = (30, 35, 30) if theme_key == "dark" else (45, 45, 40)
+        for key, b in zip(("a", "b", "c"), base):
+            v = int(b * mist / 10 + 0.5) / 10  # 与 JS Math.round 同向
+            parts.append(f"--glass-blob-alpha-{key}: {v:g}%;")
+    if abs(glass - 0.38) > 1e-9:
+        parts.append(f"--glass-bg: {_swap_alpha(preset['--glass-bg'], glass)};")
+        parts.append(f"--glass-strong: {_swap_alpha(preset['--glass-strong'], min(0.95, round(glass + 0.07, 2)))};")
     return " ".join(parts), theme_key
+
+
+def _clampf(value, low: float, high: float, fallback: float) -> float:
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return fallback
+    return max(low, min(high, n))
+
+
+def _swap_alpha(rgba: str, alpha: float) -> str:
+    """把 rgba(...) 字面量末位 alpha 换成指定值（通道数保留）。"""
+    return re.sub(r"^(rgba?\([^)]*,\s*)[\d.]+(\)$)",
+                  lambda m: m.group(1) + f"{alpha:g}" + m.group(2), rgba)
 
 
 @app.get("/about.html", response_class=HTMLResponse)
@@ -578,5 +612,20 @@ def static_index() -> str:
 
 # 挂静态文件(html=True 让 / 自动返 index.html)
 _static_dir = Path(__file__).parent / "static"
+
+
+@app.get("/favicon.svg", include_in_schema=False)
+def favicon_svg() -> Response:
+    """S-10 3g·工单第3条：显式路由钉死 content-type=image/svg+xml。
+
+    本路由必须在 / 的 StaticFiles mount 之前注册（Starlette 按注册序匹配，mount 在后
+    会吞掉一切）；Windows 下 mimetypes 读注册表，.svg 的类型不保证，不赌。
+    """
+    path = _static_dir / "favicon.svg"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="favicon.svg 不存在")
+    return Response(content=path.read_bytes(), media_type="image/svg+xml")
+
+
 if _static_dir.exists():
     app.mount("/", StaticFiles(directory=str(_static_dir), html=True), name="static")

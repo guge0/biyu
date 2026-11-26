@@ -24,6 +24,8 @@ DEFAULT_PREFS = {
         "file": None,
         "overlay": 90,
         "blur": 0,
+        "mist": 100,
+        "glass": 0.38,
     },
 }
 
@@ -59,6 +61,8 @@ def test_prefs_put_roundtrip_persists(client, tmp_path):
             "file": None,
             "overlay": 82,
             "blur": 4,
+            "mist": 150,
+            "glass": 0.25,
         },
     }
     assert client.put("/api/ui/prefs", json=payload).status_code == 200
@@ -93,6 +97,36 @@ def test_prefs_put_sanitizes_values(client):
     assert bg["overlay"] == 98
     assert bg["blur"] == 0
     assert "injected" not in prefs
+
+
+def test_prefs_glass_fields_clamped(client, tmp_path):
+    """S-10 3g·工单第2条：雾面浓度 0–200%、卡片透明度 0.20–0.90，越界夹取。"""
+    payload = {
+        "theme": "default",
+        "custom": None,
+        "background": {"type": "none", "preset": None, "file": None,
+                       "overlay": 90, "blur": 0, "mist": 300, "glass": 0.05},
+    }
+    client.put("/api/ui/prefs", json=payload)
+    bg = client.get("/api/ui/prefs").json()["background"]
+    assert bg["mist"] == 200
+    assert bg["glass"] == 0.20
+
+
+def test_prefs_legacy_file_without_glass_fields_gets_defaults(client, tmp_path):
+    """3g：旧 ui.json 缺 mist/glass 字段时回落默认值，不报错、不丢原有字段。"""
+    _prefs_path(tmp_path).parent.mkdir(parents=True, exist_ok=True)
+    _prefs_path(tmp_path).write_text(json.dumps({
+        "theme": "parchment",
+        "custom": None,
+        "background": {"type": "preset", "preset": "xuan", "file": None,
+                       "overlay": 90.0, "blur": 0},
+    }), encoding="utf-8")
+    prefs = client.get("/api/ui/prefs").json()
+    assert prefs["theme"] == "parchment"
+    assert prefs["background"]["type"] == "preset"
+    assert prefs["background"]["mist"] == 100
+    assert prefs["background"]["glass"] == 0.38
 
 
 def test_prefs_put_accepts_only_safe_tokens(client):

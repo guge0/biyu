@@ -14,6 +14,8 @@
 
 /* ---------- 令牌（默认主题：温润手稿 · 云宣） ---------- */
 /* S-10 3a修正·工单第7条：ink-mute / ink-faint / amber 压暗到 WCAG AA（原值在纸面 3.74 / 2.2 / 4.29）。
+   S-10 3g·工单第1条：卡片降到 .38 后 default 的 ink-mute/faint 在玻璃卡合成底（色团压 outer-bg 最坏值）
+   只有 4.11/3.49，再压暗到 5.0/4.55（scratch_3g/darken_solve2.py 解出，六套亮主题同步，阶梯不倒）。
    注意：:root 块内不写任何注释——test 按分号切段解析，注释会吞掉下一个令牌。 */
 :root{
   --paper:#F3F1EA;
@@ -22,8 +24,8 @@
   --ink:#1F1C18;
   --ink-solid:#26221C;
   --ink-soft:#524C42;
-  --ink-mute:#6E685C;
-  --ink-faint:#7A7366;
+  --ink-mute:#615B50;
+  --ink-faint:#676156;
   --rule:rgba(38, 33, 25, 0.08);
   --rule-strong:#DED8CA;
   --rule-soft:#EFECE4;
