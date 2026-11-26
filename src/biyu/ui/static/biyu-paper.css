@@ -624,13 +624,26 @@ body.biyu-embedded nav.top-nav { display: none; }
 /* ==================== S-3 T7 · 快检台(图纸 P0-1 三色高亮与 60/40 双栏) ==================== */
 .qc-split-grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 24px; align-items: flex-start; }
 @media (max-width: 1080px) { .qc-split-grid { grid-template-columns: 1fr; } }
+/* S-10 3c：粘贴卡改限高弹性卡——主操作行移进卡底(1280x665 首屏可见)。
+   336 = 卡上方堆叠实测 288(页头32+标题138+工具行56+图例37+间距25) + 页脚状态栏 39 + 圆整余量；
+   粘贴/高亮视图作 flex 子项在卡内滚，页面不因长稿变高。 */
 .qc-editor-box {
   background: var(--surface);
   border: 1px solid var(--rule-strong);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-card);
   padding: 24px 28px;
-  min-height: 440px;
+  display: flex; flex-direction: column;
+  max-height: calc(100vh - 336px);
+  max-height: calc(100dvh - 336px);
+}
+.qc-editor-box > .prose-input { flex: 1 1 auto; min-height: 150px; }
+.qc-editor-box > .prose { flex: 1 1 auto; min-height: 150px; overflow: auto; }
+/* 卡底操作行：剥掉 .toolbar 的独立卡面，压成卡脚(同工作台 revision-actions 做法) */
+.qc-editor-box .toolbar {
+  flex: none; padding: 12px 0 0;
+  background: transparent; border: 0; border-top: 1px solid var(--rule-soft);
+  border-radius: 0; box-shadow: none;
 }
 .qc-hl-hedge { background: rgba(166, 75, 56, 0.13); border-bottom: 2px wavy var(--mark); padding: 1px 2px; border-radius: 3px; cursor: pointer; }
 .qc-hl-simile { background: var(--amber-bg); border-bottom: 2px solid var(--amber); padding: 1px 2px; border-radius: 3px; cursor: pointer; }
